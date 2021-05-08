@@ -1,0 +1,86 @@
+* About
+
+The ~dtache~ package brings detachable commands to Emacs. Currently
+it is mainly boosting ~M-x shell~ through the ~dtache-shell.el~
+package. The ~dtache.el~ is the backend that provides a mean to create
+detachable sessions, and manages them through a database.
+
+** Background
+
+The package provides the following:
+- allows shell commands to run detached from Emacs
+- access to metadata as well as logs from the sessions
+  
+** Configuration
+
+Configure the ~dtache~ package.
+
+#+begin_src elisp
+  (use-package dtache
+    :config
+    ;; Configure directories for the database as well as sessions
+    (setq dtache-db-directory (expand-file-name "dtache" user-emacs-directory))
+    (require 'xdg)
+    (setq dtache-session-directory (f-join (xdg-runtime-dir) "dtache"))
+    ;; Run the setup
+    (dtache-setup))
+#+end_src
+
+Configure the ~dtache-shell~ package. The ~dtache-shell-enable~ will
+activate the dtache-shell minor mode in shell buffers.
+
+#+begin_src elisp
+  (use-package dtache-shell
+    :hook (after-init . dtache-shell-enable))
+#+end_src
+
+Configure the keybindings for the minor mode. The choice here is
+either going inclusive on the package replacing the normal behavior of
+shell, or to be more deliberate.
+
+The following is the evil-bindings for the more adventurous configuration.
+#+begin_src elisp
+  (general-def dtache-shell-mode-map
+      "<return>" #'dtache-shell-create-session
+      "<S-return>" #'comint-send-input
+      "<C-return>" #'dtache-attach-to-session)
+#+end_src
+
+** Optional
+
+If you are a user of ~marginalia~ and ~embark~ you might also be
+interested in adding the following to enrich the
+~dtache-attach-to-session~ command.
+
+#+begin_src elisp
+  (use-package dtache-marginalia
+    :after (dtache marginalia)
+    :config
+    (add-to-list 'marginalia-annotators-heavy '(dtache . dtache-marginalia-annotate)))
+
+  (use-package dtache-embark
+    :after (dtache embark))
+#+end_src
+
+** Commands
+
+The following is a list of commands that can be run on ~dtache~
+sessions.
+
+| Command                     | Description                                 |
+|-----------------------------+---------------------------------------------|
+| dtache-attach-to-session    | Attach to a session                         |
+| dtache-open-log             | Open the output log for a session           |
+| dtache-open-stdout          | Open the stdout for a session               |
+| dtache-open-stderr          | Open the stderr for a session               |
+| dtache-copy-session         | Copy the session command                    |
+| dtache-copy-session-content | Copy the output of a session                |
+| dtache-kill-session         | Kill an active session                      |
+| dtache-remove-session       | Remove a session                            |
+| dtache-compile-session      | Open the session output in compilation mode |
+| dtache-shell-create-session | Create a session from a shell command      |
+
+* Recognition
+
+The inspiration for the package comes from [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][ambrevar's
+package-eshell-detach]].
