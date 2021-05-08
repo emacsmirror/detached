@@ -243,15 +243,15 @@ cluttering the comint-history with dtach commands."
   (let* ((sessions (dtache--sessions))
          (selected
           (completing-read "Select session: "
-                           (lambda (string pred action)
-                             (if (eq action 'metadata)
-                                 '(metadata (category . dtache)
-                                            (cycle-sort-function . identity)
-                                            (display-sort-function . identity))
-                               ;; TODO: Tweak this and implement full
-                               ;; programable completion
-                               (complete-with-action
-                                action sessions string pred)))
+                           (lambda (str pred action)
+                             (pcase action
+                               ('metadata '(metadata (category . dtache)
+                                                     (cycle-sort-function . identity)
+                                                     (display-sort-function . identity)))
+                               (`(boundaries . ,_) nil)
+                               ('nil (try-completion str sessions pred))
+                               ('t (all-completions str sessions pred))
+                               (_ (test-completion str sessions pred))))
                            nil t nil 'dtache-session-history)))
     (dtache-session-decode selected)))
 
@@ -339,7 +339,6 @@ cluttering the comint-history with dtach commands."
 
 (defun dtache-session--update (session)
   "Update the `dtache' SESSION."
-  ;; TODO: Make this function private
   (setf (dtache--session-active session) (dtache--session-active-p session))
   (setf (dtache--session-duration session) (dtache--duration session))
   (setf (dtache--session-log-size session) (file-attribute-size
