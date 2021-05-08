@@ -80,7 +80,6 @@ sessions.
 | dtache-compile-session      | Open the session output in compilation mode |
 | dtache-shell-create-session | Create a session from a shell command      |
 
-* Recognition
+* Credits
 
-The inspiration for the package comes from [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][ambrevar's
-package-eshell-detach]].
+The inspiration for the package comes from ~ambrevar's~ [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]].
