@@ -48,7 +48,7 @@ The following is the evil-bindings for the more adventurous configuration.
 
 ** Optional
 
-If you are a user of ~marginalia~ and ~embark~ you might also be
+If you are a user of [[https://github.com/minad/marginalia/][marginalia]] and [[https://github.com/oantolin/embark/][embark]] you might also be
 interested in adding the following to enrich the
 ~dtache-attach-to-session~ command.
 
