@@ -1,9 +1,8 @@
 * About
 
-The ~dtache~ package brings detachable commands to Emacs. Currently
-it is mainly boosting ~M-x shell~ through the ~dtache-shell.el~
-package. The ~dtache.el~ is the backend that provides a mean to create
-detachable sessions, and manages them through a database.
+The ~dtache~ package brings detachable commands to Emacs with the help
+of the external program [[https://linux.die.net/man/1/dtach][dtach]]. Currently it is mainly boosting ~M-x
+shell~ through the ~dtache-shell.el~ package.
 
 ** Background
 
@@ -46,11 +45,16 @@ The following is the evil-bindings for the more adventurous configuration.
       "<C-return>" #'dtache-attach-to-session)
 #+end_src
 
+You might also want to bind the ~dtache-shell-detach~ to a keybinding
+to be able to quickly detach from a command.
+
 ** Optional
 
 If you are a user of [[https://github.com/minad/marginalia/][marginalia]] and [[https://github.com/oantolin/embark/][embark]] you might also be
 interested in adding the following to enrich the
-~dtache-attach-to-session~ command.
+~dtache-attach-to-session~ command. Marginalia adds informative
+annotations and Embark adds quick access to commands to operate on a
+session.
 
 #+begin_src elisp
   (use-package dtache-marginalia
