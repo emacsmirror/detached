@@ -1,11 +1,11 @@
-;;; dtache-shell.el --- Shell integration of dtache -*- lexical-binding: t -*-
+;;; dtache-shell.el --- Dtache integration in shell -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2020-2021 Niklas Eklund
 
 ;; Author: Niklas Eklund <niklas.eklund@posteo.net>
 ;; URL: https://www.gitlab.com/niklaseklund/dtache.git
 ;; Version: 0.1
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: convenience processes
 
 ;; This file is not part of GNU Emacs.
@@ -25,96 +25,104 @@
 
 ;;; Commentary:
 
-;; This package provides integration of dtache into shell-mode buffers.
-
-;;;; Usage
-
-;; `dtache-shell-enable': Enable dtache in shell buffers
+;; This package provides integration of `dtache' in `shell'.
 
 ;;; Code:
+
 ;;;; Requirements
 
-(require 'cl-lib)
-(require 'dash)
-(require 'subr-x)
 (require 'dtache)
-(require 'comint)
-(require 's)
-(require 'shell)
+
+;;;; Variables
+
+(defvar dtache-shell-block-list '("^$")
+  "A list of regexps to block non-supported input.")
+(defvar dtache-shell-silence-dtach-messages t
+  "Filter out messages from the `dtach' program.")
 
 ;;;; Functions
 
-(defun dtache-shell-enable ()
-  "Enable `dtache-shell'."
-  (add-hook 'shell-mode-hook #'dtache-shell-maybe-activate)
-  (advice-add 'shell :around #'dtache-shell--disable-histfile))
+(defun dtache-shell-filter-dtach-eof (string)
+  "Remove eof message from dtach in STRING."
+  (if (string-match dtache-eof-message string)
+      (replace-regexp-in-string (format "%s\n" dtache-eof-message) "" string)
+    string))
 
-(defun dtache-shell-disable ()
-  "Disable `dtache-shell'."
-  (remove-hook 'shell-mode-hook #'dtache-shell-maybe-activate)
-  (advice-remove 'shell #'dtache-shell--disable-histfile))
-
-(defun dtache-shell-maybe-activate ()
-  "Only local sessions are supported."
-  (unless (file-remote-p default-directory)
-    (dtache-shell-mode)))
+(defun dtache-shell-filter-dtach-detached (string)
+  "Remove detached message from dtach in STRING."
+  (if (string-match dtache-detached-message string)
+      (replace-regexp-in-string (format "%s\n" dtache-detached-message) "" string)
+    string))
 
 ;;;; Commands
 
 ;;;###autoload
-(defun dtache-shell-create-session (&optional disable-block)
-  "Create a new dtache session.
-Use prefix argument DISABLE-BLOCK to force the launch of a session."
+(defun dtache-shell-send-input (&optional create-session)
+  "Send input to `shell'.
+
+Optionally CREATE-SESSION with prefix argument."
   (interactive "P")
-  (let ((comint-input-sender #'dtache-shell-input-sender)
-        (dtache-block-list (if disable-block '() dtache-block-list)))
+  (if create-session
+      (dtache-shell-create)
+    (comint-send-input)))
+
+;;;###autoload
+(defun dtache-shell-create ()
+  "Create a session."
+  (interactive)
+  (let ((comint-input-sender #'dtache-shell--create-input-sender))
     (comint-send-input)))
 
 ;;;###autoload
 (defun dtache-shell-detach ()
-  "Detach from an attached session."
+  "Detach from session."
   (interactive)
   (let ((proc (get-buffer-process (current-buffer)))
-        (input "\C-\\"))
-    (if (dtache-shell--attached-p)
-        (comint-simple-send proc input)
-      (message "Not attached to a session"))))
+        (input dtache-detach-character))
+    (comint-simple-send proc input)))
 
-(defun dtache-shell-input-sender (proc string)
-  "Create a dtache command based on STRING and send to PROC.
+;;;###autoload
+(defun dtache-shell-attach (session)
+  "Attach to SESSION.
 
-The function doesn't create dtache sessions when STRING is matching
-any regexp found in `dtache-block-list'."
-  (if-let* ((no-child-process (not (process-running-child-p (get-process (buffer-name)))))
-            (allowed (not (--find (s-matches-p it string) dtache-block-list)))
-            (session (dtache-create-session (substring-no-properties string)))
-            (command (dtache-session-command session)))
-      (comint-simple-send proc command)
-    (comint-simple-send proc string)))
+`comint-add-to-input-history' is temporarily disabled to avoid
+cluttering the comint-history with dtach commands."
+  (interactive
+   (list (dtache-select-session)))
+  (if (dtache--session-active-p session)
+      (cl-letf ((dtache--current-session session)
+                (comint-input-sender #'dtache-shell--attach-input-sender)
+                ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
+        (comint-kill-input)
+        (comint-send-input))
+    (funcall dtache-attach-alternate-function session)))
 
 ;;;; Support functions
 
-(defun dtache-shell--attached-p ()
-  "Return t if `shell' is attached to a session."
-  (let ((pid (process-running-child-p (get-process (buffer-name)))))
-    (when pid
-      (let-alist (process-attributes pid)
-	    (s-equals-p "dtach" .comm)))))
+(defun dtache-shell--attach-input-sender (proc _string)
+  "Attach to `dtache--session' and send the attach command to PROC."
+  (let* ((socket
+          (concat
+           (dtache--session-session-directory dtache--current-session)
+           (dtache--session-id dtache--current-session)
+           dtache-socket-ext))
+         (input
+          (concat dtache-program " -a " socket)))
+    (comint-simple-send proc input)))
 
-(defun dtache-shell--filter-dtach-eof (string)
-  "Remove eof message from dtach in STRING."
-  (if (string-match dtache-eof-message string)
-      (s-replace (format "%s\n" (s-replace "\\" "" dtache-eof-message)) "" string)
-    string))
-
-(defun dtache-shell--disable-histfile (orig-fun &rest args)
-  "Disable HISTFILE before calling ORIG-FUN with ARGS."
-  (cl-letf (((getenv "HISTFILE") ""))
-    (apply orig-fun args)))
-
-(defun dtache-shell--save-history ()
-  "Save `shell' history."
-  (comint-write-input-ring))
+(defun dtache-shell--create-input-sender (proc string)
+  "Create a dtache session based on STRING and send to PROC."
+  (with-connection-local-variables
+   (if-let* ((supported-input
+              (not (seq-find
+                    (lambda (blocked)
+                      (string-match-p string blocked))
+                    dtache-shell-block-list)))
+             (command (dtache-dtach-command
+                       (dtache--create-session
+                        (substring-no-properties string)))))
+       (comint-simple-send proc command)
+     (comint-simple-send proc string))))
 
 ;;;; Minor mode
 
@@ -123,13 +131,18 @@ any regexp found in `dtache-block-list'."
   :lighter "dtache-shell"
   :keymap (let ((map (make-sparse-keymap)))
             map)
-  (if dtache-shell-mode
-      (progn
-        (dtache-cleanup-sessions)
-        (add-hook 'comint-preoutput-filter-functions #'dtache-shell--filter-dtach-eof 0 t)
-        (add-hook 'kill-buffer-hook #'dtache-shell--save-history 0 t))
-    (remove-hook 'comint-preoutput-filter-functions #'dtache-shell--filter-dtach-eof t)
-    (remove-hook 'kill-buffer-hook #'dtache-shell--save-history t)))
+  (with-connection-local-variables
+   (if dtache-shell-mode
+       (progn
+         (dtache-db-initialize)
+         (dtache-create-session-directory)
+         (dtache-cleanup-sessions)
+         (when dtache-shell-silence-dtach-messages
+           (add-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-eof 0 t)
+           (add-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-detached 0 t)))
+     (when dtache-shell-silence-dtach-messages
+       (remove-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-eof t)
+       (remove-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-detached t)))))
 
 (provide 'dtache-shell)
 

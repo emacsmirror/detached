@@ -1,4 +1,4 @@
-;;; dtache-marginalia.el --- Marginalia for dtache -*- lexical-binding: t -*-
+;;; marginalia-dtache.el --- Dtache Marginalia integration -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2020-2021 Niklas Eklund
 
@@ -25,7 +25,7 @@
 
 ;;; Commentary:
 
-;; This package provides a marginalia annotator for dtache.
+;; This package provides annotated `dtache' sessions with `marginalia'.
 
 ;;; Code:
 
@@ -36,53 +36,58 @@
 
 ;;;; Variables
 
-(defvar dtache-marginalia-git-branch-length 30)
-(defvar dtache-marginalia-duration-length 10)
-(defvar dtache-marginalia-size-length 8)
-(defvar dtache-marginalia-date-length 12)
+(defvar marginalia-dtache-git-branch-length 30)
+(defvar marginalia-dtache-duration-length 10)
+(defvar marginalia-dtache-size-length 8)
+(defvar marginalia-dtache-date-length 12)
 
 ;;;; Faces
 
-(defface dtache-marginalia-git
+(defgroup marginalia-dtache-faces nil
+  "Faces used by `marginalia-mode'."
+  :group 'marginalia
+  :group 'faces)
+
+(defface marginalia-dtache-git
   '((t :inherit marginalia-char))
   "Face used to highlight git information in `marginalia-mode'.")
 
-(defface dtache-marginalia-error
+(defface marginalia-dtache-error
   '((t :inherit error))
   "Face used to highlight error in `marginalia-mode'.")
 
-(defface dtache-marginalia-active
+(defface marginalia-dtache-active
   '((t :inherit marginalia-file-owner))
   "Face used to highlight active in `marginalia-mode'.")
 
-(defface dtache-marginalia-duration
+(defface marginalia-dtache-duration
   '((t :inherit marginalia-date))
   "Face used to highlight duration in `marginalia-mode'.")
 
-(defface dtache-marginalia-size
+(defface marginalia-dtache-size
   '((t :inherit marginalia-size))
   "Face used to highlight size in `marginalia-mode'.")
 
-(defface dtache-marginalia-creation
+(defface marginalia-dtache-creation
   '((t :inherit marginalia-date))
   "Face used to highlight date in `marginalia-mode'.")
 
 ;;;; Functions
 
-(defun dtache-marginalia-annotate (candidate)
+(defun marginalia-dtache-annotate (candidate)
   "Annotate dtache CANDIDATE."
-  (let* ((session (dtache-session-decode candidate)))
+  (let* ((session (dtache-decode-session candidate)))
     (marginalia--fields
-     ((dtache-marginalia--active session) :width 3 :face 'dtache-marginalia-active)
-     ((dtache-marginalia--stderr-p session) :width 3 :face 'dtache-marginalia-error)
-     ((dtache-marginalia--git-branch session) :truncate dtache-marginalia-git-branch-length :face 'dtache-marginalia-git)
-     ((dtache-marginalia--duration session) :truncate dtache-marginalia-duration-length :face 'dtache-marginalia-duration)
-     ((dtache-marginalia--size session) :truncate dtache-marginalia-size-length :face 'dtache-marginalia-size)
-     ((dtache-marginalia--creation session) :truncate dtache-marginalia-date-length :face 'dtache-marginalia-date))))
+     ((marginalia-dtache--active session) :width 3 :face 'marginalia-dtache-active)
+     ((marginalia-dtache--stderr-p session) :width 3 :face 'marginalia-dtache-error)
+     ((marginalia-dtache--git-branch session) :truncate marginalia-dtache-git-branch-length :face 'marginalia-dtache-git)
+     ((marginalia-dtache--duration session) :truncate marginalia-dtache-duration-length :face 'marginalia-dtache-duration)
+     ((marginalia-dtache--size session) :truncate marginalia-dtache-size-length :face 'marginalia-dtache-size)
+     ((marginalia-dtache--creation session) :truncate marginalia-dtache-date-length :face 'marginalia-dtache-date))))
 
 ;;;; Support functions
 
-(defun dtache-marginalia--duration (session)
+(defun marginalia-dtache--duration (session)
   "Return SESSION's duration time."
   (let* ((time (round (dtache--session-duration session)))
          (hours (/ time 3600))
@@ -92,33 +97,33 @@
           ((> time 60) (format "%sm %ss" minutes seconds))
           (t (format "%ss" seconds)))))
 
-(defun dtache-marginalia--creation (session)
+(defun marginalia-dtache--creation (session)
   "Return SESSION's creation time."
   (format-time-string
    "%b %d %H:%M"
    (dtache--session-creation-time session)))
 
-(defun dtache-marginalia--size (session)
+(defun marginalia-dtache--size (session)
   "Return the size of SESSION's log."
   (file-size-human-readable
    (dtache--session-log-size session)))
 
-(defun dtache-marginalia--git-branch (session)
+(defun marginalia-dtache--git-branch (session)
   "Return the git branch for SESSION."
-  (dtache--session-git session))
+  (plist-get (dtache--session-metadata session) :git))
 
-(defun dtache-marginalia--active (session)
+(defun marginalia-dtache--active (session)
   "Return string if SESSION is active."
   (if (dtache--session-active session)
       "*"
     ""))
 
-(defun dtache-marginalia--stderr-p (session)
+(defun marginalia-dtache--stderr-p (session)
   "Return string if SESSION has errors."
   (if (dtache--session-stderr-p session)
       "!"
     ""))
 
-(provide 'dtache-marginalia)
+(provide 'marginalia-dtache)
 
-;;; dtache-marginalia.el ends here
+;;; marginalia-dtache.el ends here

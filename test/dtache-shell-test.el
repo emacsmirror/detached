@@ -4,7 +4,7 @@
 
 ;; Author: Niklas Eklund <niklas.eklund@posteo.net>
 ;; Url: https://gitlab.com/niklaseklund/dtache
-;; Package-requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "27.1"))
 ;; Version: 0.1
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 
 ;;; Commentary:
 
-;; Tests for dtache-shell
+;; Tests for `dtache-shell'.
 
 ;;; Code:
 
@@ -35,7 +35,13 @@
   (let ((str "
 [EOF - dtach terminating]
 user@machine "))
-    (should (string= "\nuser@machine " (dtache-shell--filter-dtach-eof str)))))
+    (should (string= "\nuser@machine " (dtache-shell-filter-dtach-eof str)))))
+
+(ert-deftest dtache-shell-test-filter-detached ()
+  (let ((str "
+[detached]
+user@machine "))
+    (should (string= "\nuser@machine " (dtache-shell-filter-dtach-detached str)))))
 
 (provide 'dtache-shell-test)
 

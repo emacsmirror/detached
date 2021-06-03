@@ -1,4 +1,4 @@
-;;; dtache-embark.el --- Embark for dtache -*- lexical-binding: t -*-
+;;; embark-dtache.el --- Dtache Embark integration -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2020-2021 Niklas Eklund
 
@@ -25,7 +25,7 @@
 
 ;;; Commentary:
 
-;; This package provides an embark keymap for dtache.
+;; This package provides `embark' actions to operate on `dtache' sessions.
 
 ;;; Code:
 
@@ -36,21 +36,20 @@
 
 ;;;; Keymap
 
-(embark-define-keymap dtache-embark-map
+(embark-define-keymap embark-dtache-map
   "Keymap for Embark dtache actions."
   ("l" dtache-open-log)
   ("e" dtache-open-stderr)
   ("o" dtache-open-stdout)
-  ("i" dtache-insert-session)
-  ("w" dtache-copy-session)
-  ("W" dtache-copy-session-content)
+  ("i" dtache-insert-session-command)
+  ("w" dtache-copy-session-command)
+  ("W" dtache-copy-session-log)
   ("c" dtache-compile-session)
   ("d" dtache-remove-session)
-  ("k" dtache-kill-session)
-  ("s" dtache-consult-search-session))
+  ("k" dtache-kill-session))
 
-(add-to-list 'embark-keymap-alist '(dtache . dtache-embark-map))
+(add-to-list 'embark-keymap-alist '(dtache . embark-dtache-map))
 
-(provide 'dtache-embark)
+(provide 'embark-dtache)
 
-;;; dtache-embark.el ends here
+;;; embark-dtache.el ends here
