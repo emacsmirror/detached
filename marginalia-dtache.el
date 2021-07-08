@@ -79,7 +79,7 @@
   (let* ((session (dtache-decode-session candidate)))
     (marginalia--fields
      ((marginalia-dtache--active session) :width 3 :face 'marginalia-dtache-active)
-     ((marginalia-dtache--stderr-p session) :width 3 :face 'marginalia-dtache-error)
+     ((marginalia-dtache--degraded session) :width 3 :face 'marginalia-dtache-error)
      ((marginalia-dtache--git-branch session) :truncate marginalia-dtache-git-branch-length :face 'marginalia-dtache-git)
      ((marginalia-dtache--duration session) :truncate marginalia-dtache-duration-length :face 'marginalia-dtache-duration)
      ((marginalia-dtache--size session) :truncate marginalia-dtache-size-length :face 'marginalia-dtache-size)
@@ -110,7 +110,7 @@
 
 (defun marginalia-dtache--git-branch (session)
   "Return the git branch for SESSION."
-  (plist-get (dtache--session-metadata session) :git))
+  (plist-get (dtache--session-metadata session) :git-branch))
 
 (defun marginalia-dtache--active (session)
   "Return string if SESSION is active."
@@ -118,9 +118,9 @@
       "*"
     ""))
 
-(defun marginalia-dtache--stderr-p (session)
-  "Return string if SESSION has errors."
-  (if (dtache--session-stderr-p session)
+(defun marginalia-dtache--degraded (session)
+  "Return string if SESSION is degraded."
+  (if (dtache--session-degraded session)
       "!"
     ""))
 

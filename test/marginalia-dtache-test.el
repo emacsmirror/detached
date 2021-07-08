@@ -45,16 +45,16 @@
   (should (string= "1k" (marginalia-dtache--size (dtache--session-create :log-size 1024)))))
 
 (ert-deftest marginalia-dtache-git ()
-  (should (string= "foo" (marginalia-dtache--git-branch (dtache--session-create :metadata '(:git "foo")))))
+  (should (string= "foo" (marginalia-dtache--git-branch (dtache--session-create :metadata '(:git-branch "foo")))))
   (should (not (marginalia-dtache--git-branch (dtache--session-create)))))
 
 (ert-deftest marginalia-dtache-active ()
   (should (string= "*" (marginalia-dtache--active (dtache--session-create :active t))))
   (should (string= "" (marginalia-dtache--active (dtache--session-create :active nil)))))
 
-(ert-deftest marginalia-dtache-stderr-p ()
-  (should (string= "!" (marginalia-dtache--stderr-p (dtache--session-create :stderr-p t))))
-  (should (string= "" (marginalia-dtache--stderr-p (dtache--session-create :stderr-p nil)))))
+(ert-deftest marginalia-dtache-degraded ()
+  (should (string= "!" (marginalia-dtache--degraded (dtache--session-create :degraded t))))
+  (should (string= "" (marginalia-dtache--degraded (dtache--session-create :degraded nil)))))
 
 (provide 'marginalia-dtache-test)
 

@@ -40,6 +40,7 @@
 
 (require 'emacsql-sqlite)
 (require 'tramp-sh)
+(require 'autorevert)
 
 ;;;; Variables
 
@@ -53,7 +54,7 @@
   "The `dtach' program.")
 (defvar dtache-shell "bash"
   "Shell to run the dtach command in.")
-(defvar dtache-metadata-annotators '((:git . dtache--session-git-branch))
+(defvar dtache-metadata-annotators '((:git-branch . dtache--session-git-branch))
   "An alist of annotators for metadata.")
 (defvar dtache-max-command-length 95
   "Maximum length of displayed command.")
@@ -76,9 +77,14 @@
   "Message printed when `dtach' finishes.")
 (defconst dtache-detach-character "\C-\\"
   "Character used to detach from a session.")
+(defvar dtache-degraded-list '()
+  "Regexps that should run in dedgraded mode.")
+(defvar dtache-tail-interval 2
+  "Interval in seconds for dtache to tail.")
 
 ;;;;; Private
 
+(defvar dtache--dtach-mode nil "Mode of operation.")
 (defvar dtache--session-candidates nil "An alist of session candidates.")
 (defvar dtache--current-session nil "The current session.")
 
@@ -93,9 +99,9 @@
   (session-directory nil :read-only t)
   (metadata nil :read-only t)
   (host nil :read-only t)
+  (degraded nil :read-only t)
   (duration nil)
   (log-size nil)
-  (stderr-p nil)
   (active nil))
 
 ;;;; Functions
@@ -202,21 +208,38 @@ This function also makes sure that the HISTFILE is disabled for local shells."
 
 (defun dtache-dtach-command (session)
   "Return a dtach command for SESSION."
-  (let* ((command (dtache-session-command session))
-         (directory (dtache--session-session-directory session))
+  (let* ((directory (dtache--session-session-directory session))
          (file-name (dtache--session-id session))
-         (stdout (concat directory file-name dtache-stdout-ext))
-         (stderr (concat directory file-name dtache-stderr-ext))
-         (log (concat directory file-name dtache-log-ext))
          (socket (concat directory file-name dtache-socket-ext))
          ;; Construct the command line
-         ;;   { { echo stdout; echo stderr >&2; } >>(tee stdout ); } 2>>(tee stderr) | tee log
-         (commandline (format "{ { %s; }%s }%s %s"
-                              (format "%s" command)
-                              (format " > >(tee %s );" stdout)
-                              (format " 2> >(tee %s )" stderr)
-                              (format " | tee %s" log))))
-    (format "%s -c %s -z %s -c %s" dtache-program socket dtache-shell (shell-quote-argument commandline))))
+         (commandline (dtache--output-command session))
+         (dtach-mode (if (dtache--session-degraded session)
+                         "-n"
+                       dtache--dtach-mode)))
+    (format "%s %s %s -z %s -c %s" dtache-program dtach-mode socket dtache-shell (shell-quote-argument commandline))))
+
+(defun dtache-degraded-p (command)
+  "Return t if COMMAND should run in degreaded mode."
+  (if (thread-last dtache-degraded-list
+        (seq-filter (lambda (regexp)
+                      (string-match-p regexp command)))
+        (length)
+        (= 0))
+      nil
+    t))
+
+(defun dtache-session-notify-command (session)
+  "Append notify-send to SESSION's command."
+  (let* ((command (dtache--session-command session))
+         (emacs-icon
+          (concat data-directory
+                  "images/icons/hicolor/scalable/apps/emacs.svg")))
+    (if (file-remote-p default-directory)
+        command
+      (concat
+       command
+       (format " && notify-send \"Dtache finished: %s\"" command)
+       (format " --icon %s" emacs-icon)))))
 
 (defun dtache-metadata ()
   "Return a property list with metadata."
@@ -265,7 +288,7 @@ This function also makes sure that the HISTFILE is disabled for local shells."
       (with-current-buffer (get-buffer-create buffer-name)
         (setq-local buffer-read-only nil)
         (erase-buffer)
-        (insert-file-contents file )
+        (insert-file-contents file)
         (setq-local default-directory
                     (dtache--session-working-directory session))
         (compilation-mode))
@@ -322,6 +345,15 @@ This function also makes sure that the HISTFILE is disabled for local shells."
   (dtache--open-file session 'log))
 
 ;;;###autoload
+(defun dtache-tail-log (session)
+  "Tail SESSION's log."
+  (interactive
+   (list (dtache-select-session)))
+  (if (dtache--session-active-p session)
+      (dtache--tail-file session 'log)
+    (dtache--open-file session 'log)))
+
+;;;###autoload
 (defun dtache-open-stdout (session)
   "Open SESSION's stdout."
   (interactive
@@ -335,9 +367,32 @@ This function also makes sure that the HISTFILE is disabled for local shells."
    (list (dtache-select-session)))
   (dtache--open-file session 'stderr))
 
+;;;###autoload
+(defun dtache-attach-to-session (session)
+  "Attach to SESSION."
+  (interactive
+   (list (dtache-select-session)))
+  (if (dtache--session-active-p session)
+      (dtache--attach-to-session session)
+    (funcall dtache-attach-alternate-function session)))
+
+;;;###autoload
+(defun dtache-quit-tail-log ()
+  "Quit `dtache' tail log.
+
+The log can have been updated, but that is not done by the user but
+rather the tail mode.  To avoid a promtp `buffer-modified-p' is set to
+nil before closing."
+  (interactive)
+  (set-buffer-modified-p nil)
+  (kill-buffer-and-window))
+
 ;;;; Support functions
 
 ;;;;; Session
+
+(cl-defgeneric dtache--attach-to-session (session)
+  "Attach to SESSION.")
 
 (defun dtache--create-session (command)
   "Create a `dtache' session from COMMAND."
@@ -345,6 +400,7 @@ This function also makes sure that the HISTFILE is disabled for local shells."
          (dtache--session-create :id (dtache--create-id command)
                                  :command command
                                  :working-directory default-directory
+                                 :degraded (dtache-degraded-p command)
                                  :creation-time (time-to-seconds (current-time))
                                  :session-directory (file-name-as-directory dtache-session-directory)
                                  :host (dtache--host)
@@ -399,10 +455,6 @@ This function also makes sure that the HISTFILE is disabled for local shells."
   (setf (dtache--session-log-size session) (file-attribute-size
                                             (file-attributes
                                              (dtache-session-file session 'log))))
-  (setf (dtache--session-stderr-p session) (> (file-attribute-size
-                                               (file-attributes
-                                                (dtache-session-file session 'stderr)))
-                                              0))
   session)
 
 (defun dtache--session-git-branch ()
@@ -512,6 +564,38 @@ This function also makes sure that the HISTFILE is disabled for local shells."
 
 ;;;;; Other
 
+(defun dtache--output-command (session)
+  "Return output command for SESSION."
+  (if (dtache--session-degraded session)
+      (dtache--output-to-file-command session)
+    (dtache--output-to-both-command session)))
+
+(defun dtache--output-to-file-command (session)
+  "Return a command to send SESSION's output directly to log."
+  (let* ((command (dtache-session-command session))
+         (directory (dtache--session-session-directory session))
+         (file-name (dtache--session-id session))
+         (log (concat directory file-name dtache-log-ext)))
+    ;; Construct the command line
+    ;;   echo &> log
+    (format "{ %s; } &> %s" command log)))
+
+(defun dtache--output-to-both-command (session)
+  "Return a command to send SESSION's output to both shell and log."
+  (let* ((command (dtache-session-command session))
+         (directory (dtache--session-session-directory session))
+         (file-name (dtache--session-id session))
+         (stdout (concat directory file-name dtache-stdout-ext))
+         (stderr (concat directory file-name dtache-stderr-ext))
+         (log (concat directory file-name dtache-log-ext)))
+    ;; Construct the command line
+    ;;   { { echo stdout; echo stderr >&2; } >>(tee stdout ); } 2>>(tee stderr) | tee log
+    (format "{ { %s; }%s }%s %s"
+            (format "%s" command)
+            (format " > >(tee %s );" stdout)
+            (format " 2> >(tee %s )" stderr)
+            (format " | tee %s" log))))
+
 (defun dtache--host ()
   "Return name of host."
   (if-let ((remote-host (file-remote-p default-directory))
@@ -532,8 +616,8 @@ This function also makes sure that the HISTFILE is disabled for local shells."
 
 Modification time is not reliable whilst a session is active.  Instead
 the current time is used."
-  ;; TODO: This function might need to take into account that there
-  ;; might be a time offset between two computers
+  ;; TODO: Consider calculating a time offset between host and remote
+  ;; computer
   (if (dtache--session-active session)
       (- (time-to-seconds) (dtache--session-creation-time session))
     (- (time-to-seconds
@@ -544,33 +628,55 @@ the current time is used."
 
 (defun dtache--open-file (session file)
   "Oen SESSION's FILE."
-  (let* ((buffer-name
-          (format "*dtache-%s-%s*" file
-                  (dtache--session-short-id session)))
-         (file-path
+  (let* ((file-path
+          (dtache-session-file session file)))
+    (if (file-exists-p file-path)
+        (progn
+          (find-file-other-window file-path)
+          (setq-local default-directory (dtache--session-working-directory session))
+          (dtache-log-mode)
+          (goto-char (point-max)))
+      (message "Dtache can't find file: %s" file-path))))
+
+(defun dtache--tail-file (session file)
+  "Tail SESSION's FILE."
+  (let* ((file-path
           (dtache-session-file session file)))
     (when (file-exists-p file-path)
-      (with-current-buffer (get-buffer-create buffer-name)
-        (erase-buffer)
-        (insert-file-contents file-path)
-        (setq-local default-directory (dtache--session-working-directory session)))
-      (pop-to-buffer buffer-name)
-      (dtache-log-mode))))
+      (find-file-other-window file-path)
+      (dtache-tail-mode)
+      (goto-char (point-max)))))
 
 (defun dtache--create-id (command)
   "Return a hash identifier for COMMAND."
   (let ((current-time (current-time-string)))
-    (secure-hash 'md5 (concat  command current-time))))
+    (secure-hash 'md5 (concat command current-time))))
 
 ;;;; Major mode
 
 (defvar dtache-log-mode-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "q") #'kill-buffer-and-window)
     map)
   "Keymap for `dtache-log-mode'.")
 
 (define-derived-mode dtache-log-mode nil "Dtache Log"
-  "Major mode for dtache logs.")
+  "Major mode for dtache logs."
+  (read-only-mode t))
+
+(defvar dtache-tail-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "q") #'dtache-quit-tail-log)
+    map)
+  "Keymap for `dtache-tail-mode'.")
+
+(define-derived-mode dtache-tail-mode auto-revert-tail-mode "Dtache Tail"
+  "Major mode for tailing dtache logs."
+  (setq-local auto-revert-interval dtache-tail-interval)
+  (auto-revert-set-timer)
+  (setq-local auto-revert-verbose nil)
+  (auto-revert-tail-mode)
+  (read-only-mode t))
 
 (provide 'dtache)
 

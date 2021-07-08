@@ -70,13 +70,15 @@
 ;;;; Tests
 
 (ert-deftest dtache-test-dtach-command ()
-  (let* ((dtache-shell "zsh")
-         (dtache-program "/usr/bin/dtach")
-         (actual
-          (dtache-dtach-command
-           (dtache--session-create :id "12345" :session-directory "/tmp/dtache/")))
-         (expected "^/usr/bin/dtach -c /tmp/dtache/12345.socket -z zsh -c .*"))
-    (should (string-match-p expected actual))))
+  (cl-letf* (((symbol-function #'dtache--output-command) (lambda (_) "command"))
+             (dtache-shell "zsh")
+             (dtache-program "/usr/bin/dtach")
+             (dtache--dtach-mode "-c")
+             (actual
+              (dtache-dtach-command
+               (dtache--session-create :id "12345" :session-directory "/tmp/dtache/")))
+             (expected "/usr/bin/dtach -c /tmp/dtache/12345.socket -z zsh -c command"))
+    (should (string= expected actual))))
 
 (ert-deftest dtache-test-metadata ()
   ;; No annotators
@@ -250,6 +252,26 @@
      (let ((sessions (dtache--db-select-active-sessions "localhost")))
        (should (= (length sessions) 1))
        (should (string= (dtache--session-id (elt sessions 0)) (dtache--session-id session3)))))))
+
+(ert-deftest dtache-test-output-command ()
+  ;; Degraded
+  (let* ((actual
+          (dtache--output-command
+           (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls" :degraded t)))
+         (expected "{ ls; } &> /tmp/dtache/12345.log"))
+    (should (string= actual expected)))
+
+  ;; Normal
+  (let* ((actual
+          (dtache--output-command
+           (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls")))
+         (expected "{ { ls; } > >(tee /tmp/dtache/12345.stdout ); } 2> >(tee /tmp/dtache/12345.stderr )  | tee /tmp/dtache/12345.log"))
+    (should (string= actual expected))))
+
+(ert-deftest dtache-test-degraded-p ()
+  (let ((dtache-degraded-list '("ls")))
+    (should (not (dtache-degraded-p "cd")))
+    (should (dtache-degraded-p "ls -la"))))
 
 (provide 'dtache-test)
 

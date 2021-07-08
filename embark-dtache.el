@@ -38,7 +38,9 @@
 
 (embark-define-keymap embark-dtache-map
   "Keymap for Embark dtache actions."
+  ("a" dtache-attach-to-session)
   ("l" dtache-open-log)
+  ("t" dtache-tail-log)
   ("e" dtache-open-stderr)
   ("o" dtache-open-stdout)
   ("i" dtache-insert-session-command)

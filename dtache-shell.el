@@ -39,6 +39,10 @@
   "A list of regexps to block non-supported input.")
 (defvar dtache-shell-silence-dtach-messages t
   "Filter out messages from the `dtach' program.")
+(defvar dtache-shell-create-primary-function #'dtache-shell-new-session
+  "Primary function for creating a session.")
+(defvar dtache-shell-create-secondary-function #'dtache-shell-create-session
+  "Secondary function for creating a session.")
 
 ;;;; Functions
 
@@ -63,14 +67,33 @@
 Optionally CREATE-SESSION with prefix argument."
   (interactive "P")
   (if create-session
-      (dtache-shell-create)
+      (funcall dtache-shell-create-primary-function)
     (comint-send-input)))
 
 ;;;###autoload
-(defun dtache-shell-create ()
-  "Create a session."
+(defun dtache-shell-create (&optional secondary)
+  "Create a new session with `dtache-shell-create-primary-function'.
+
+If prefix argument SECONDARY call `dtache-shell-create-secondary-function'."
+  (interactive "P")
+  (if secondary
+      (funcall dtache-shell-create-secondary-function)
+    (funcall dtache-shell-create-primary-function)))
+
+;;;###autoload
+(defun dtache-shell-create-session ()
+  "Create a session and attach to it."
   (interactive)
-  (let ((comint-input-sender #'dtache-shell--create-input-sender))
+  (let* ((dtache--dtach-mode "-c")
+         (comint-input-sender #'dtache-shell--create-input-sender))
+    (comint-send-input)))
+
+;;;###autoload
+(defun dtache-shell-new-session ()
+  "Create a new session."
+  (interactive)
+  (let ((dtache--dtach-mode "-n")
+        (comint-input-sender #'dtache-shell--create-input-sender))
     (comint-send-input)))
 
 ;;;###autoload
@@ -89,25 +112,28 @@ Optionally CREATE-SESSION with prefix argument."
 cluttering the comint-history with dtach commands."
   (interactive
    (list (dtache-select-session)))
-  (if (dtache--session-active-p session)
-      (cl-letf ((dtache--current-session session)
-                (comint-input-sender #'dtache-shell--attach-input-sender)
-                ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
-        (comint-kill-input)
-        (comint-send-input))
-    (funcall dtache-attach-alternate-function session)))
+  (cl-letf ((dtache--current-session session)
+            (comint-input-sender #'dtache-shell--attach-input-sender)
+            ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
+    (comint-kill-input)
+    (comint-send-input)))
 
 ;;;; Support functions
 
+(cl-defmethod dtache--attach-to-session (session &context (major-mode shell-mode))
+  "Attach to a dtache SESSION when MAJOR-MODE is `shell-mode'."
+  (dtache-shell-attach session))
+
 (defun dtache-shell--attach-input-sender (proc _string)
   "Attach to `dtache--session' and send the attach command to PROC."
-  (let* ((socket
+  (let* ((dtache--dtach-mode "-a")
+         (socket
           (concat
            (dtache--session-session-directory dtache--current-session)
            (dtache--session-id dtache--current-session)
            dtache-socket-ext))
          (input
-          (concat dtache-program " -a " socket)))
+          (concat dtache-program " " dtache--dtach-mode " " socket)))
     (comint-simple-send proc input)))
 
 (defun dtache-shell--create-input-sender (proc string)
