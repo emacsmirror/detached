@@ -273,6 +273,18 @@
     (should (not (dtache-degraded-p "cd")))
     (should (dtache-degraded-p "ls -la"))))
 
+(ert-deftest dtache-test-session-pid ()
+  (cl-letf* (((symbol-function #'process-file) (lambda (_program _infile _buffer _display &rest _args)
+                                                 (insert "\"USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\nuser    6699  0.0  0.0   4752  2304 ?        Ss   13:06   0:00 dtach -n /tmp/foo.socket\nuser    6698  0.0  0.0   4752  2304 ?        Ss   13:07   0:00 dtach -c /tmp/bar.socket\n")))
+
+             (session1 (dtache--session-create :id "foo" :session-directory "/tmp/"))
+             (session2 (dtache--session-create :id "bar" :session-directory "/tmp/"))
+             (session3 (dtache--session-create :id "baz" :session-directory "/tmp/"))
+             (dtache-socket-ext ".socket"))
+    (should (string= "6699" (dtache--session-pid session1)))
+    (should (string= "6698" (dtache--session-pid session2)))
+    (should (not (dtache--session-pid session3)))))
+
 (provide 'dtache-test)
 
 ;;; dtache-test.el ends here

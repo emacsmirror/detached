@@ -162,6 +162,7 @@
 
 (defun dtache-session-candidates ()
   "Return an alist of session candidates."
+  (dtache-initialize)
   (dtache-update-sessions)
   (let* ((sessions (nreverse
                     (dtache--db-select-host-sessions (dtache--host)))))
@@ -169,6 +170,13 @@
           (seq-map (lambda (session)
                      `(,(dtache-encode-session session) . ,session))
                    sessions))))
+
+(defun dtache-initialize ()
+  "Initialize `dtache'."
+  (unless dtache-db
+    (dtache-db-initialize)
+    (dtache-create-session-directory)
+    (dtache-cleanup-sessions)))
 
 ;;;;; Database
 
@@ -330,12 +338,18 @@ This function also makes sure that the HISTFILE is disabled for local shells."
   "Send a TERM signal to SESSION."
   (interactive
    (list (dtache-select-session)))
-  (let* ((pids (flatten-list
-                (dtache--session-child-pids
-                 (dtache--session-pid session)))))
-    (seq-doseq (pid pids)
-      (apply #'process-file
-             `("kill" nil nil nil ,pid)))))
+  (let ((pid (dtache--session-pid session)))
+    (when pid
+      (dtache--kill-processes pid))))
+
+(defun dtache--kill-processes (pid)
+  "Kill PID and all of its children."
+  (let ((child-processes
+         (split-string
+          (shell-command-to-string (format "pgrep -P %s" pid))
+          "\n" t)))
+    (seq-do (lambda (pid) (dtache--kill-processes pid)) child-processes)
+    (apply #'process-file `("kill" nil nil nil ,pid))))
 
 ;;;###autoload
 (defun dtache-open-log (session)
@@ -411,18 +425,18 @@ nil before closing."
 
 (defun dtache--session-pid (session)
   "Return SESSION's pid."
-  (let* ((socket (concat
-                  (dtache--session-session-directory session)
-                  (dtache--session-id session)
-                  dtache-socket-ext))
-         (regexp (concat "dtach -c " socket))
+  (let* ((socket
+          (concat
+           (dtache--session-session-directory session)
+           (dtache--session-id session)
+           dtache-socket-ext))
+         (regexp (rx-to-string `(and "dtach " (or "-n " "-c ") ,socket)))
          (ps-args '("aux" "-w")))
     (with-temp-buffer
       (apply #'process-file `("ps" nil t nil ,@ps-args))
-      (buffer-substring-no-properties (point-min) (point-max))
       (goto-char (point-min))
-      (search-forward-regexp regexp nil t)
-      (elt (split-string (thing-at-point 'line) " " t) 1))))
+      (when (search-forward-regexp regexp nil t)
+        (elt (split-string (thing-at-point 'line) " " t) 1)))))
 
 (defun dtache--session-child-pids (pid)
   "Return a list of pids for all child processes including PID."
@@ -486,6 +500,7 @@ nil before closing."
 
 (defun dtache--db-insert-session (session)
   "Insert SESSION into the database."
+  (dtache-initialize)
   (let ((id (dtache--session-id session))
         (host (dtache--session-host session))
         (active (dtache--session-active session)))
@@ -677,6 +692,14 @@ the current time is used."
   (setq-local auto-revert-verbose nil)
   (auto-revert-tail-mode)
   (read-only-mode t))
+
+(defun dtache-setup-evil-bindings ()
+  "Function that use `general' to setup `evil' bindings."
+  (when (fboundp 'general-def)
+    (general-def '(motion normal) dtache-log-mode-map
+      "q" #'kill-buffer-and-window)
+    (general-def '(motion normal) dtache-tail-mode-map
+      "q" #'dtache-quit-tail-log)))
 
 (provide 'dtache)
 

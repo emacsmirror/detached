@@ -37,6 +37,8 @@
 
 (defvar dtache-shell-block-list '("^$")
   "A list of regexps to block non-supported input.")
+(defvar dtache-shell-new-block-list '("^sudo.*")
+  "A list of regexps to block from creating a session without attaching.")
 (defvar dtache-shell-silence-dtach-messages t
   "Filter out messages from the `dtach' program.")
 (defvar dtache-shell-create-primary-function #'dtache-shell-new-session
@@ -142,8 +144,15 @@ cluttering the comint-history with dtach commands."
    (if-let* ((supported-input
               (not (seq-find
                     (lambda (blocked)
-                      (string-match-p string blocked))
+                      (string-match-p blocked string))
                     dtache-shell-block-list)))
+             (dtache--dtach-mode
+              (if (seq-find
+                   (lambda (blocked)
+                     (string-match-p blocked string))
+                   dtache-shell-new-block-list)
+                  "-c"
+                dtache--dtach-mode))
              (command (dtache-dtach-command
                        (dtache--create-session
                         (substring-no-properties string)))))
@@ -159,13 +168,9 @@ cluttering the comint-history with dtach commands."
             map)
   (with-connection-local-variables
    (if dtache-shell-mode
-       (progn
-         (dtache-db-initialize)
-         (dtache-create-session-directory)
-         (dtache-cleanup-sessions)
-         (when dtache-shell-silence-dtach-messages
-           (add-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-eof 0 t)
-           (add-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-detached 0 t)))
+       (when dtache-shell-silence-dtach-messages
+         (add-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-eof 0 t)
+         (add-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-detached 0 t))
      (when dtache-shell-silence-dtach-messages
        (remove-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-eof t)
        (remove-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-detached t)))))
