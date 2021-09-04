@@ -175,8 +175,8 @@
   "Initialize `dtache'."
   (unless dtache-db
     (dtache-db-initialize)
-    (dtache-create-session-directory)
-    (dtache-cleanup-sessions)))
+    (dtache-cleanup-sessions))
+  (dtache-create-session-directory))
 
 ;;;;; Database
 
