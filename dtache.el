@@ -688,6 +688,7 @@ the current time is used."
 (define-derived-mode dtache-tail-mode auto-revert-tail-mode "Dtache Tail"
   "Major mode for tailing dtache logs."
   (setq-local auto-revert-interval dtache-tail-interval)
+  (setq-local revert-buffer-preserve-modes nil)
   (auto-revert-set-timer)
   (setq-local auto-revert-verbose nil)
   (auto-revert-tail-mode)
