@@ -23,17 +23,13 @@ Configuration for the =dtache= package. This package provides the backend for =d
 
 #+begin_src elisp
   (use-package dtache
-    :hook (after-init . dtache-setup)
+    :hook (after-init . dtache-initialize)
     :config
+    ;; Configure `dtache'
     (setq dtache-db-directory (no-littering-expand-var-file-name "dtache"))
     (setq dtache-session-directory (expand-file-name "dtache" (temporary-file-directory)))
-    (setq dtache-shell-history-file "~/.bash_history")
 
-    (general-def '(motion normal) dtache-log-mode-map
-      "q" #'kill-buffer-and-window)
-    (general-def '(motion normal) dtache-tail-mode-map
-      "q" #'dtache-quit-tail-log)
-
+    ;; Exclude dtache log files from `recentf'
     (add-to-list 'recentf-exclude (rx (regexp "dtache.*\.log"))))
 #+end_src
 
@@ -43,12 +39,34 @@ Configuration for the =dtache-shell= package. This package provides the integrat
 
 #+begin_src elisp
   (use-package dtache-shell
-    :hook (shell-mode . dtache-shell-mode)
+    :hook (after-init . dtache-shell-setup)
+    :general
+    (:keymaps 'dtache-shell-mode-map
+              "<S-return>" #'dtache-shell-create-session
+              "<C-return>" #'dtache-shell-attach)
     :config
-    (general-def dtache-shell-mode-map
-      "<S-return>" #'dtache-shell-create
-      "<C-return>" #'dtache-tail-log
-      "C-c C-q" #'dtache-shell-detach))
+    (setq dtache-shell-history-file "~/.bash_history"))
+#+end_src
+
+*** Metadata annotators
+
+Create a custom function that captures the branch name if the session is started in a git repository.
+
+#+begin_src elisp
+  (defun dtache--session-git-branch ()
+    "Return current git branch."
+    (let ((git-directory (locate-dominating-file "." ".git")))
+      (when git-directory
+        (let ((args '("name-rev" "--name-only" "HEAD")))
+          (with-temp-buffer
+            (apply #'process-file `("git" nil t nil ,@args))
+            (string-trim (buffer-string)))))))
+#+end_src
+
+Configure the metadata annotators list so that it runs your annotator.
+
+#+begin_src elisp
+  (setq dtache-metadata-annotators-alist '((branch . dtache--session-git-branch))
 #+end_src
 
 ** Integration with other packages
@@ -82,7 +100,7 @@ The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_n
    '((dtache-shell . "/bin/bash")
      (dtache-shell-history-file . "~/.bash_history")
      (dtache-session-directory . "~/tmp")
-     (dtache-program . "/home/user/.local/bin/dtach")))
+     (dtache-dtach-program . "/home/user/.local/bin/dtach")))
 
   (connection-local-set-profiles
    '(:application tramp :protocol "ssh") 'remote-dtache)
@@ -103,7 +121,44 @@ In degraded mode =dtache= will skip the usage of =tee= and instead redirect all 
 Make =dtache= send a notification once a session is finished. This would only make sense to add for sessions on the localhost. Add the following advice to the config.
 
 #+begin_src elisp
-  (advice-add 'dtache-session-command :override #'dtache-session-notify-command)
+  (defun dtache-session-finish-notification-a (session)
+    "Send a notification when SESSION finish."
+    (let* ((min-duration 5.0)
+           (send-alert (> (dtache--session-duration session) min-duration)))
+      (if send-alert
+          (alert (format "Command: %s" (dtache--session-command session))
+                 :title (format "Dtache session finished!")
+                 :severity 'moderate
+                 :category 'compile
+                 :id 'compile-ok)
+        (message "Dtache finished session: %s"
+                 (dtache--session-command session)))))
+#+end_src
+
+#+begin_src elisp
+  (advice-add 'dtache-session-finish-notification :override #'dtache-session-finish-notification-a)
+#+end_src
+
+** Evil bindings
+
+#+begin_src elisp
+  (general-def '(normal motion) dtache-sessions-mode-map
+    "<return>" #'dtache-open-session
+    "e" #'dtache-open-stderr
+    "c" #'dtache-compile-session
+    "d" #'dtache-remove-session
+    "gr" #'dtache-list-sessions
+    "K" #'dtache-kill-session
+    "L" #'dtache-open-log
+    "o" #'dtache-open-stdout
+    "r" #'dtache-rerun-session
+    "t" #'dtache-tail-log
+    "w" #'dtache-copy-session-command
+    "W" #'dtache-copy-session-log)
+  (general-def '(motion normal) dtache-log-mode-map
+    "q" #'kill-buffer-and-window)
+  (general-def '(motion normal) dtache-tail-mode-map
+    "q" #'dtache-quit-tail-log)
 #+end_src
 
 * Commands
@@ -116,7 +171,6 @@ Commands to be used in shell buffers.
 
 | Command                 | Description                 |
 |-------------------------+-----------------------------|
-| dtache-shell-send-input | Optionally create a session |
 | dtache-shell-create     | Create a session            |
 | dtache-shell-attach     | Attach to a session         |
 | dtache-shell-detach     | Detach from a session       |
@@ -136,6 +190,32 @@ General commands that can be used anywhere.
 | dtache-remove-session       | Remove a session                            |
 | dtache-compile-session      | Open the session output in compilation mode |
 
+* Tips & Tricks
+** Advice functions
+
+The following two functions are examples on how to create functions that can be used to advice other functions in order to replace =compile= and =async-shell-command= with =dtache-start-session=
+
+#+begin_src elisp
+  (defun dtache-compile-advice (orig-fun &rest args)
+    "Function to replace usage of `compile' before calling ORIG-FUN with ARGS."
+    (cl-letf (((symbol-function 'compile)
+               (lambda (args)
+                 (dtache-start-session (car args)))))
+      (apply orig-fun args)))
+
+  (defun dtache-start-session-advice (orig-fun &rest args)
+    "Function to replace usage of `async-shell-command' before calling ORIG-FUN with ARGS."
+    (cl-letf (((symbol-function 'async-shell-command)
+               (lambda (args)
+                 (dtache-start-session (car args)))))
+      (apply orig-fun args)))
+#+end_src
+
 * Credits
 
 The inspiration for the package comes from ~ambrevar's~ [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]].
+
+* TODO Things to do before next release
+- [X] Update header documentation in files
+- [ ] Squash the development from the branch and merge to master
+- [ ] Update the README.org file

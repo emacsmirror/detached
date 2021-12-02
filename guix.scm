@@ -36,8 +36,7 @@
        (file-name (git-file-name name version))))
      (build-system emacs-build-system)
      (propagated-inputs
-      `(("emacs-emacsql-sqlite3" ,emacs-emacsql-sqlite3)
-        ("emacs-embark" ,emacs-embark)
+      `(("emacs-embark" ,emacs-embark)
         ("emacs-marginalia" ,emacs-marginalia)))
      (native-inputs
       `(("emacs-ert-runner" ,emacs-ert-runner)))

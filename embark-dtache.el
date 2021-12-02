@@ -5,7 +5,7 @@
 ;; Author: Niklas Eklund <niklas.eklund@posteo.net>
 ;; URL: https://www.gitlab.com/niklaseklund/dtache.git
 ;; Version: 0.1
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: convenience processes
 
 ;; This file is not part of GNU Emacs.
@@ -25,7 +25,7 @@
 
 ;;; Commentary:
 
-;; This package provides `embark' actions to operate on `dtache' sessions.
+;; This package provides `embark' actions to operate on a `dtache' session.
 
 ;;; Code:
 
@@ -38,17 +38,17 @@
 
 (embark-define-keymap embark-dtache-map
   "Keymap for Embark dtache actions."
-  ("a" dtache-attach-to-session)
-  ("l" dtache-open-log)
-  ("t" dtache-tail-log)
-  ("e" dtache-open-stderr)
-  ("o" dtache-open-stdout)
-  ("i" dtache-insert-session-command)
-  ("w" dtache-copy-session-command)
-  ("W" dtache-copy-session-log)
   ("c" dtache-compile-session)
   ("d" dtache-remove-session)
-  ("k" dtache-kill-session))
+  ("e" dtache-open-stderr)
+  ("i" dtache-insert-session-command)
+  ("k" dtache-kill-session)
+  ("l" dtache-open-log)
+  ("o" dtache-open-stdout)
+  ("r" dtache-rerun-session)
+  ("t" dtache-tail-log)
+  ("w" dtache-copy-session-command)
+  ("W" dtache-copy-session-log))
 
 (add-to-list 'embark-keymap-alist '(dtache . embark-dtache-map))
 

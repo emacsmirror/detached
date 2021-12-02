@@ -35,58 +35,77 @@
 
 ;;;; Variables
 
+(defvar dtache-shell-history-file nil
+  "File to store history.")
 (defvar dtache-shell-block-list '("^$")
   "A list of regexps to block non-supported input.")
 (defvar dtache-shell-new-block-list '("^sudo.*")
   "A list of regexps to block from creating a session without attaching.")
 (defvar dtache-shell-silence-dtach-messages t
   "Filter out messages from the `dtach' program.")
-(defvar dtache-shell-create-primary-function #'dtache-shell-new-session
-  "Primary function for creating a session.")
-(defvar dtache-shell-create-secondary-function #'dtache-shell-create-session
-  "Secondary function for creating a session.")
+
+(defconst dtache-shell-detach-character "\C-\\"
+  "Character used to detach from a session.")
+(defconst dtache-shell-eof-message "\\[EOF - dtach terminating\\]\^M"
+  "Message printed when `dtach' finishes.")
+(defconst dtache-shell-detached-message "\\[detached\\]\^M"
+  "Message printed when `dtach' finishes.")
+
+;;;;; Private
+
+(defvar dtache-shell--current-session nil "The current session.")
 
 ;;;; Functions
 
+(defun dtache-shell-override-history (orig-fun &rest args)
+  "Override history to read `dtache-shell-history-file' in ORIG-FUN with ARGS.
+
+This function also makes sure that the HISTFILE is disabled for local shells."
+  (cl-letf (((getenv "HISTFILE") ""))
+    (advice-add 'comint-read-input-ring :around #'dtache-shell--comint-read-input-ring-advice)
+    (apply orig-fun args)))
+
+(defun dtache-shell-save-history ()
+  "Add hook to save history when killing `shell' buffer."
+  (add-hook 'kill-buffer-hook #'dtache-shell-save-history 0 t))
+
 (defun dtache-shell-filter-dtach-eof (string)
   "Remove eof message from dtach in STRING."
-  (if (string-match dtache-eof-message string)
-      (replace-regexp-in-string (format "%s\n" dtache-eof-message) "" string)
+  (if (string-match dtache-shell-eof-message string)
+      (replace-regexp-in-string (format "%s\n" dtache-shell-eof-message) "" string)
     string))
 
 (defun dtache-shell-filter-dtach-detached (string)
   "Remove detached message from dtach in STRING."
-  (if (string-match dtache-detached-message string)
-      (replace-regexp-in-string (format "%s\n" dtache-detached-message) "" string)
+  (if (string-match dtache-shell-detached-message string)
+      (replace-regexp-in-string (format "%s\n" dtache-shell-detached-message) "" string)
     string))
+
+(defun dtache-shell-setup ()
+  "Setup `dtache-shell'."
+  (add-hook 'shell-mode-hook #'dtache-shell-save-history)
+  (add-hook 'shell-mode-hook #'dtache-shell-mode)
+  (advice-add 'shell :around #'dtache-shell-override-history))
+
+(defun dtache-shell-select-session ()
+  "Return selected session."
+  (dtache-update-sessions)
+  (let* ((current-host (dtache--host))
+         (sessions
+          (thread-last dtache--sessions
+            (seq-filter (lambda (it)
+                          (string= (dtache--session-host it) current-host)))
+            (seq-filter #'dtache--session-active-p))))
+    (dtache-completing-read sessions)))
 
 ;;;; Commands
 
 ;;;###autoload
-(defun dtache-shell-send-input (&optional create-session)
-  "Send input to `shell'.
-
-Optionally CREATE-SESSION with prefix argument."
+(defun dtache-shell-create-session (&optional detach)
+  "Create a session and attach to it unless DETACH."
   (interactive "P")
-  (if create-session
-      (funcall dtache-shell-create-primary-function)
-    (comint-send-input)))
-
-;;;###autoload
-(defun dtache-shell-create (&optional secondary)
-  "Create a new session with `dtache-shell-create-primary-function'.
-
-If prefix argument SECONDARY call `dtache-shell-create-secondary-function'."
-  (interactive "P")
-  (if secondary
-      (funcall dtache-shell-create-secondary-function)
-    (funcall dtache-shell-create-primary-function)))
-
-;;;###autoload
-(defun dtache-shell-create-session ()
-  "Create a session and attach to it."
-  (interactive)
-  (let* ((dtache--dtach-mode "-c")
+  (let* ((dtache-session-type 'shell)
+         (dtache--dtach-mode (if detach 'new 'create))
          (comint-input-sender #'dtache-shell--create-input-sender))
     (comint-send-input)))
 
@@ -94,7 +113,8 @@ If prefix argument SECONDARY call `dtache-shell-create-secondary-function'."
 (defun dtache-shell-new-session ()
   "Create a new session."
   (interactive)
-  (let ((dtache--dtach-mode "-n")
+  (let ((dtache-session-type 'shell)
+        (dtache--dtach-mode 'new)
         (comint-input-sender #'dtache-shell--create-input-sender))
     (comint-send-input)))
 
@@ -103,7 +123,7 @@ If prefix argument SECONDARY call `dtache-shell-create-secondary-function'."
   "Detach from session."
   (interactive)
   (let ((proc (get-buffer-process (current-buffer)))
-        (input dtache-detach-character))
+        (input dtache-shell-detach-character))
     (comint-simple-send proc input)))
 
 ;;;###autoload
@@ -113,29 +133,27 @@ If prefix argument SECONDARY call `dtache-shell-create-secondary-function'."
 `comint-add-to-input-history' is temporarily disabled to avoid
 cluttering the comint-history with dtach commands."
   (interactive
-   (list (dtache-select-session)))
-  (cl-letf ((dtache--current-session session)
-            (comint-input-sender #'dtache-shell--attach-input-sender)
-            ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
-    (comint-kill-input)
-    (comint-send-input)))
+   (list (dtache-shell-select-session)))
+  (if (dtache--session-active-p session)
+      (cl-letf ((dtache-shell--current-session session)
+                (comint-input-sender #'dtache-shell--attach-input-sender)
+                ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
+        (comint-kill-input)
+        (comint-send-input))
+    (dtache-open-session session)))
 
 ;;;; Support functions
 
-(cl-defmethod dtache--attach-to-session (session &context (major-mode shell-mode))
-  "Attach to a dtache SESSION when MAJOR-MODE is `shell-mode'."
-  (dtache-shell-attach session))
-
 (defun dtache-shell--attach-input-sender (proc _string)
   "Attach to `dtache--session' and send the attach command to PROC."
-  (let* ((dtache--dtach-mode "-a")
+  (let* ((dtache--dtach-mode 'attach)
          (socket
           (concat
-           (dtache--session-session-directory dtache--current-session)
-           (dtache--session-id dtache--current-session)
-           dtache-socket-ext))
+           (dtache--session-session-directory dtache-shell--current-session)
+           (dtache--session-id dtache-shell--current-session)
+           dtache--socket-ext))
          (input
-          (concat dtache-program " " dtache--dtach-mode " " socket)))
+          (concat dtache-dtach-program " " (dtache--dtach-arg) " " socket)))
     (comint-simple-send proc input)))
 
 (defun dtache-shell--create-input-sender (proc string)
@@ -151,13 +169,39 @@ cluttering the comint-history with dtach commands."
                    (lambda (blocked)
                      (string-match-p blocked string))
                    dtache-shell-new-block-list)
-                  "-c"
+                  'create
                 dtache--dtach-mode))
-             (command (dtache-dtach-command
-                       (dtache--create-session
-                        (substring-no-properties string)))))
-       (comint-simple-send proc command)
+             (session (dtache--create-session
+                       (substring-no-properties string)))
+             (command (dtache-dtach-command session))
+             (shell-command
+              (mapconcat 'identity `(,dtache-dtach-program
+                                     ,@(butlast command)
+                                     ,(shell-quote-argument (car (last command))))
+                         " ")))
+       (progn
+         (dtache-setup-notification session)
+         (comint-simple-send proc shell-command))
      (comint-simple-send proc string))))
+
+(defun dtache-shell--comint-read-input-ring-advice (orig-fun &rest args)
+  "Set `comint-input-ring-file-name' before calling ORIG-FUN with ARGS."
+  (with-connection-local-variables
+   (let ((comint-input-ring-file-name
+          (concat
+           (file-remote-p default-directory)
+           dtache-shell-history-file)))
+     (apply orig-fun args)
+     (advice-remove 'comint-read-input-ring #'dtache-shell--comint-read-input-ring-advice))))
+
+(defun dtache-shell--save-history ()
+  "Save `shell' history."
+  (with-connection-local-variables
+   (let ((comint-input-ring-file-name
+          (concat
+           (file-remote-p default-directory)
+           dtache-shell-history-file)))
+     (comint-write-input-ring))))
 
 ;;;; Minor mode
 

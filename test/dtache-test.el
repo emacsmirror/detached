@@ -36,13 +36,11 @@
 (defmacro dtache-test--with-temp-database (&rest body)
   "Initialize a dtache database and evaluate BODY."
   `(let* ((temp-directory (make-temp-file "dtache" t))
-          (dtache-db-directory (expand-file-name "db" temp-directory))
-          (dtache-session-directory (expand-file-name "sessions" temp-directory))
-          (dtache-db))
+          (dtache-db-directory (expand-file-name "dtache.db" temp-directory))
+          (dtache-session-directory (expand-file-name "sessions" temp-directory)))
      (unwind-protect
          (progn
-           (dtache-db-initialize)
-           (dtache-create-session-directory)
+           (dtache-initialize)
            ,@body)
        (delete-directory temp-directory t))))
 
@@ -71,30 +69,32 @@
 
 (ert-deftest dtache-test-dtach-command ()
   (cl-letf* (((symbol-function #'dtache--output-command) (lambda (_) "command"))
-             (dtache-shell "zsh")
-             (dtache-program "/usr/bin/dtach")
-             (dtache--dtach-mode "-c")
+             (dtache-shell-program "zsh")
+             (dtache-dtach-program "/usr/bin/dtach")
+             (dtache--dtach-mode 'create)
              (actual
               (dtache-dtach-command
                (dtache--session-create :id "12345" :session-directory "/tmp/dtache/")))
-             (expected "/usr/bin/dtach -c /tmp/dtache/12345.socket -z zsh -c command"))
-    (should (string= expected actual))))
+             (expected `(, "-c" "/tmp/dtache/12345.socket" "-z" "zsh" "-c" "command")))
+    (should (equal expected actual))))
 
 (ert-deftest dtache-test-metadata ()
   ;; No annotators
-  (let ((dtache-metadata-annotators '()))
+  (let ((dtache-metadata-annotators-alist '()))
     (should (not (dtache-metadata))))
 
-  ;; Two annotatos
-  (let ((dtache-metadata-annotators
-         '((:git-branch . (lambda () "foo"))
-           (:username . (lambda () "bar"))))
-        (expected '(:git-branch "foo" :username "bar")))
+  ;; Two annotators
+  (let ((dtache-metadata-annotators-alist
+         '((git-branch . (lambda () "foo"))
+           (username . (lambda () "bar"))))
+        (expected '((username . "bar")
+                    (git-branch . "foo"))))
     (should (equal (dtache-metadata) expected))))
 
 (ert-deftest dtache-test-session-file ()
   ;; Local files
   (cl-letf* (((symbol-function #'expand-file-name) (lambda (file directory) (concat directory file)))
+             ((symbol-function #'file-remote-p) (lambda (_directory) nil))
              (session (dtache--session-create :id "12345" :session-directory "/home/user/tmp/")))
     (should (string= "/home/user/tmp/12345.log" (dtache-session-file session 'log)))
     (should (string= "/home/user/tmp/12345.stderr" (dtache-session-file session 'stderr)))
@@ -124,13 +124,6 @@
                      (dtache--session-truncate-command
                       (dtache--session-create :command "12345678"))))))
 
-(ert-deftest dtache-test-session-encode ()
-  (let ((session
-         (dtache--session-create :command "abcdefghijk"
-                                 :id "-------12345678"))
-        (dtache-max-command-length 8))
-    (should (string= "ab...jk  12345678" (dtache-encode-session session)))))
-
 (ert-deftest dtache-test-host ()
   (should (string= "localhost" (dtache--host)))
   (let ((default-directory "/ssh:remotehost:/home/user/git"))
@@ -152,117 +145,58 @@
      (dtache-test--change-session-state session 'kill)
      (should (dtache--session-dead-p session)))))
 
-(ert-deftest dtache-test-session-decode ()
-  (dtache-test--with-temp-database
-   (dtache-test--create-session :command "foo" :host "localhost")
-   (dtache-session-candidates)
-   (should
-    (equal (elt (dtache--db-select-host-sessions "localhost") 0)
-           (dtache-decode-session
-            (car (elt dtache--session-candidates 0)))))))
-
-(ert-deftest dtache-test-session-candidates ()
-  (dtache-test--with-temp-database
-   (dtache-test--create-session :command "foo" :host "localhost")
-   (dtache-test--create-session :command "bar" :host "localhost")
-   (should
-    (seq-set-equal-p
-     (thread-last (dtache-session-candidates)
-       (seq-map #'cdr))
-     (seq-reverse
-      (dtache--db-select-host-sessions "localhost"))))))
-
-(ert-deftest dtache-test-update-sessions ()
-  (dtache-test--with-temp-database
-   (cl-letf* ((session1 (dtache-test--create-session :command "foo" :host "localhost"))
-              (session2 (dtache-test--create-session :command "bar" :host "localhost"))
-              (session3 (dtache-test--create-session :command "baz" :host "remotehost"))
-              (host "localhost")
-              ((symbol-function #'dtache--host) (lambda () host)))
-     ;; Add three sessions two matching host which will be
-     ;; updated. One of them is dead and should be removed
-     (dtache-test--change-session-state session2 'kill)
-     (dtache-test--change-session-state session3 'deactivate)
-     (dtache-update-sessions)
-     (let ((db-sessions (dtache--db-select-host-sessions host)))
-       (should (= (length db-sessions) 1))
-       (should (string= (dtache--session-id (elt db-sessions 0)) (dtache--session-id session1)))
-       (should (not (equal (elt db-sessions 0) session1)))))))
-
-(ert-deftest dtache-test-cleanup-sessions ()
+(ert-deftest dtache-test-cleanup-host-sessions ()
   (dtache-test--with-temp-database
    (cl-letf* ((session1 (dtache-test--create-session :command "foo" :host "remotehost"))
               (session2 (dtache-test--create-session :command "bar" :host "localhost"))
               (session3 (dtache-test--create-session :command "baz" :host "localhost"))
               (host "localhost")
               ((symbol-function #'dtache--host) (lambda () host)))
-     ;; One active, one dead, one active
+     ;; One inactive, one missing, one active
      (dtache-test--change-session-state session1 'deactivate)
      (dtache-test--change-session-state session2 'kill)
-     (dtache-cleanup-sessions)
+     (dtache-cleanup-host-sessions host)
      (should (seq-set-equal-p
-              (dtache--db-select-host-sessions host)
-              `(,session3))))))
+              (dtache--db-select-sessions)
+              `(,session1 ,session3))))))
 
 ;;;;; Database
 
-(ert-deftest dtache-test-db-initialize ()
-  (dtache-test--with-temp-database
-   (should (emacsql-live-p dtache-db))))
-
 (ert-deftest dtache-test-db-insert-session ()
   (dtache-test--with-temp-database
-   (let* ((session (dtache-test--create-session :command "foo" :host "localhost"))
-          (id (dtache--session-id session)))
-     (should (equal (dtache--db-select-session id) session)))))
+   (let* ((session (dtache-test--create-session :command "foo" :host "localhost")))
+     (should (equal (dtache--db-select-sessions) `(,session))))))
 
 (ert-deftest dtache-test-db-remove-session ()
   (dtache-test--with-temp-database
    (let* ((host "localhost")
           (session1 (dtache-test--create-session :command "foo" :host host))
           (session2 (dtache-test--create-session :command "bar" :host host)))
-     (should (seq-set-equal-p `(,session1 ,session2) (dtache--db-select-host-sessions host)))
+     (should (seq-set-equal-p `(,session1 ,session2) (dtache--db-select-sessions)))
      (dtache--db-remove-session session1)
-     (should (seq-set-equal-p `(,session2) (dtache--db-select-host-sessions host))))))
+     (should (seq-set-equal-p `(,session2) (dtache--db-select-sessions))))))
 
 (ert-deftest dtache-test-db-update-session ()
   (dtache-test--with-temp-database
    (let* ((session (dtache-test--create-session :command "foo" :host "localhost"))
           (id (dtache--session-id session)))
      (setf (dtache--session-active session) nil)
-     (should (not (equal session (dtache--db-select-session id))))
+     (should (not (equal session (car (dtache--db-select-sessions)))))
      (dtache--db-update-session session)
-     (should (equal session (dtache--db-select-session id))))))
-
-(ert-deftest dtache-test-db-select-host-sessions ()
-  (dtache-test--with-temp-database
-   (let* ((session1 (dtache-test--create-session :command "foo" :host "localhost"))
-          (session2 (dtache-test--create-session :command "bar" :host "remotehost"))
-          (session3 (dtache-test--create-session :command "baz" :host "localhost")))
-     (should (seq-set-equal-p `(,session2) (dtache--db-select-host-sessions "remotehost")))
-     (should (seq-set-equal-p `(,session1 ,session3) (dtache--db-select-host-sessions "localhost"))))))
-
-(ert-deftest dtache-test-db-select-active-sessions ()
-  (dtache-test--with-temp-database
-   (let* ((session1 (dtache-test--create-session :command "foo" :host "localhost"))
-          (session2 (dtache-test--create-session :command "bar" :host "remotehost"))
-          (session3 (dtache-test--create-session :command "baz" :host "localhost")))
-     (dtache-test--change-session-state session1 'deactivate)
-     (dtache-update-sessions)
-     (let ((sessions (dtache--db-select-active-sessions "localhost")))
-       (should (= (length sessions) 1))
-       (should (string= (dtache--session-id (elt sessions 0)) (dtache--session-id session3)))))))
+     (should (equal session (car (dtache--db-select-sessions)))))))
 
 (ert-deftest dtache-test-output-command ()
   ;; Degraded
-  (let* ((actual
+  (let* ((dtache-notify-send nil)
+         (actual
           (dtache--output-command
            (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls" :degraded t)))
          (expected "{ ls; } &> /tmp/dtache/12345.log"))
     (should (string= actual expected)))
 
   ;; Normal
-  (let* ((actual
+  (let* ((dtache-notify-send nil)
+         (actual
           (dtache--output-command
            (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls")))
          (expected "{ { ls; } > >(tee /tmp/dtache/12345.stdout ); } 2> >(tee /tmp/dtache/12345.stderr )  | tee /tmp/dtache/12345.log"))
@@ -280,10 +214,35 @@
              (session1 (dtache--session-create :id "foo" :session-directory "/tmp/"))
              (session2 (dtache--session-create :id "bar" :session-directory "/tmp/"))
              (session3 (dtache--session-create :id "baz" :session-directory "/tmp/"))
-             (dtache-socket-ext ".socket"))
+             (dtache--socket-ext ".socket"))
     (should (string= "6699" (dtache--session-pid session1)))
     (should (string= "6698" (dtache--session-pid session2)))
     (should (not (dtache--session-pid session3)))))
+
+;;;;; String representations
+
+(ert-deftest dtache-test-duration-str ()
+  (should (string= "1s" (dtache--duration-str (dtache--session-create :duration 1))))
+  (should (string= "1m 1s" (dtache--duration-str (dtache--session-create :duration 61))))
+  (should (string= "1h 1m 1s" (dtache--duration-str (dtache--session-create :duration 3661)))))
+
+(ert-deftest dtache-test-creation-str ()
+  ;; Make sure to set the TIMEZONE before executing the test to avoid
+  ;; differences between machines
+  (cl-letf (((getenv "TZ") "UTC0"))
+    (should (string= "May 08 08:49" (dtache--creation-str (dtache--session-create :creation-time 1620463748.7636228))))))
+
+(ert-deftest dtache-test-size-str ()
+  (should (string= "100" (dtache--size-str (dtache--session-create :log-size 100))))
+  (should (string= "1k" (dtache--size-str (dtache--session-create :log-size 1024)))))
+
+(ert-deftest dtache-test-degraded-str ()
+  (should (string= "!" (dtache--degraded-str (dtache--session-create :degraded t))))
+  (should (string= "" (dtache--degraded-str (dtache--session-create :degraded nil)))))
+
+(ert-deftest dtache-test-active-str ()
+  (should (string= "*" (dtache--active-str (dtache--session-create :active t))))
+  (should (string= "" (dtache--active-str (dtache--session-create :active nil)))))
 
 (provide 'dtache-test)
 
