@@ -36,7 +36,7 @@ Here is a list of features that =dtache= provides for a session.
     + If the session has the status success the output is opened
     + If the session has the status failure the session is compiled
 
-  To see examples of the features listed above please see the following presentation =PLACEHOLDER=.
+  To see examples of the features listed above please see the following [[https://www.youtube.com/watch?v=if1W58SrClk][video]].
   
 * Configuration
 ** Dtache

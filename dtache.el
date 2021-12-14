@@ -150,8 +150,8 @@
            (dtache-select-session))))
   (if-let ((open-function
             (dtache--session-open-function session)))
-      (funcall open-function session))
-  (dtache-open-dwim session))
+      (funcall open-function session)
+    (dtache-open-dwim session)))
 
 ;;;###autoload
 (defun dtache-compile-session (session)
@@ -381,7 +381,7 @@ Sessions running on  current host or localhost are updated."
         (setf (dtache--session-status session) (funcall status session)))
       (dtache-session-finish-notification session)
       (when-let ((callback (dtache--session-callback-function session)))
-        (funcall callback))))
+        (funcall callback session))))
   (setf (dtache--session-output-size session)
         (file-attribute-size (file-attributes
                               (dtache-session-file session 'log))))
@@ -755,7 +755,7 @@ Sessions running on  current host or localhost are updated."
 
          ;; Execute callback
          (when-let ((callback (dtache--session-callback-function session)))
-           (funcall callback)))))))
+           (funcall callback session)))))))
 
 (defun dtache--eat-cookie (&rest _)
   "Eat the disambiguation cookie in the minibuffer."

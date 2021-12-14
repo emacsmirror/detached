@@ -16,27 +16,19 @@ Tangle the code block above into a shell script.
   (call-interactively #'org-babel-tangle-file)
 #+end_src
 
-Need to make sure =ediff= behaves.
-
-#+begin_src elisp :results none
-  (let ((window-conf))
-    (add-hook 'ediff-before-setup-hook
-              (defun ne/ediff-save-window-conf ()
-                (setq window-conf (current-window-configuration))))
-    (dolist (hook '(ediff-quit-hook ediff-suspended-hook))
-      (add-hook hook (defun ne/ediff-restore-window-conf ()
-                       (set-window-configuration window-conf)))))
-#+end_src
-
 * Introduction
 
-  =Dtache=, or =Detach Emacs=, is a package to run shell commands in sessions that are isolated from Emacs. The name of the package comes from [[https://github.com/crigler/dtach][dtach]], which is the program that makes this package possible.
+  [[https://gitlab.com/niklaseklund/dtache][Dtache]], or =Detach Emacs=, is a package to run and interact with shell commands which are run isolated from Emacs. The name of the package comes from [[https://github.com/crigler/dtach][dtach]], which is the program that makes this package possible.
 
   The inspiration for the package comes from those situations where I would chose to run commands in a terminal outside of Emacs.
 
-* How do I?
-** Start a session
-*** With M-x
+  My reasons for not using Emacs at those points where:
+  - performance
+  - stability
+  - remote support
+
+* How to start a session?
+** With M-x
 
 A session can be started with the command =dtache-shell-command=.
 
@@ -44,7 +36,7 @@ A session can be started with the command =dtache-shell-command=.
   (call-interactively #'dtache-shell-command)
 #+end_src
 
-*** With a function
+** With a function
 
 A session can also be started with the =dtache-start-session= function. Which can be included in custom commands.
 
@@ -52,7 +44,7 @@ A session can also be started with the =dtache-start-session= function. Which ca
   (dtache-start-session "pylint demo.py ")
 #+end_src
 
-*** With shell
+** With shell
 
 A session can also be started from =M-x shell=, making it a dispatcher for =dtache= sessions.
 
@@ -63,10 +55,10 @@ A session can also be started from =M-x shell=, making it a dispatcher for =dtac
 Run the following command.
 
 #+begin_src sh
-  sleep 10 && ls -la
+  /tmp/dtache/loop.sh && ls -la
 #+end_src
 
-** Interact with a session
+* How to interact with a session?
 
 To list all sessions.
 
@@ -199,6 +191,54 @@ The duration becomes very valuable when the shell commands are deterministic.
 
 In combination with the =git-branch= annotator the =dtache-diff-session= command becomes useful in comparing two sessions.
 
+#+begin_src elisp :results none
+  (let ((window-conf))
+    (add-hook 'ediff-before-setup-hook
+              (defun demo/ediff-save-window-conf ()
+                (setq window-conf (current-window-configuration))))
+    (dolist (hook '(ediff-quit-hook ediff-suspended-hook))
+      (add-hook hook (defun demo/ediff-restore-window-conf ()
+                       (set-window-configuration window-conf)))))
+#+end_src
+
 ** Transient combo
 
 [[https://github.com/magit/transient][Transient]] and =dtache= plays very well together. At work I use the power of transient to compose shell commands and =dtache= to run them.
+
+** Create sessions with custom open functions
+
+Sometimes you need to tweak =dtache's= behavior in how to interact with specific sessions. If that is the case it is best done by adding a custom =open-function= or a custom =callback-function=.
+
+#+begin_src elisp :results none
+  (defun demo/dtache-custom-session (command)
+    "Run COMMAND in a very custom way."
+    (let ((dtache-open-session-function
+           (lambda (session)
+             (let ((buffer (get-buffer-create "*dtache-custom-open*")))
+               (with-current-buffer buffer
+                 (erase-buffer)
+                 (insert "This is a custom view of the session\n")
+                 (insert (dtache-session-output session)))
+               (pop-to-buffer buffer)))))
+      (dtache-start-session command)))
+
+  (demo/dtache-custom-session "ls")
+#+end_src
+
+* The End 
+
+The last thing we need to actually prove is the ability to actually run independently from Emacs.
+
+Local session.
+
+#+begin_src elisp :results none
+  (dtache-start-session "/tmp/dtache/loop.sh && echo end")
+#+end_src
+
+Remote session.
+
+#+begin_src elisp :dir /ssh:pi:~/bin :results none
+  (dtache-start-session "sleep 30 && ls -la")
+#+end_src
+
+Thanks for watching :)
