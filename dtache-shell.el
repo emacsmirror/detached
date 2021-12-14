@@ -151,7 +151,7 @@ cluttering the comint-history with dtach commands."
           (concat
            (dtache--session-session-directory dtache-shell--current-session)
            (dtache--session-id dtache-shell--current-session)
-           dtache--socket-ext))
+           ".socket"))
          (input
           (concat dtache-dtach-program " " (dtache--dtach-arg) " " socket)))
     (comint-simple-send proc input)))

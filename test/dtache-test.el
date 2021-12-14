@@ -37,7 +37,10 @@
   "Initialize a dtache database and evaluate BODY."
   `(let* ((temp-directory (make-temp-file "dtache" t))
           (dtache-db-directory (expand-file-name "dtache.db" temp-directory))
-          (dtache-session-directory (expand-file-name "sessions" temp-directory)))
+          (dtache-session-directory (expand-file-name "sessions" temp-directory))
+          (dtache--sessions)
+          (dtache--sessions-initialized)
+          (dtache--remote-session-timer))
      (unwind-protect
          (progn
            (dtache-initialize)
@@ -56,19 +59,18 @@
   "Set STATE of SESSION."
   (pcase state
     ('activate
-     (dolist (type `(socket log stderr))
+     (dolist (type `(socket log))
        (with-temp-file (dtache-session-file session type))))
     ('deactivate
      (delete-file (dtache-session-file session 'socket)))
     ('kill
      (delete-file (dtache-session-file session 'socket))
-     (delete-file (dtache-session-file session 'log))
-     (delete-file (dtache-session-file session 'stderr)))))
+     (delete-file (dtache-session-file session 'log)))))
 
 ;;;; Tests
 
 (ert-deftest dtache-test-dtach-command ()
-  (cl-letf* (((symbol-function #'dtache--output-command) (lambda (_) "command"))
+  (cl-letf* (((symbol-function #'dtache--magic-command) (lambda (_) "command"))
              (dtache-shell-program "zsh")
              (dtache-dtach-program "/usr/bin/dtach")
              (dtache--dtach-mode 'create)
@@ -97,8 +99,6 @@
              ((symbol-function #'file-remote-p) (lambda (_directory) nil))
              (session (dtache--session-create :id "12345" :session-directory "/home/user/tmp/")))
     (should (string= "/home/user/tmp/12345.log" (dtache-session-file session 'log)))
-    (should (string= "/home/user/tmp/12345.stderr" (dtache-session-file session 'stderr)))
-    (should (string= "/home/user/tmp/12345.stdout" (dtache-session-file session 'stdout)))
     (should (string= "/home/user/tmp/12345.socket" (dtache-session-file session 'socket))))
 
   ;; Remote files
@@ -106,8 +106,6 @@
              ((symbol-function #'file-remote-p) (lambda (_directory) "/ssh:foo:"))
              (session (dtache--session-create :id "12345" :session-directory "/home/user/tmp/")))
     (should (string= "/ssh:foo:/home/user/tmp/12345.log" (dtache-session-file session 'log)))
-    (should (string= "/ssh:foo:/home/user/tmp/12345.stderr" (dtache-session-file session 'stderr)))
-    (should (string= "/ssh:foo:/home/user/tmp/12345.stdout" (dtache-session-file session 'stdout)))
     (should (string= "/ssh:foo:/home/user/tmp/12345.socket" (dtache-session-file session 'socket)))))
 
 (ert-deftest dtache-test-session-short-id ()
@@ -139,11 +137,11 @@
 (ert-deftest dtache-test-session-dead-p ()
   (dtache-test--with-temp-database
    (let ((session (dtache-test--create-session :command "foo" :host "localhost")))
-     (should (not (dtache--session-dead-p session)))
+     (should (not (dtache--session-missing-p session)))
      (dtache-test--change-session-state session 'deactivate)
-     (should (not (dtache--session-dead-p session)))
+     (should (not (dtache--session-missing-p session)))
      (dtache-test--change-session-state session 'kill)
-     (should (dtache--session-dead-p session)))))
+     (should (dtache--session-missing-p session)))))
 
 (ert-deftest dtache-test-cleanup-host-sessions ()
   (dtache-test--with-temp-database
@@ -185,27 +183,27 @@
      (dtache--db-update-session session)
      (should (equal session (car (dtache--db-select-sessions)))))))
 
-(ert-deftest dtache-test-output-command ()
-  ;; Degraded
-  (let* ((dtache-notify-send nil)
+(ert-deftest dtache-test-magic-command ()
+  ;; Redirect only
+  (let* ((dtache-shell-program "bash")
          (actual
-          (dtache--output-command
-           (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls" :degraded t)))
-         (expected "{ ls; } &> /tmp/dtache/12345.log"))
+          (dtache--magic-command
+           (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls" :redirect-only t)))
+         (expected "{ dtache-env bash -c -i \\\"ls\\\"; } &> /tmp/dtache/12345.log"))
     (should (string= actual expected)))
 
   ;; Normal
-  (let* ((dtache-notify-send nil)
+  (let* ((dtache-shell-program "bash")
          (actual
-          (dtache--output-command
+          (dtache--magic-command
            (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls")))
-         (expected "{ { ls; } > >(tee /tmp/dtache/12345.stdout ); } 2> >(tee /tmp/dtache/12345.stderr )  | tee /tmp/dtache/12345.log"))
+         (expected "{ dtache-env bash -c -i \\\"ls\\\"; } 2>&1 | tee /tmp/dtache/12345.log"))
     (should (string= actual expected))))
 
-(ert-deftest dtache-test-degraded-p ()
-  (let ((dtache-degraded-list '("ls")))
-    (should (not (dtache-degraded-p "cd")))
-    (should (dtache-degraded-p "ls -la"))))
+(ert-deftest dtache-test-redirect-only-p ()
+  (let ((dtache-redirect-only-regexps '("ls")))
+    (should (not (dtache-redirect-only-p "cd")))
+    (should (dtache-redirect-only-p "ls -la"))))
 
 (ert-deftest dtache-test-session-pid ()
   (cl-letf* (((symbol-function #'process-file) (lambda (_program _infile _buffer _display &rest _args)
@@ -213,8 +211,7 @@
 
              (session1 (dtache--session-create :id "foo" :session-directory "/tmp/"))
              (session2 (dtache--session-create :id "bar" :session-directory "/tmp/"))
-             (session3 (dtache--session-create :id "baz" :session-directory "/tmp/"))
-             (dtache--socket-ext ".socket"))
+             (session3 (dtache--session-create :id "baz" :session-directory "/tmp/")))
     (should (string= "6699" (dtache--session-pid session1)))
     (should (string= "6698" (dtache--session-pid session2)))
     (should (not (dtache--session-pid session3)))))
@@ -233,16 +230,27 @@
     (should (string= "May 08 08:49" (dtache--creation-str (dtache--session-create :creation-time 1620463748.7636228))))))
 
 (ert-deftest dtache-test-size-str ()
-  (should (string= "100" (dtache--size-str (dtache--session-create :log-size 100))))
-  (should (string= "1k" (dtache--size-str (dtache--session-create :log-size 1024)))))
+  (should (string= "100" (dtache--size-str (dtache--session-create :output-size 100))))
+  (should (string= "1k" (dtache--size-str (dtache--session-create :output-size 1024)))))
 
-(ert-deftest dtache-test-degraded-str ()
-  (should (string= "!" (dtache--degraded-str (dtache--session-create :degraded t))))
-  (should (string= "" (dtache--degraded-str (dtache--session-create :degraded nil)))))
+(ert-deftest dtache-test-status-str ()
+  (should (string= "!" (dtache--status-str (dtache--session-create :status 'failure))))
+  (should (string= " " (dtache--status-str (dtache--session-create :status 'success))))
+  (should (string= " " (dtache--status-str (dtache--session-create :status 'unknown)))))
 
 (ert-deftest dtache-test-active-str ()
   (should (string= "*" (dtache--active-str (dtache--session-create :active t))))
-  (should (string= "" (dtache--active-str (dtache--session-create :active nil)))))
+  (should (string= " " (dtache--active-str (dtache--session-create :active nil)))))
+
+(ert-deftest dtache-test-working-dir-str ()
+  (should
+   (string= "/home/user/repo"
+            (dtache--working-dir-str
+             (dtache--session-create :working-directory "/ssh:remote:/home/user/repo"))))
+  (should
+   (string= "~/repo"
+            (dtache--working-dir-str
+             (dtache--session-create :working-directory "~/repo")))))
 
 (provide 'dtache-test)
 

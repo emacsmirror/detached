@@ -40,15 +40,14 @@
   "Keymap for Embark dtache actions."
   ("c" dtache-compile-session)
   ("d" dtache-remove-session)
-  ("e" dtache-open-stderr)
   ("i" dtache-insert-session-command)
   ("k" dtache-kill-session)
-  ("l" dtache-open-log)
-  ("o" dtache-open-stdout)
+  ("o" dtache-open-output)
   ("r" dtache-rerun-session)
-  ("t" dtache-tail-log)
+  ("t" dtache-tail-output)
   ("w" dtache-copy-session-command)
-  ("W" dtache-copy-session-log))
+  ("W" dtache-copy-session-output)
+  ("=" dtache-diff-session))
 
 (add-to-list 'embark-keymap-alist '(dtache . embark-dtache-map))
 

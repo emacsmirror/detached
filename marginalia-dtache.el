@@ -39,8 +39,10 @@
 
 (defvar marginalia-dtache-metadata-length 30)
 (defvar marginalia-dtache-duration-length 10)
+(defvar marginalia-dtache-working-dir-length 50)
 (defvar marginalia-dtache-size-length 8)
 (defvar marginalia-dtache-date-length 12)
+(defvar marginalia-dtache-host-length 10)
 
 ;;;; Faces
 
@@ -73,6 +75,14 @@
   '((t :inherit marginalia-date))
   "Face used to highlight date in `marginalia-mode'.")
 
+(defface marginalia-dtache-working-dir
+  '((t :inherit marginalia-symbol))
+  "Face used to highlight working directory in `marginalia-mode'.")
+
+(defface marginalia-dtache-host
+  '((t :inherit marginalia-function))
+  "Face used to highlight host in `marginalia-mode'.")
+
 ;;;; Functions
 
 (defun marginalia-dtache-annotate (candidate)
@@ -81,7 +91,9 @@
           (get-text-property 0 'dtache--data candidate)))
     (marginalia--fields
      ((dtache--active-str session) :width 3 :face 'marginalia-dtache-active)
-     ((dtache--degraded-str session) :width 3 :face 'marginalia-dtache-error)
+     ((dtache--status-str session) :width 3 :face 'marginalia-dtache-error)
+     ((dtache--session-host session) :truncate marginalia-dtache-host-length :face 'marginalia-dtache-host)
+     ((dtache--working-dir-str session) :truncate marginalia-dtache-working-dir-length :face 'marginalia-dtache-working-dir)
      ((dtache--metadata-str session) :truncate marginalia-dtache-metadata-length :face 'marginalia-dtache-metadata)
      ((dtache--duration-str session) :truncate marginalia-dtache-duration-length :face 'marginalia-dtache-duration)
      ((dtache--size-str session) :truncate marginalia-dtache-size-length :face 'marginalia-dtache-size)

@@ -7,33 +7,114 @@
   :description: Why Dtache?
   :end:
 
-  =Dtache= allows a program to be seamlessly executed in an environment that is isolated from =Emacs= which made possible by the [[https://github.com/crigler/dtach][dtach]] program. This package makes sure that, even though programs are running in isolated sessions, they get tightly integrated with Emacs.
+  =Dtache=, or =Detach Emacs=, is a package to run shell commands in sessions that are isolated from Emacs. =Dtache= also provides a convenient user interface to interact with the sessions. 
 
-  The =dtache= package is split up into two, =dtache.el= and =dtache-shell.el=. The former provides the backend implementation, whilst the former provides the integration with =M-x shell=.
+  The package sprung out of the realization that I would run certain shell commands in a terminal outside of Emacs instead of using =M-x shell=. These situations were I didn't chose Emacs was either:
+  - Because of performance reasons, the built in shell is not the fastest when there is a lot of output
+  - Because of stability concerns, I didn't want to have Emacs freeze or crash have an effect on the shell command I was running
+  - Because of remote capabilities, I would be using [[https://github.com/tmux/tmux][Tmux]] on a remote host in order to run a command and detach from it
+  But running shell commands outside of Emacs meant missing out on all the nice features that comes from an Emacs workflow.
+ 
+  The solution for me has been =dtache=. The package allows users to start sessions, which will keep on running, even if Emacs itself is shut down. This is a feature provided by the program [[https://github.com/crigler/dtach][dtach]]. The package takes all of the previous benefits of using an external terminal and provides them in the package and at the same time offers a lot of other capabilities, provided by Emacs.
 
-** Screenshots
+** Features
 
-TBD
+Here is a list of features that =dtache= provides for a session.
+
+  - =Output=: The user have access to all output from a session
+  - =Notification=: The user gets a notification when a session has finished
+  - =Status=: Sessions are automatically labeled success or failure
+  - =Remote=: Sessions can be started on remote hosts, effectively becoming a lightweight alternative to Tmux
+  - =Duration=: The user is informed about for how long a session has run, or ran, if the session has finished
+  - =Compile=: The user can chose to compile the output from a session, which effectively mimics =M-x compile=
+  - =Tail=: The user can chose to tail the output of an active session
+  - =Metadata=: The user can add annotators which are used to capture metadata about the environment from which the session was started
+  - =Diff=: The user can compare two sessions in order to see differences in the session outputs
+  - =Rerun=: The user can chose to rerun a session, which will rerun the command on the right host, in the correct working directory
+  - =Open=: The user can quickly open a session in a Do What I Mean fashion:
+    + If the session is active the output is tailed
+    + If the session has the status success the output is opened
+    + If the session has the status failure the session is compiled
+
+  To see examples of the features listed above please see the following presentation =PLACEHOLDER=.
   
 * Configuration
-** Use-package examples
-*** Dtache
+** Dtache
 
-Configuration for the =dtache= package. This package provides the backend for =dtache=.
+A minimal configuration for =dtache=.
 
 #+begin_src elisp
   (use-package dtache
     :hook (after-init . dtache-initialize)
     :config
     ;; Configure `dtache'
-    (setq dtache-db-directory (no-littering-expand-var-file-name "dtache"))
-    (setq dtache-session-directory (expand-file-name "dtache" (temporary-file-directory)))
-
-    ;; Exclude dtache log files from `recentf'
-    (add-to-list 'recentf-exclude (rx (regexp "dtache.*\.log"))))
+    (setq dtache-db-directory user-emacs-directory)
+    (setq dtache-session-directory (expand-file-name "dtache" (temporary-file-directory))))
 #+end_src
 
-*** Dtache-shell
+** The dtache-env script
+
+Create an executable shell script, named =dtache-env=, which will be used as a wrapper for the shell commands we are running.
+
+#+begin_src sh
+  #!/usr/bin/env bash
+
+  dtache_command="$*"
+
+  if eval "$dtache_command"; then
+      echo -e "\nDtache session finished"
+  else
+      echo -e "\nDtache exited abnormally with code $?"
+  fi
+#+end_src
+
+Either put it somewhere in path or customize the =dtache-env= variable so that it refers to the script.
+
+#+begin_src elisp
+  (setq dtache-env "/path/to/dtache-env")
+#+end_src
+
+This script is necessary in order for =dtache= to get information about the exit status of a session.
+
+* Commands
+** Creating a session
+
+There are tree different ways to create a dtache session.
+
+| Function                      | Description                 |
+|-------------------------------+-----------------------------|
+| =dtache-shell-command=        | Call with  M-x              |
+| =dtache-start-session=        | Call from within a function |
+| =dtache-shell-create-session= | Call from inside M-x shell  |
+
+** List sessions
+
+There are two convenient ways of listing sessions and acting upon one.
+
+| Function               | Description                     |
+|------------------------+---------------------------------|
+| =dtache-list-sessions= | Tabulated list view of sessions |
+| =dtache-open-session=  | Completion based selection      |
+
+** Actions on sessions
+
+General commands that can be used either in =dtache-list-sessions= or in =dtache-open-session= (using the embark extension).
+
+| Command                       | Description                                 |
+|-------------------------------+---------------------------------------------|
+| dtache-open-output            | Open a session's output                     |
+| dtache-tail-output            | Tail the output of an active session        |
+| dtache-diff-session           | Diff a session with another session         |
+| dtache-compile-session        | Open the session output in compilation mode |
+| dtache-rerun-session          | Rerun a session                             |
+| dtache-insert-session-command | Insert the session's command at point       |
+| dtache-copy-session-command   | Copy the session's shell command            |
+| dtache-copy-session-output    | Copy the session's output                   |
+| dtache-kill-session           | Kill an active session                      |
+| dtache-remove-session         | Remove an inactive session                  |
+
+* Extensions
+** Dtache-shell
 
 Configuration for the =dtache-shell= package. This package provides the integration with =M-x shell=.
 
@@ -48,9 +129,67 @@ Configuration for the =dtache-shell= package. This package provides the integrat
     (setq dtache-shell-history-file "~/.bash_history"))
 #+end_src
 
-*** Metadata annotators
+Commands to be used in shell buffers.
 
-Create a custom function that captures the branch name if the session is started in a git repository.
+| Command                 | Description                 |
+|-------------------------+-----------------------------|
+| dtache-shell-create     | Create a session            |
+| dtache-shell-attach     | Attach to a session         |
+| dtache-shell-detach     | Detach from a session       |
+
+** Embark
+
+Add [[https://github.com/oantolin/embark/][embark]] actions to =dtache-open-session=.
+
+#+begin_src elisp
+  (use-package embark-dtache
+    :after (dtache embark))
+#+end_src
+
+** Marginalia
+
+ Add [[https://github.com/minad/marginalia/][marginalia]] annotations to enrich =dtache-open-session=.
+
+#+begin_src elisp
+  (use-package marginalia-dtache
+    :after (dtache marginalia)
+    :config
+    (add-to-list 'marginalia-annotators-heavy '(dtache . marginalia-dtache-annotate)))
+#+end_src
+
+* Tips & Tricks
+** System notifications
+
+By default =dtache= uses the echo area to notify the user when a session has finished. An alternative is to utilize the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.
+
+#+begin_src elisp
+  (defun dtache-session-finish-alert (session)
+    "Send an alert notification when SESSION finish."
+    (let ((status (dtache--session-status session))
+          (title
+           (pcase (dtache--session-status session)
+             ('success "Dtache finished!")
+             ('failure "Dtache failed!"))))
+      (alert (dtache--session-command session)
+             :title title
+             :severity (pcase status
+                         ('success 'moderate)
+                         ('failure 'high))
+             :category 'compile
+             :id (pcase status
+                   ('success 'compile-ok)
+                   ('failure 'compile-fail)))))
+#+end_src
+
+With the usage of =advice= the user can override the default implantation with the alert version.
+
+#+begin_src elisp
+  (advice-add 'dtache-session-finish-notification :override #'dtache-session-finish-alert)
+#+end_src
+
+** Metadata annotators
+
+The user can configure any number of annotators to run upon creation of a session. Here is an example of an annotator which captures the branch name if the session is started in a git repository.
 
 #+begin_src elisp
   (defun dtache--session-git-branch ()
@@ -63,41 +202,21 @@ Create a custom function that captures the branch name if the session is started
             (string-trim (buffer-string)))))))
 #+end_src
 
-Configure the metadata annotators list so that it runs your annotator.
+The user only needs to add this function to the list of annotators.
 
 #+begin_src elisp
   (setq dtache-metadata-annotators-alist '((branch . dtache--session-git-branch))
 #+end_src
 
-** Integration with other packages
-*** Embark
-
-Add [[https://github.com/oantolin/embark/][embark]] actions to =dtache= session commands.
-
-#+begin_src elisp
-  (use-package embark-dtache
-    :after (dtache embark))
-#+end_src
-
-*** Marginalia
-
- Add [[https://github.com/minad/marginalia/][marginalia]] annotations to enrich the =dtache= session commands.
-
-#+begin_src elisp
-  (use-package marginalia-dtache
-    :after (dtache marginalia)
-    :config
-    (add-to-list 'marginalia-annotators-heavy '(dtache . marginalia-dtache-annotate)))
-#+end_src
-
 ** Remote support
 
-The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Connection-Local-Variables.html][Connection Local Variables]] which allows the user to change the variables used by =dtache= when running on a remote host.
+The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Connection-Local-Variables.html][Connection Local Variables]] which allows you to change the variables used by =dtache= when running on a remote host. This useful when the user needs to alter dtache settings when running on a remote host.
 
 #+begin_src elisp
   (connection-local-set-profile-variables
    'remote-dtache
-   '((dtache-shell . "/bin/bash")
+   '((dtache-env . "~/bin/dtache-env")
+     (dtache-shell-program . "/bin/bash")
      (dtache-shell-history-file . "~/.bash_history")
      (dtache-session-directory . "~/tmp")
      (dtache-dtach-program . "/home/user/.local/bin/dtach")))
@@ -106,89 +225,19 @@ The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_n
    '(:application tramp :protocol "ssh") 'remote-dtache)
 #+end_src
 
-** Degraded mode
+** Redirect only
 
-Occasionally the =dtache= user might run into shell commands that don't play well with the package. The symptom is that the logs are not updated until the session finish, which removes a lot of the use-case for dtache. To mitigate the problem dtache can be instructed to run in a degraded mode for those commands. This is done by adding a regexp that matches the troublesome command and add it to the list =dtache-degraded-list=.
-
-#+begin_src elisp
-  (setq dtache-degraded-list '("foo"))
-#+end_src
-
-In degraded mode =dtache= will skip the usage of =tee= and instead redirect all the outputs to the dtache log. Use =dtache-tail-log= to tail the output from the session. It's still possible to attach in the terminal but there is no output forwarded to it.
-
-** Notification
-
-Make =dtache= send a notification once a session is finished. This would only make sense to add for sessions on the localhost. Add the following advice to the config.
+Some programs doesn't play well with =tee= which =dtache= relies upon to redirect the output both to standard out as well as to file. If you encounter a situation where output from a session is only visible once it has finished running, the command you launched should instead be using =redirect only=. To list a command to run with redirect only in the future can be done by adding a regexp to =dtache-redirect-only-regexps=.
 
 #+begin_src elisp
-  (defun dtache-session-finish-notification-a (session)
-    "Send a notification when SESSION finish."
-    (let* ((min-duration 5.0)
-           (send-alert (> (dtache--session-duration session) min-duration)))
-      (if send-alert
-          (alert (format "Command: %s" (dtache--session-command session))
-                 :title (format "Dtache session finished!")
-                 :severity 'moderate
-                 :category 'compile
-                 :id 'compile-ok)
-        (message "Dtache finished session: %s"
-                 (dtache--session-command session)))))
+  (setq dtache-read-only-list '("^ls"))
 #+end_src
 
-#+begin_src elisp
-  (advice-add 'dtache-session-finish-notification :override #'dtache-session-finish-notification-a)
-#+end_src
+Here the command beginning with =ls= would from now on be using redirect only.
 
 ** Evil bindings
 
-#+begin_src elisp
-  (general-def '(normal motion) dtache-sessions-mode-map
-    "<return>" #'dtache-open-session
-    "e" #'dtache-open-stderr
-    "c" #'dtache-compile-session
-    "d" #'dtache-remove-session
-    "gr" #'dtache-list-sessions
-    "K" #'dtache-kill-session
-    "L" #'dtache-open-log
-    "o" #'dtache-open-stdout
-    "r" #'dtache-rerun-session
-    "t" #'dtache-tail-log
-    "w" #'dtache-copy-session-command
-    "W" #'dtache-copy-session-log)
-  (general-def '(motion normal) dtache-log-mode-map
-    "q" #'kill-buffer-and-window)
-  (general-def '(motion normal) dtache-tail-mode-map
-    "q" #'dtache-quit-tail-log)
-#+end_src
-
-* Commands
-
-The following is a list of commands that can be run on =dtache= sessions.
-
-** Dtache-shell
-
-Commands to be used in shell buffers.
-
-| Command                 | Description                 |
-|-------------------------+-----------------------------|
-| dtache-shell-create     | Create a session            |
-| dtache-shell-attach     | Attach to a session         |
-| dtache-shell-detach     | Detach from a session       |
-
-** Dtache
-
-General commands that can be used anywhere.
-
-| Command                     | Description                                 |
-|-----------------------------+---------------------------------------------|
-| dtache-open-log             | Open the output log for a session           |
-| dtache-open-stdout          | Open the stdout for a session               |
-| dtache-open-stderr          | Open the stderr for a session               |
-| dtache-copy-session-command | Copy the session command                    |
-| dtache-copy-session-log     | Copy the log output of a session            |
-| dtache-kill-session         | Kill a session                              |
-| dtache-remove-session       | Remove a session                            |
-| dtache-compile-session      | Open the session output in compilation mode |
+For inspiration on how to configure =dtache-list-sessions= to use evil bindings see [[https://gitlab.com/niklaseklund/dotfiles/blob/master/.config/emacs/init.el#L1393][Niklas Eklund's Emacs config]].
 
 * Tips & Tricks
 ** Advice functions
@@ -213,9 +262,4 @@ The following two functions are examples on how to create functions that can be 
 
 * Credits
 
-The inspiration for the package comes from ~ambrevar's~ [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]].
-
-* TODO Things to do before next release
-- [X] Update header documentation in files
-- [ ] Squash the development from the branch and merge to master
-- [ ] Update the README.org file
+I got inspired by =Ambrevar's= pursuits on [[https://ambrevar.xyz/emacs-eshell/][using eshell as his main shell]], and his [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]] got me into the idea of using =dtach= as a base for detachable shell commands.
