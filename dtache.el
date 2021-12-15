@@ -478,6 +478,8 @@ Sessions running on  current host or localhost are updated."
          (dtache-open-output session))
         ((eq 'failure (dtache--session-status session))
          (dtache-compile-session session))
+        ;; TODO: Inactive sessions should never have status unknown,
+        ;; need to investigate why that happens
         (t (progn (message "Unknown status of session.")
                   (dtache-open-output session)))))
 
