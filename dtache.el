@@ -505,7 +505,7 @@ Sessions running on  current host or localhost are updated."
 
 (defun dtache-setup-notification (session)
   "Setup notification for SESSION."
-  (if (file-remote-p default-directory)
+  (if (file-remote-p (dtache--session-working-directory session))
       (dtache--create-remote-session-timer)
     (dtache--add-end-of-session-notification session)))
 
