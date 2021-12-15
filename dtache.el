@@ -61,7 +61,7 @@
   "Shell to run the dtach command in.")
 (defvar dtache-env "dtache-env"
   "The name of the `dtache' program.")
-(defvar dtache-max-command-length nil
+(defvar dtache-max-command-length 90
   "Maximum length of displayed command.")
 (defvar dtache-redirect-only-regexps '()
   "Regexps for commands that should be run with redirect only.")
@@ -615,17 +615,15 @@ Sessions running on  current host or localhost are updated."
 
 (defun dtache--session-truncate-command (session)
   "Return a truncated string representation of SESSION's command."
-  (if (null dtache-max-command-length)
-      (dtache--session-command session)
-    (let ((command (dtache--session-command session))
-          (part-length (- dtache-max-command-length 3)))
-      (if (<= (length command) dtache-max-command-length)
-          (let ((padding-length (- dtache-max-command-length (length command))))
-            (concat command (make-string padding-length ?\s)))
-        (concat
-         (substring command 0 (/ part-length 2))
-         "..."
-         (substring command (- (length command) (/ part-length 2)) (length command)))))))
+  (let ((command (dtache--session-command session))
+        (part-length (- dtache-max-command-length 3)))
+    (if (<= (length command) dtache-max-command-length)
+        (let ((padding-length (- dtache-max-command-length (length command))))
+          (concat command (make-string padding-length ?\s)))
+      (concat
+       (substring command 0 (/ part-length 2))
+       "..."
+       (substring command (- (length command) (/ part-length 2)) (length command))))))
 
 (defun dtache--session-update (session)
   "Update the `dtache' SESSION."
@@ -908,7 +906,7 @@ the current time is used."
 (define-derived-mode dtache-sessions-mode tabulated-list-mode "Dtache Sessions"
   "Dtache sessions."
   (setq tabulated-list-format
-        `[("Command" ,(or dtache-max-command-length 50) nil)
+        `[("Command" ,dtache-max-command-length nil)
           ("Active" 10 nil)
           ("Status" 10 nil)
           ("Host" 20 nil)

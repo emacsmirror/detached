@@ -154,7 +154,8 @@ Add [[https://github.com/oantolin/embark/][embark]] actions to =dtache-open-sess
   (use-package marginalia-dtache
     :after (dtache marginalia)
     :config
-    (add-to-list 'marginalia-annotators-heavy '(dtache . marginalia-dtache-annotate)))
+    ;; Register marginalia annotator
+    (add-to-list 'marginalia-annotator-registry '(dtache marginalia-dtache-annotate builtin none)))
 #+end_src
 
 * Tips & Tricks
