@@ -9,7 +9,7 @@
 
   =Dtache=, or =Detach Emacs=, is a package to run shell commands in sessions that are isolated from Emacs. =Dtache= also provides a convenient user interface to interact with the sessions. 
 
-  The package sprung out of the realization that I would run certain shell commands in a terminal outside of Emacs instead of using =M-x shell=. These situations were I didn't chose Emacs was either:
+  The package sprung out of the realization that I would run certain shell commands in a terminal outside of Emacs instead of using =M-x shell=. These situations were I didn't choose Emacs was either:
   - Because of performance reasons, the built in shell is not the fastest when there is a lot of output
   - Because of stability concerns, I didn't want to have Emacs freeze or crash have an effect on the shell command I was running
   - Because of remote capabilities, I would be using [[https://github.com/tmux/tmux][Tmux]] on a remote host in order to run a command and detach from it
@@ -26,11 +26,11 @@ Here is a list of features that =dtache= provides for a session.
   - =Status=: Sessions are automatically labeled success or failure
   - =Remote=: Sessions can be started on remote hosts, effectively becoming a lightweight alternative to Tmux
   - =Duration=: The user is informed about for how long a session has run, or ran, if the session has finished
-  - =Compile=: The user can chose to compile the output from a session, which effectively mimics =M-x compile=
-  - =Tail=: The user can chose to tail the output of an active session
+  - =Compile=: The user can choose to compile the output from a session, which effectively mimics =M-x compile=
+  - =Tail=: The user can choose to tail the output of an active session
   - =Metadata=: The user can add annotators which are used to capture metadata about the environment from which the session was started
   - =Diff=: The user can compare two sessions in order to see differences in the session outputs
-  - =Rerun=: The user can chose to rerun a session, which will rerun the command on the right host, in the correct working directory
+  - =Rerun=: The user can choose to rerun a session, which will rerun the command on the right host, in the correct working directory
   - =Open=: The user can quickly open a session in a Do What I Mean fashion:
     + If the session is active the output is tailed
     + If the session has the status success the output is opened
