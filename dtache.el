@@ -263,6 +263,7 @@
     (if (file-exists-p file-path)
         (progn
           (with-current-buffer (get-buffer-create buffer-name)
+            (setq-local buffer-read-only nil)
             (insert (dtache-session-output session))
             (setq-local default-directory (dtache--session-working-directory session))
             (dtache-log-mode)
