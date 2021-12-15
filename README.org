@@ -239,27 +239,6 @@ Here the command beginning with =ls= would from now on be using redirect only.
 
 For inspiration on how to configure =dtache-list-sessions= to use evil bindings see [[https://gitlab.com/niklaseklund/dotfiles/blob/master/.config/emacs/init.el#L1393][Niklas Eklund's Emacs config]].
 
-* Tips & Tricks
-** Advice functions
-
-The following two functions are examples on how to create functions that can be used to advice other functions in order to replace =compile= and =async-shell-command= with =dtache-start-session=
-
-#+begin_src elisp
-  (defun dtache-compile-advice (orig-fun &rest args)
-    "Function to replace usage of `compile' before calling ORIG-FUN with ARGS."
-    (cl-letf (((symbol-function 'compile)
-               (lambda (args)
-                 (dtache-start-session (car args)))))
-      (apply orig-fun args)))
-
-  (defun dtache-start-session-advice (orig-fun &rest args)
-    "Function to replace usage of `async-shell-command' before calling ORIG-FUN with ARGS."
-    (cl-letf (((symbol-function 'async-shell-command)
-               (lambda (args)
-                 (dtache-start-session (car args)))))
-      (apply orig-fun args)))
-#+end_src
-
 * Credits
 
 I got inspired by =Ambrevar's= pursuits on [[https://ambrevar.xyz/emacs-eshell/][using eshell as his main shell]], and his [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]] got me into the idea of using =dtach= as a base for detachable shell commands.
