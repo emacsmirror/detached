@@ -115,11 +115,11 @@ Commands to be used in shell buffers.
 
 ** Embark
 
-Add [[https://github.com/oantolin/embark/][embark]] actions to =dtache-open-session=.
+Add [[https://github.com/oantolin/embark/][embark]] actions to =dtache-open-session= by adding the following to the configuration.
 
 #+begin_src elisp
-  (use-package embark-dtache
-    :after (dtache embark))
+  (defvar embark-dtache-map (make-composed-keymap dtache-action-map embark-general-map))
+  (add-to-list 'embark-keymap-alist '(dtache . embark-dtache-map))
 #+end_src
 
 * Tips & Tricks
