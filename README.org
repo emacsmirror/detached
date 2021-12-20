@@ -145,6 +145,26 @@ Add the following to the configuration in order to take advantage of this featur
   (setq dtache-env "/path/to/dtache-env")
 #+end_src
 
+** MacOS support
+
+=Dtache= depends on =filenotify= to trigger events when a =dtach socket= is deleted, which defines the transition from active to inactive for a dtache session. Currently this implementation causes issues for MacOS users, it should work, but until the root cause has been identified this provides a workaround solution.
+
+#+begin_src elisp
+  (defun dtache--add-end-of-session-notification-advice (session)
+    "Trigger an event when SESSION transition to inactive."
+    (let* ((timer)
+           (callback
+            (lambda ()
+              (when (dtache--session-deactivated-p session)
+                (dtache--session-final-update session)
+                (cancel-timer timer)))))
+      (setq timer (run-with-idle-timer 0.5 0.5 callback))))
+
+  (advice-add 'dtache--add-end-of-session-notification :override #'dtache--add-end-of-session-notification-advice)
+#+end_src
+
+We replace the notification function with one based on a timer instead. This timer will periodically check if a session has gotten deactivated.
+
 ** System notifications
 
 By default =dtache= uses the echo area to notify the user when a session has finished. An alternative is to utilize the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.
