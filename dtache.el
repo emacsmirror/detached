@@ -384,7 +384,8 @@ nil before closing."
 (defun dtache-select-session ()
   "Return selected session."
   (dtache-update-sessions)
-  (dtache-completing-read dtache--sessions))
+  (let ((sessions dtache--sessions))
+    (dtache-completing-read sessions)))
 
 (defun dtache-update-sessions ()
   "Update `dtache' sessions.
@@ -420,12 +421,31 @@ Sessions running on  current host or localhost are updated."
 
 (defun dtache-session-candidates (sessions)
   "Return an alist of SESSIONS candidates."
-  (seq-map (lambda (it)
-             (let ((s (format #("%s\0%s" 2 5 (invisible t))
-                              (dtache--session-truncate-command  it)
-                              (dtache--session-short-id it))))
-               (prog1 s (put-text-property 0 1 'dtache--data it s))))
-           sessions))
+  (thread-last sessions
+               (seq-map (lambda (it)
+                          `(,(dtache--session-truncate-command it)
+                            . ,it)))
+               (dtache--session-deduplicate)
+               (seq-map (lambda (it)
+                          ;; Max width is the ... padding + width of identifier
+                          (setcar it (truncate-string-to-width (car it) (+ 3 6 dtache-max-command-length) 0 ?\s))
+                          it))))
+
+(defun dtache--session-deduplicate (sessions)
+  "Make car of SESSIONS unique by adding an identifier to it."
+  (let* ((ht (make-hash-table :test #'equal :size (length sessions)))
+         (identifier-width 6)
+         (reverse-sessions (seq-reverse sessions)))
+    (dolist (session reverse-sessions)
+      (if-let (count (gethash (car session) ht))
+          (setcar session (format "%s%s" (car session)
+                                  (truncate-string-to-width
+                                   (propertize (format " (%s)" (puthash (car session) (1+ count) ht)) 'face 'dtache-identifier-face)
+                                   identifier-width 0 ?\s)))
+        (puthash (car session) 0 ht)
+        (setcar session (format "%s%s" (car session) (make-string identifier-width ?\s)))))
+    (seq-reverse reverse-sessions)))
+
 (defun dtache-session-annotation (session)
   "Return annotation string for SESSION."
   (mapconcat
@@ -682,14 +702,13 @@ Sessions running on  current host or localhost are updated."
 (defun dtache--session-truncate-command (session)
   "Return a truncated string representation of SESSION's command."
   (let ((command (dtache--session-command session))
-        (part-length (- dtache-max-command-length 3)))
+        (truncated-command))
     (if (<= (length command) dtache-max-command-length)
-        (let ((padding-length (- dtache-max-command-length (length command))))
-          (concat command (make-string padding-length ?\s)))
+        command
       (concat
-       (substring command 0 (/ part-length 2))
+       (substring command 0 (/ dtache-max-command-length 2))
        "..."
-       (substring command (- (length command) (/ part-length 2)) (length command))))))
+       (substring command (- (length command) (/ dtache-max-command-length 2)) (length command))))))
 
 (defun dtache--session-short-id (session)
   "Return the short representation of the SESSION's id."
@@ -824,16 +843,6 @@ Sessions running on  current host or localhost are updated."
     ;; Execute callback
     (when-let ((callback (dtache--session-callback-function session)))
       (funcall callback session))))
-
-(defun dtache--eat-cookie (&rest _)
-  "Eat the disambiguation cookie in the minibuffer."
-  (let* ((pos (minibuffer-prompt-end))
-         (max (point-max)))
-    (while (and (< pos max) (/= 0 (char-after pos)))
-      (setq pos (1+ pos)))
-    (when (< pos max)
-      (add-text-properties pos (next-property-change pos nil max)
-                           '(invisible t rear-nonsticky t)))))
 
 (defun dtache--kill-processes (pid)
   "Kill PID and all of its children."
