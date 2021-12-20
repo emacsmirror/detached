@@ -101,7 +101,6 @@
   (open-function nil :read-only t)
   (callback-function nil :read-only t)
   (status-function nil :read-only t)
-  (env nil :read-only t)
   (working-directory nil :read-only t)
   (creation-time nil :read-only t)
   (session-directory nil :read-only t)
@@ -454,16 +453,15 @@ Sessions running on  current host or localhost are updated."
 (defun dtache-session-output (session)
   "Return content of SESSION's output."
   (let* ((filename (dtache-session-file session 'log))
-         (status (dtache--session-status session))
-         (remove-dtache-message (and (dtache--session-env session)
-                                     (not (eq status 'unknown)))))
+         (dtache-message (rx (regexp "\n.*\nDtache session ") (or "finished" "exited"))))
     (with-temp-buffer
       (insert-file-contents filename)
-      (goto-char (point-max))
-      (when remove-dtache-message
-        (line-move -3)
-        (end-of-line))
-      (buffer-substring (point-min) (point)))))
+      (goto-char (point-min))
+      (let ((beginning (point))
+            (end (if (search-forward-regexp dtache-message nil t)
+                     (match-beginning 0)
+                   (point-max))))
+        (buffer-substring beginning end)))))
 
 (defun dtache-session-finish-notification (session)
   "Send a notification when SESSION finish."
@@ -573,7 +571,6 @@ Sessions running on  current host or localhost are updated."
                                  :callback-function dtache-session-callback-function
                                  :status-function dtache-session-status-function
                                  :working-directory (dtache-get-working-directory)
-                                 :env dtache-env
                                  :redirect-only (dtache-redirect-only-p command)
                                  :creation-time (time-to-seconds (current-time))
                                  :status 'unknown
