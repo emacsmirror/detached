@@ -341,14 +341,16 @@ Sessions running on  current host or localhost are updated."
   (let ((current-host (dtache--host))
         (updated-sessions))
     (setq updated-sessions
-          (seq-map (lambda (it)
-                     (if (and (or (string= current-host (dtache--session-host it))
-                                  (string= "localhost" (dtache--session-host it)))
-                              (or (dtache--session-active it)
-                                  (dtache--session-deactivated-p it)))
-                         (dtache-update-session it)
-                       it))
-                   dtache--sessions))
+          (thread-last
+            dtache--sessions
+            (seq-map (lambda (it)
+                       (if (and (or (string= current-host (dtache--session-host it))
+                                    (string= "localhost" (dtache--session-host it)))
+                                (or (dtache--session-active it)
+                                    (dtache--session-deactivated-p it)))
+                           (dtache-update-session it)
+                         it)))
+            (seq-remove #'null)))
     (dtache--db-update-sessions updated-sessions)))
 
 (defun dtache-session-file (session file)
@@ -375,21 +377,13 @@ Sessions running on  current host or localhost are updated."
 
 (defun dtache-update-session (session)
   "Update SESSION."
-  (when (dtache--session-deactivated-p session)
-    (progn
-      (setf (dtache--session-active session) nil)
-      (setf (dtache--session-duration session)
-            (dtache--duration session))
-      (if-let ((status (dtache--session-status-function session)))
-          (setf (dtache--session-status session) (funcall status session))
-        (setf (dtache--session-status session) (dtache-session-exit-code-status session)))
-      (dtache-session-finish-notification session)
-      (when-let ((callback (dtache--session-callback-function session)))
-        (funcall callback session))))
-  (setf (dtache--session-output-size session)
-        (file-attribute-size (file-attributes
-                              (dtache-session-file session 'log))))
-  session)
+  (if (or (dtache--session-deactivated-p session)
+          (dtache--session-missing-p session))
+      (dtache--session-final-update session)
+    (setf (dtache--session-output-size session)
+          (file-attribute-size (file-attributes
+                                (dtache-session-file session 'log))))
+    session))
 
 (defun dtache-initialize ()
   "Initialize `dtache'."
@@ -410,7 +404,8 @@ Sessions running on  current host or localhost are updated."
                                   (if (and (string= "localhost" (dtache--session-host it))
                                            (dtache--session-active it))
                                       (dtache-update-session it)
-                                    it)))))
+                                    it)))
+                       (seq-remove #'null)))
 
     ;; Setup notifications
     (thread-last dtache--sessions
@@ -632,14 +627,6 @@ Sessions running on  current host or localhost are updated."
        "..."
        (substring command (- (length command) (/ part-length 2)) (length command))))))
 
-(defun dtache--session-update (session)
-  "Update the `dtache' SESSION."
-  (setf (dtache--session-active session) (dtache--session-active-p session))
-  (setf (dtache--session-output-size session) (file-attribute-size
-                                            (file-attributes
-                                             (dtache-session-file session 'log))))
-  session)
-
 (defun dtache--session-short-id (session)
   "Return the short representation of the SESSION's id."
   (let ((id (dtache--session-id session)))
@@ -741,29 +728,38 @@ Sessions running on  current host or localhost are updated."
    (lambda (event)
      (pcase-let ((`(,_ ,action ,_) event))
        (when (eq action 'deleted)
-         ;; Update session
-         (setf (dtache--session-output-size session) (file-attribute-size
-                                                   (file-attributes
-                                                    (dtache-session-file session 'log))))
+         (dtache--session-final-update session))))))
 
-         (setf (dtache--session-active session) nil)
-         (setf (dtache--session-duration session)
-               (- (time-to-seconds) (dtache--session-creation-time session)))
+(defun dtache--session-final-update (session)
+  "Make a final update to SESSION."
+  (if (dtache--session-missing-p session)
+      ;; Remove missing session
+      nil
 
-         ;; Update session in database
-         (dtache--db-update-session session)
+    ;; Update session
+    (setf (dtache--session-output-size session)
+          (file-attribute-size
+           (file-attributes
+            (dtache-session-file session 'log))))
 
-         ;; Update status
-         (if-let ((status (dtache--session-status-function session)))
-             (setf (dtache--session-status session) (funcall status session))
-           (setf (dtache--session-status session) (dtache-session-exit-code-status session)))
+    (setf (dtache--session-active session) nil)
+    (setf (dtache--session-duration session)
+          (- (time-to-seconds) (dtache--session-creation-time session)))
 
-         ;; Send notification
-         (dtache-session-finish-notification session)
+    ;; Update session in database
+    (dtache--db-update-session session)
 
-         ;; Execute callback
-         (when-let ((callback (dtache--session-callback-function session)))
-           (funcall callback session)))))))
+    ;; Update status
+    (if-let ((status (dtache--session-status-function session)))
+        (setf (dtache--session-status session) (funcall status session))
+      (setf (dtache--session-status session) (dtache-session-exit-code-status session)))
+
+    ;; Send notification
+    (dtache-session-finish-notification session)
+
+    ;; Execute callback
+    (when-let ((callback (dtache--session-callback-function session)))
+      (funcall callback session))))
 
 (defun dtache--eat-cookie (&rest _)
   "Eat the disambiguation cookie in the minibuffer."
