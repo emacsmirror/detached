@@ -114,10 +114,14 @@
 
 (ert-deftest dtache-test-session-truncate-command ()
   (let ((dtache-max-command-length 7))
-    (should (string= "12...78"
+    (dtache--session-truncate-command
+     (dtache--session-create :command "12345678"))
+    (should (string= "123...678"
                      (dtache--session-truncate-command
                       (dtache--session-create :command "12345678")))))
-  (let ((dtache-max-command-length 6))
+  (let ((dtache-max-command-length 2))
+    (dtache--session-truncate-command
+                      (dtache--session-create :command "12345678"))
     (should (string= "1...8"
                      (dtache--session-truncate-command
                       (dtache--session-create :command "12345678"))))))

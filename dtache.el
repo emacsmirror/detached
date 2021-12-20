@@ -701,8 +701,7 @@ Sessions running on  current host or localhost are updated."
 
 (defun dtache--session-truncate-command (session)
   "Return a truncated string representation of SESSION's command."
-  (let ((command (dtache--session-command session))
-        (truncated-command))
+  (let ((command (dtache--session-command session)))
     (if (<= (length command) dtache-max-command-length)
         command
       (concat
