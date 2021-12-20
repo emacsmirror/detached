@@ -79,6 +79,59 @@
   "Hooks to run when compiling a session.")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
+(defvar dtache-annotation-format
+  `((:width 3 :function dtache--active-str :face dtache-active-face)
+    (:width 3 :function dtache--status-str :face dtache-failure-face)
+    (:width 10 :function dtache--session-host :face dtache-host-face)
+    (:width 40 :function dtache--working-dir-str :face dtache-working-dir-face)
+    (:width 30 :function dtache--metadata-str :face dtache-metadata-face)
+    (:width 10 :function dtache--duration-str :face dtache-duration-face)
+    (:width 8 :function dtache--size-str :face dtache-size-face)
+    (:width 12 :function dtache--creation-str :face dtache-creation-face))
+  "The format of the annotations.")
+
+;;;;; Faces
+
+(defgroup dtache-faces nil
+  "Faces used by `dtache'."
+  :group 'dtache
+  :group 'faces)
+
+(defface dtache-metadata-face
+  '((t :inherit font-lock-builtin-face))
+  "Face used to highlight metadata in `dtache'.")
+
+(defface dtache-failure-face
+  '((t :inherit error))
+  "Face used to highlight failure in `dtache'.")
+
+(defface dtache-active-face
+  '((t :inherit success))
+  "Face used to highlight active in `dtache'.")
+
+(defface dtache-duration-face
+  '((t :inherit font-lock-builtin-face))
+  "Face used to highlight duration in `dtache'.")
+
+(defface dtache-size-face
+  '((t :inherit font-lock-function-name-face))
+  "Face used to highlight size in `dtache'.")
+
+(defface dtache-creation-face
+  '((t :inherit font-lock-comment-face))
+  "Face used to highlight date in `dtache'.")
+
+(defface dtache-working-dir-face
+  '((t :inherit font-lock-variable-name-face))
+  "Face used to highlight working directory in `dtache'.")
+
+(defface dtache-host-face
+  '((t :inherit font-lock-constant-face))
+  "Face used to highlight host in `dtache'.")
+
+(defface dtache-identifier-face
+  '((t :inherit font-lock-comment-face))
+  "Face used to highlight identifier in `dtache'.")
 
 ;;;;; Private
 
@@ -373,6 +426,17 @@ Sessions running on  current host or localhost are updated."
                               (dtache--session-short-id it))))
                (prog1 s (put-text-property 0 1 'dtache--data it s))))
            sessions))
+(defun dtache-session-annotation (session)
+  "Return annotation string for SESSION."
+  (mapconcat
+   #'identity
+   (cl-loop for annotation in dtache-annotation-format
+            collect (let ((str (funcall (plist-get annotation :function) session)))
+                      (truncate-string-to-width
+                       (propertize str 'face (plist-get annotation :face))
+                       (plist-get annotation :width)
+                       0 ?\s)))
+   "   "))
 
 (defun dtache-update-session (session)
   "Update SESSION."
@@ -487,20 +551,23 @@ Sessions running on  current host or localhost are updated."
 (defun dtache-completing-read (sessions)
   "Select a session from SESSIONS through `completing-read'."
   (let* ((candidates (dtache-session-candidates sessions))
-         (metadata '(metadata
+         (metadata `(metadata
                      (category . dtache)
                      (cycle-sort-function . identity)
-                     (display-sort-function . identity)))
-         (coll (lambda (string predicate action)
-                 (if (eq action 'metadata)
-                     metadata
-                   (complete-with-action action candidates string predicate))))
-         (cand (minibuffer-with-setup-hook
-                   (lambda ()
-                     (add-hook 'after-change-functions 'dtache--eat-cookie nil t))
-                 (completing-read "Select session: " coll nil t nil
-                                  'dtache-session-history))))
-    (get-text-property 0 'dtache--data (car (member cand candidates)))))
+                     (display-sort-function . identity)
+                     (annotation-function . ,(lambda (s)
+                                               (dtache-session-annotation (cdr (assoc s candidates)))))
+                     (affixation-function .
+                                          ,(lambda (cands)
+                                             (seq-map (lambda (s)
+                                                        `(,s nil ,(dtache-session-annotation (cdr (assoc s candidates)))))
+                                                      cands)))))
+         (collection (lambda (string predicate action)
+                       (if (eq action 'metadata)
+                           metadata
+                         (complete-with-action action candidates string predicate))))
+         (cand (completing-read "Select session: " collection nil t nil 'dtache-session-history)))
+    (cdr (assoc cand candidates))))
 
 (defun dtache-setup-notification (session)
   "Setup notification for SESSION."
