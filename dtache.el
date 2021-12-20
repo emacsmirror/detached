@@ -793,8 +793,7 @@ Otherwise use tee to log stdout and stderr individually."
           (if dtache-env
               (string-join
                `(,dtache-env
-                 ,dtache-shell-program "-c"
-                 ,(shell-quote-argument (format "\"%s\"" (dtache--session-command session)))) " ")
+                 ,(shell-quote-argument (dtache--session-command session))) " ")
             `(,dtache-shell-program "-c" ,(shell-quote-argument (dtache--session-command session)))))
          (directory (dtache--session-session-directory session))
          (file-name (dtache--session-id session))
