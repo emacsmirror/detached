@@ -122,18 +122,6 @@ Add [[https://github.com/oantolin/embark/][embark]] actions to =dtache-open-sess
     :after (dtache embark))
 #+end_src
 
-** Marginalia
-
- Add [[https://github.com/minad/marginalia/][marginalia]] annotations to enrich =dtache-open-session=.
-
-#+begin_src elisp
-  (use-package marginalia-dtache
-    :after (dtache marginalia)
-    :config
-    ;; Register marginalia annotator
-    (add-to-list 'marginalia-annotator-registry '(dtache marginalia-dtache-annotate builtin none)))
-#+end_src
-
 * Tips & Tricks
 ** Automatic status labeling
 
