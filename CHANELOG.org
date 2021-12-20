@@ -1,0 +1,12 @@
+#+title: dtache.el - Changelog
+#+author: Niklas Eklund
+#+language: en
+
+* Development
+
+- Fix error in =dtache-env= usage. The integration wasn't correct which resulted in =dtache= failing to execute some commands properly
+- Make =dtache-env= optional rather than required. =Dtache= should be fine without it, just that automatic status labeling will not be run
+
+* Version 0.1 (2021-12-15)
+
+- Initial release
