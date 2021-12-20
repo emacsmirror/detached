@@ -52,30 +52,6 @@ A minimal configuration for =dtache=.
     (setq dtache-session-directory (expand-file-name "dtache" (temporary-file-directory))))
 #+end_src
 
-** The dtache-env script
-
-Create an executable shell script, named =dtache-env=, which will be used as a wrapper for the shell commands we are running.
-
-#+begin_src sh
-  #!/usr/bin/env bash
-
-  dtache_command="$*"
-
-  if eval "$dtache_command"; then
-      echo -e "\nDtache session finished"
-  else
-      echo -e "\nDtache exited abnormally with code $?"
-  fi
-#+end_src
-
-Either put it somewhere in path or customize the =dtache-env= variable so that it refers to the script.
-
-#+begin_src elisp
-  (setq dtache-env "/path/to/dtache-env")
-#+end_src
-
-This script is necessary in order for =dtache= to get information about the exit status of a session.
-
 * Commands
 ** Creating a session
 
@@ -159,6 +135,16 @@ Add [[https://github.com/oantolin/embark/][embark]] actions to =dtache-open-sess
 #+end_src
 
 * Tips & Tricks
+** Automatic status labeling
+
+The =dtache-env= script found in this repository can be used to execute shell commands in a controlled environment. This environment makes sure that the exit status is present in the session's output. This makes it possible for =dtache= to automatically label a session with either =success= or =failure=.
+
+Add the following to the configuration in order to take advantage of this feature.
+
+#+begin_src elisp
+  (setq dtache-env "/path/to/dtache-env")
+#+end_src
+
 ** System notifications
 
 By default =dtache= uses the echo area to notify the user when a session has finished. An alternative is to utilize the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.
@@ -187,7 +173,6 @@ With the usage of =advice= the user can override the default implantation with t
 #+begin_src elisp
   (advice-add 'dtache-session-finish-notification :override #'dtache-session-finish-alert)
 #+end_src
-
 ** Metadata annotators
 
 The user can configure any number of annotators to run upon creation of a session. Here is an example of an annotator which captures the branch name if the session is started in a git repository.

@@ -59,7 +59,7 @@
   "The name of the `dtach' program.")
 (defvar dtache-shell-program "bash"
   "Shell to run the dtach command in.")
-(defvar dtache-env "dtache-env"
+(defvar dtache-env nil
   "The name of the `dtache' program.")
 (defvar dtache-max-command-length 90
   "Maximum length of displayed command.")
@@ -73,7 +73,7 @@
   "Custom function to use to open a session.")
 (defvar dtache-session-callback-function nil
   "Custom function to callback when a session finish.")
-(defvar dtache-session-status-function #'dtache-session-exit-code-status
+(defvar dtache-session-status-function nil
   "Custom function to deduce the status of a session.")
 (defvar dtache-compile-hooks nil
   "Hooks to run when compiling a session.")
@@ -101,6 +101,7 @@
   (open-function nil :read-only t)
   (callback-function nil :read-only t)
   (status-function nil :read-only t)
+  (env nil :read-only t)
   (working-directory nil :read-only t)
   (creation-time nil :read-only t)
   (session-directory nil :read-only t)
@@ -379,8 +380,9 @@ Sessions running on  current host or localhost are updated."
       (setf (dtache--session-active session) nil)
       (setf (dtache--session-duration session)
             (dtache--duration session))
-      (when-let ((status (dtache--session-status-function session)))
-        (setf (dtache--session-status session) (funcall status session)))
+      (if-let ((status (dtache--session-status-function session)))
+          (setf (dtache--session-status session) (funcall status session))
+        (setf (dtache--session-status session) (dtache-session-exit-code-status session)))
       (dtache-session-finish-notification session)
       (when-let ((callback (dtache--session-callback-function session)))
         (funcall callback session))))
@@ -445,18 +447,21 @@ Sessions running on  current host or localhost are updated."
 
 (defun dtache-session-exit-code-status (session)
   "Return status based on exit-code in SESSION."
-  (with-temp-buffer
-    (insert-file-contents (dtache-session-file session 'log))
-    (goto-char (point-max))
-    (if (string-match "Dtache session finished" (thing-at-point 'line t))
-        'success
-      'failure)))
+  (if (null dtache-env)
+      'unknown
+    (with-temp-buffer
+      (insert-file-contents (dtache-session-file session 'log))
+      (goto-char (point-max))
+      (if (string-match "Dtache session finished" (thing-at-point 'line t))
+          'success
+        'failure))))
 
 (defun dtache-session-output (session)
   "Return content of SESSION's output."
   (let* ((filename (dtache-session-file session 'log))
          (status (dtache--session-status session))
-         (remove-dtache-message (not (eq status 'unknown))))
+         (remove-dtache-message (and (dtache--session-env session)
+                                     (not (eq status 'unknown)))))
     (with-temp-buffer
       (insert-file-contents filename)
       (goto-char (point-max))
@@ -480,10 +485,9 @@ Sessions running on  current host or localhost are updated."
          (dtache-open-output session))
         ((eq 'failure (dtache--session-status session))
          (dtache-compile-session session))
-        ;; TODO: Inactive sessions should never have status unknown,
-        ;; need to investigate why that happens
-        (t (progn (message "Unknown status of session.")
-                  (dtache-open-output session)))))
+        ((eq 'unknown (dtache--session-status session))
+         (dtache-open-output session))
+        (t (message "Dtache session is in an unexpected state."))))
 
 ;;;;; Other
 
@@ -574,6 +578,7 @@ Sessions running on  current host or localhost are updated."
                                  :callback-function dtache-session-callback-function
                                  :status-function dtache-session-status-function
                                  :working-directory (dtache-get-working-directory)
+                                 :env dtache-env
                                  :redirect-only (dtache-redirect-only-p command)
                                  :creation-time (time-to-seconds (current-time))
                                  :status 'unknown
@@ -749,8 +754,9 @@ Sessions running on  current host or localhost are updated."
          (dtache--db-update-session session)
 
          ;; Update status
-         (when-let ((status (dtache--session-status-function session)))
-           (setf (dtache--session-status session) (funcall status session)))
+         (if-let ((status (dtache--session-status-function session)))
+             (setf (dtache--session-status session) (funcall status session))
+           (setf (dtache--session-status session) (dtache-session-exit-code-status session)))
 
          ;; Send notification
          (dtache-session-finish-notification session)
@@ -783,10 +789,13 @@ Sessions running on  current host or localhost are updated."
 
 If SESSION is redirect-only fallback to a command that doesn't rely on tee.
 Otherwise use tee to log stdout and stderr individually."
-  (let* ((command (string-join
-                   `(,dtache-env
-                     ,dtache-shell-program "-c" "-i"
-                     ,(shell-quote-argument (format "\"%s\"" (dtache--session-command session)))) " "))
+  (let* ((command
+          (if dtache-env
+              (string-join
+               `(,dtache-env
+                 ,dtache-shell-program "-c"
+                 ,(shell-quote-argument (format "\"%s\"" (dtache--session-command session)))) " ")
+            `(,dtache-shell-program "-c" ,(shell-quote-argument (dtache--session-command session)))))
          (directory (dtache--session-session-directory session))
          (file-name (dtache--session-id session))
          (log (concat directory file-name ".log")))

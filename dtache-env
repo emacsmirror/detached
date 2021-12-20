@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+dtache_command="$*"
+
+if eval "$dtache_command"; then
+    echo -e "\nDtache session finished"
+else
+    echo -e "\nDtache exited abnormally with code $?"
+fi
