@@ -184,20 +184,40 @@
      (should (equal session (car (dtache--db-select-sessions)))))))
 
 (ert-deftest dtache-test-magic-command ()
-  ;; Redirect only
-  (let* ((dtache-shell-program "bash")
+  ;; Redirect only without dtache-env
+  (let* ((dtache-env nil)
+         (dtache-shell-program "bash")
          (actual
           (dtache--magic-command
            (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls" :redirect-only t)))
-         (expected "{ dtache-env bash -c -i \\\"ls\\\"; } &> /tmp/dtache/12345.log"))
+         (expected "{ (bash -c ls); } &> /tmp/dtache/12345.log"))
     (should (string= actual expected)))
 
-  ;; Normal
-  (let* ((dtache-shell-program "bash")
+  ;; Normal without dtache-env
+  (let* ((dtache-env nil)
+         (dtache-shell-program "bash")
          (actual
           (dtache--magic-command
            (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls")))
-         (expected "{ dtache-env bash -c -i \\\"ls\\\"; } 2>&1 | tee /tmp/dtache/12345.log"))
+         (expected "{ (bash -c ls); } 2>&1 | tee /tmp/dtache/12345.log"))
+    (should (string= actual expected)))
+
+  ;; Redirect only with dtache-env
+  (let* ((dtache-env "dtache-env")
+         (dtache-shell-program "bash")
+         (actual
+          (dtache--magic-command
+           (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls" :redirect-only t)))
+         (expected "{ dtache-env ls; } &> /tmp/dtache/12345.log"))
+    (should (string= actual expected)))
+
+  ;; Normal with dtache-env
+  (let* ((dtache-env "dtache-env")
+         (dtache-shell-program "bash")
+         (actual
+          (dtache--magic-command
+           (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls")))
+         (expected "{ dtache-env ls; } 2>&1 | tee /tmp/dtache/12345.log"))
     (should (string= actual expected))))
 
 (ert-deftest dtache-test-redirect-only-p ()
