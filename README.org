@@ -74,7 +74,7 @@ There are two convenient ways of listing sessions and acting upon one.
 
 ** Actions on sessions
 
-General commands that can be used either in =dtache-list-sessions= or in =dtache-open-session= (using the embark extension).
+Session commands that can be used in either =dtache-list-sessions= or in =dtache-open-session=.
 
 | Command                       | Description                                 |
 |-------------------------------+---------------------------------------------|
@@ -113,16 +113,22 @@ Commands to be used in shell buffers.
 | dtache-shell-attach     | Attach to a session         |
 | dtache-shell-detach     | Detach from a session       |
 
-** Embark
+* Tips & Tricks
+** Actions
 
-Add [[https://github.com/oantolin/embark/][embark]] actions to =dtache-open-session=.
+To act on sessions the user can either bind the =dtache-action-map= to a binding of there choice. An example could be.
 
 #+begin_src elisp
-  (use-package embark-dtache
-    :after (dtache embark))
+  (global-set-key (kbd "C-c d") dtache-action-map)
 #+end_src
 
-* Tips & Tricks
+Or if the user has the package [[https://github.com/oantolin/embark/][embark]] installed the actions could be integrated with that package by adding the following to the =dtache= configuration.
+
+#+begin_src elisp
+  (defvar embark-dtache-map (make-composed-keymap dtache-action-map embark-general-map))
+  (add-to-list 'embark-keymap-alist '(dtache . embark-dtache-map))
+#+end_src
+
 ** Automatic status labeling
 
 The =dtache-env= script found in this repository can be used to execute shell commands in a controlled environment. This environment makes sure that the exit status is present in the session's output. This makes it possible for =dtache= to automatically label a session with either =success= or =failure=.

@@ -79,6 +79,7 @@
   "Hooks to run when compiling a session.")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
+
 (defvar dtache-annotation-format
   `((:width 3 :function dtache--active-str :face dtache-active-face)
     (:width 3 :function dtache--status-str :face dtache-failure-face)
@@ -89,6 +90,20 @@
     (:width 8 :function dtache--size-str :face dtache-size-face)
     (:width 12 :function dtache--creation-str :face dtache-creation-face))
   "The format of the annotations.")
+
+(defvar dtache-action-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "c" #'dtache-compile-session)
+    (define-key map "d" #'dtache-remove-session)
+    (define-key map "i" #'dtache-insert-session-command)
+    (define-key map "k" #'dtache-kill-session)
+    (define-key map "o" #'dtache-open-output)
+    (define-key map "r" #'dtache-rerun-session)
+    (define-key map "t" #'dtache-tail-output)
+    (define-key map "w" #'dtache-copy-session-command)
+    (define-key map "W" #'dtache-copy-session-output)
+    (define-key map "=" #'dtache-diff-session)
+    map))
 
 ;;;;; Faces
 

@@ -4,7 +4,8 @@
 
 * Development
 
-- Remove external dependency to marginalia. Dtache now implements annotations for all users.
+- Remove external dependency to =embark=. The package now implements an action map that can be used with/without embark.
+- Remove external dependency to =marginalia=. The package now provides annotations for all users.
 - Fix error in =dtache-env= usage. The integration wasn't correct which resulted in =dtache= failing to execute some commands properly
 - Make =dtache-env= optional rather than required. =Dtache= should be fine without it, just that automatic status labeling will not be run
 
