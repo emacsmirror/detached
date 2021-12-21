@@ -230,10 +230,42 @@ The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_n
 Some programs doesn't play well with =tee= which =dtache= relies upon to redirect the output both to standard out as well as to file. If you encounter a situation where output from a session is only visible once it has finished running, the command you launched should instead be using =redirect only=. To list a command to run with redirect only in the future can be done by adding a regexp to =dtache-redirect-only-regexps=.
 
 #+begin_src elisp
-  (setq dtache-read-only-list '("^ls"))
+  (setq dtache-redirect-only-regexps '("^ls"))
 #+end_src
 
 Here the command beginning with =ls= would from now on be using redirect only.
+
+** Replace compile with dtache
+
+*** Unconditionally
+
+=Dtache= can be seen as a replacement for =compile=. To unconditionally replace the latter with the former one can apply this advice.
+
+#+begin_src elisp
+  (defun dtache-compile-override (command &optional _)
+    "Run COMMAND with `dtache'."
+    (dtache-start-session command))
+
+  (advice-add 'compile :override #'dtache-compile-override)
+#+end_src
+
+#+RESULTS:
+
+*** Selectively
+
+Maybe you like the behavior of =compile= but for some specific commands you would like to replace the usage of =compile= with =dtache=. That can be done with the following advice, in this case replacing the usage of =compile= within function =foo=.
+
+#+begin_src elisp
+  (defun dtache-replace-compile-advice (orig-fun &rest args)
+    "Replace `compile' with `dtache'.
+  This is done before ORIG-FUN is passed ARGS."
+    (cl-letf* (((symbol-function 'compile)
+                (lambda (command &optional _)
+                  (dtache-start-session command))))
+      (apply orig-fun args)))
+
+  (advice-add #'foo :around #'dtache-replace-compile-advice)
+#+end_src
 
 ** Evil bindings
 
