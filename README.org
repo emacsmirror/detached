@@ -112,6 +112,26 @@ Commands to be used in shell buffers.
 | dtache-shell-create     | Create a session            |
 | dtache-shell-attach     | Attach to a session         |
 | dtache-shell-detach     | Detach from a session       |
+* Variables
+
+** Annotations
+
+The user can customize the appearance of annotations in =dtache-open-session= by modifying the =dtache-annotation-format=. The default annotation format is the following.
+
+#+begin_src elisp
+  (defvar dtache-annotation-format
+    `((:width 3 :function dtache--active-str :face dtache-active-face)
+      (:width 3 :function dtache--status-str :face dtache-failure-face)
+      (:width 10 :function dtache--session-host :face dtache-host-face)
+      (:width 40 :function dtache--working-dir-str :face dtache-working-dir-face)
+      (:width 30 :function dtache--metadata-str :face dtache-metadata-face)
+      (:width 10 :function dtache--duration-str :face dtache-duration-face)
+      (:width 8 :function dtache--size-str :face dtache-size-face)
+      (:width 12 :function dtache--creation-str :face dtache-creation-face))
+    "The format of the annotations.")
+#+end_src
+
+If the user wants to remove specific annotations or decrease/increase the widths, do that by changing the values for this variable.
 
 * Tips & Tricks
 ** Actions
