@@ -228,9 +228,7 @@
    (list (if (eq major-mode 'dtache-sessions-mode)
              (tabulated-list-get-id)
            (dtache-select-session))))
-  (let ((buffer-name
-         (format "*dtache-compile-%s*"
-                 (dtache--session-short-id session)))
+  (let ((buffer-name "*dtache-session-output*")
         (file
          (dtache-session-file session 'log))
         (tramp-verbose 1))
@@ -322,9 +320,7 @@
    (list (if (eq major-mode 'dtache-sessions-mode)
              (tabulated-list-get-id)
            (dtache-select-session))))
-  (let* ((buffer-name
-          (format "*dtache-output-%s*"
-                  (dtache--session-short-id session)))
+  (let* ((buffer-name "*dtache-session-output*")
          (file-path
           (dtache-session-file session 'log))
          (tramp-verbose 1))
@@ -364,12 +360,16 @@
    (list
     (dtache-select-session)
     (dtache-select-session)))
-  (dtache--create-diff-buffer session1)
-  (dtache--create-diff-buffer session2)
-  (let ((buffer1 (format "*dtache-diff-%s*"
-                         (dtache--session-short-id session1)))
-        (buffer2 (format "*dtache-diff-%s*"
-                         (dtache--session-short-id session2))))
+  (let ((buffer1 "*dtache-session-output-1*")
+        (buffer2 "*dtache-session-output-2*"))
+    (with-current-buffer (get-buffer-create buffer1)
+      (erase-buffer)
+      (insert (dtache--session-header session1))
+      (insert (dtache-session-output session1)))
+    (with-current-buffer (get-buffer-create buffer2)
+      (erase-buffer)
+      (insert (dtache--session-header session2))
+      (insert (dtache-session-output session2)))
     (ediff-buffers buffer1 buffer2)))
 
 ;;;###autoload
@@ -752,22 +752,19 @@ Sessions running on  current host or localhost are updated."
     (setq dtache--remote-session-timer
           (run-with-timer 10 60 #'dtache-update-remote-sessions))))
 
-(defun dtache--create-diff-buffer (session)
-  "Create a diff buffer for SESSION."
-  (let ((buffer-name
-         (format "*dtache-diff-%s*"
-                 (dtache--session-short-id session))))
-    (with-current-buffer (get-buffer-create buffer-name)
-      (erase-buffer)
-      (insert (format "Command: %s\n" (dtache--session-command session)))
-      (insert (format "Working directory: %s\n" (dtache--working-dir-str session)))
-      (insert (format "Status: %s\n" (dtache--session-status session)))
-      (insert (format "Created at: %s\n" (dtache--creation-str session)))
-      (insert (format "Id: %s\n" (dtache--session-id session)))
-      (insert (format "Metadata: %s\n" (dtache--metadata-str session)))
-      (insert (format "Duration: %s\n" (dtache--duration-str session)))
-      (insert "\n")
-      (insert (dtache-session-output session)))))
+(defun dtache--session-header (session)
+  "Return header for SESSION."
+  (mapconcat
+   #'identity
+   `(,(format "Command: %s" (dtache--session-command session))
+     ,(format "Working directory: %s" (dtache--working-dir-str session))
+     ,(format "Status: %s" (dtache--session-status session))
+     ,(format "Created at: %s" (dtache--creation-str session))
+     ,(format "Id: %s" (dtache--session-id session))
+     ,(format "Metadata: %s" (dtache--metadata-str session))
+     ,(format "Duration: %s" (dtache--duration-str session))
+     "")
+   "\n"))
 
 ;;;;; Database
 
