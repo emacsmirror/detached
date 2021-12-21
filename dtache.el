@@ -79,6 +79,8 @@
   "Hooks to run when compiling a session.")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
+(defvar dtache-timer-configuration '(:seconds 10 :repeat 60 :function run-with-timer)
+  "A property list defining how often to run a timer.")
 
 (defvar dtache-annotation-format
   `((:width 3 :function dtache--active-str :face dtache-active-face)
@@ -156,8 +158,6 @@
   "Mode of operation for dtach.")
 (defvar dtache--sessions nil
   "A list of sessions.")
-(defvar dtache--remote-session-timer nil
-  "Timer object for remote polling.")
 
 ;;;; Data structures
 
@@ -504,24 +504,6 @@ Sessions running on  current host or localhost are updated."
                  (seq-filter #'dtache--session-active)
                  (seq-do #'dtache-setup-notification))))
 
-(defun dtache-update-remote-sessions ()
-  "Update active remote sessions."
-  (let ((predicate
-         (lambda (s) (and (not (string= "localhost" (dtache--session-host s)))
-                     (dtache--session-active s)))))
-
-    ;; Update sessions
-    (thread-last (dtache--db-get-sessions)
-      (seq-do (lambda (it)
-                 (if (funcall predicate it)
-                     (dtache-update-session it)
-                   it))))
-
-    ;; Cancel timer if no active remote sessions
-    (unless (> (seq-count predicate (dtache--db-get-sessions)) 0)
-      (cancel-timer dtache--remote-session-timer)
-      (setq dtache--remote-session-timer nil))))
-
 (defun dtache-cleanup-host-sessions (host)
   "Run cleanuup on HOST sessions."
   (seq-do
@@ -600,7 +582,7 @@ Sessions running on  current host or localhost are updated."
 (defun dtache-setup-notification (session)
   "Setup notification for SESSION."
   (if (file-remote-p (dtache--session-working-directory session))
-      (dtache--create-remote-session-timer)
+      (dtache--session-timer session)
     (dtache--add-end-of-session-notification session)))
 
 (defun dtache-dtach-command (session)
@@ -732,12 +714,6 @@ Sessions running on  current host or localhost are updated."
    (file-exists-p
     (dtache-session-file session 'log))))
 
-(defun dtache--create-remote-session-timer ()
-  "Create a new remote session and trigger timer."
-  (unless dtache--remote-session-timer
-    (setq dtache--remote-session-timer
-          (run-with-timer 10 60 #'dtache-update-remote-sessions))))
-
 (defun dtache--session-header (session)
   "Return header for SESSION."
   (mapconcat
@@ -751,6 +727,20 @@ Sessions running on  current host or localhost are updated."
      ,(format "Duration: %s" (dtache--duration-str session))
      "")
    "\n"))
+
+(defun dtache--session-timer (session)
+  "Create a timmer for SESSION according to `dtache-timer-configuration'."
+  (let* ((timer)
+         (callback
+          (lambda ()
+            (when (dtache--session-deactivated-p session)
+              (dtache--session-final-update session)
+              (cancel-timer timer)))))
+    (setq timer
+          (funcall (plist-get dtache-timer-configuration :function)
+                   (plist-get dtache-timer-configuration :seconds)
+                   (plist-get dtache-timer-configuration :repeat)
+                   callback))))
 
 ;;;;; Database
 

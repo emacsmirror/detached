@@ -166,13 +166,9 @@ Add the following to the configuration in order to take advantage of this featur
 #+begin_src elisp
   (defun dtache--add-end-of-session-notification-advice (session)
     "Trigger an event when SESSION transition to inactive."
-    (let* ((timer)
-           (callback
-            (lambda ()
-              (when (dtache--session-deactivated-p session)
-                (dtache--session-final-update session)
-                (cancel-timer timer)))))
-      (setq timer (run-with-idle-timer 0.5 0.5 callback))))
+    (let ((dtache-timer-configuration
+           '(:seconds 0.5 :repeat 0.5 :function run-with-idle-timer)))
+      (dtache--session-timer session)))
 
   (advice-add 'dtache--add-end-of-session-notification :override #'dtache--add-end-of-session-notification-advice)
 #+end_src
