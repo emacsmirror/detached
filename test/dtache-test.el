@@ -76,8 +76,8 @@
              (dtache--dtach-mode 'create)
              (actual
               (dtache-dtach-command
-               (dtache--session-create :id "12345" :session-directory "/tmp/dtache/")))
-             (expected `(, "-c" "/tmp/dtache/12345.socket" "-z" "zsh" "-c" "command")))
+               (dtache--session-create :id 's12345 :session-directory "/tmp/dtache/")))
+             (expected `(, "-c" "/tmp/dtache/s12345.socket" "-z" "zsh" "-c" "command")))
     (should (equal expected actual))))
 
 (ert-deftest dtache-test-metadata ()
@@ -97,20 +97,16 @@
   ;; Local files
   (cl-letf* (((symbol-function #'expand-file-name) (lambda (file directory) (concat directory file)))
              ((symbol-function #'file-remote-p) (lambda (_directory) nil))
-             (session (dtache--session-create :id "12345" :session-directory "/home/user/tmp/")))
-    (should (string= "/home/user/tmp/12345.log" (dtache-session-file session 'log)))
-    (should (string= "/home/user/tmp/12345.socket" (dtache-session-file session 'socket))))
+             (session (dtache--session-create :id 's12345 :session-directory "/home/user/tmp/")))
+    (should (string= "/home/user/tmp/s12345.log" (dtache-session-file session 'log)))
+    (should (string= "/home/user/tmp/s12345.socket" (dtache-session-file session 'socket))))
 
   ;; Remote files
   (cl-letf* (((symbol-function #'expand-file-name) (lambda (file directory) (concat directory file)))
              ((symbol-function #'file-remote-p) (lambda (_directory) "/ssh:foo:"))
-             (session (dtache--session-create :id "12345" :session-directory "/home/user/tmp/")))
-    (should (string= "/ssh:foo:/home/user/tmp/12345.log" (dtache-session-file session 'log)))
-    (should (string= "/ssh:foo:/home/user/tmp/12345.socket" (dtache-session-file session 'socket)))))
-
-(ert-deftest dtache-test-session-short-id ()
-  (let ((session (dtache--session-create :id "abcdefg12345678")))
-    (should (string= "12345678" (dtache--session-short-id session)))))
+             (session (dtache--session-create :id 's12345 :session-directory "/home/user/tmp/")))
+    (should (string= "/ssh:foo:/home/user/tmp/s12345.log" (dtache-session-file session 'log)))
+    (should (string= "/ssh:foo:/home/user/tmp/s12345.socket" (dtache-session-file session 'socket)))))
 
 (ert-deftest dtache-test-session-truncate-command ()
   (let ((dtache-max-command-length 7))
@@ -159,7 +155,7 @@
      (dtache-test--change-session-state session2 'kill)
      (dtache-cleanup-host-sessions host)
      (should (seq-set-equal-p
-              (dtache--db-select-sessions)
+              (dtache--db-get-sessions)
               `(,session1 ,session3))))))
 
 ;;;;; Database
@@ -167,25 +163,27 @@
 (ert-deftest dtache-test-db-insert-session ()
   (dtache-test--with-temp-database
    (let* ((session (dtache-test--create-session :command "foo" :host "localhost")))
-     (should (equal (dtache--db-select-sessions) `(,session))))))
+     (should (equal (dtache--db-get-sessions) `(,session))))))
 
 (ert-deftest dtache-test-db-remove-session ()
   (dtache-test--with-temp-database
    (let* ((host "localhost")
           (session1 (dtache-test--create-session :command "foo" :host host))
           (session2 (dtache-test--create-session :command "bar" :host host)))
-     (should (seq-set-equal-p `(,session1 ,session2) (dtache--db-select-sessions)))
-     (dtache--db-remove-session session1)
-     (should (seq-set-equal-p `(,session2) (dtache--db-select-sessions))))))
+     (should (seq-set-equal-p `(,session1 ,session2) (dtache--db-get-sessions)))
+     (dtache--db-remove-entry session1)
+     (should (seq-set-equal-p `(,session2) (dtache--db-get-sessions))))))
 
 (ert-deftest dtache-test-db-update-session ()
   (dtache-test--with-temp-database
    (let* ((session (dtache-test--create-session :command "foo" :host "localhost"))
-          (id (dtache--session-id session)))
-     (setf (dtache--session-active session) nil)
-     (should (not (equal session (car (dtache--db-select-sessions)))))
-     (dtache--db-update-session session)
-     (should (equal session (car (dtache--db-select-sessions)))))))
+          (id (dtache--session-id session))
+          (copy))
+     (setq copy (copy-dtache-session session))
+     (setf (dtache--session-active copy) nil)
+     (should (not (equal copy (dtache--db-get-session id))))
+     (dtache--db-update-entry copy t)
+     (should (equal copy (car (dtache--db-get-sessions)))))))
 
 (ert-deftest dtache-test-magic-command ()
   ;; Redirect only without dtache-env
@@ -193,8 +191,8 @@
          (dtache-shell-program "bash")
          (actual
           (dtache--magic-command
-           (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls" :redirect-only t)))
-         (expected "{ (bash -c ls); } &> /tmp/dtache/12345.log"))
+           (dtache--session-create :id 's12345 :session-directory "/tmp/dtache/" :command "ls" :redirect-only t)))
+         (expected "{ (bash -c ls); } &> /tmp/dtache/s12345.log"))
     (should (string= actual expected)))
 
   ;; Normal without dtache-env
@@ -202,8 +200,8 @@
          (dtache-shell-program "bash")
          (actual
           (dtache--magic-command
-           (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls")))
-         (expected "{ (bash -c ls); } 2>&1 | tee /tmp/dtache/12345.log"))
+           (dtache--session-create :id 's12345 :session-directory "/tmp/dtache/" :command "ls")))
+         (expected "{ (bash -c ls); } 2>&1 | tee /tmp/dtache/s12345.log"))
     (should (string= actual expected)))
 
   ;; Redirect only with dtache-env
@@ -211,8 +209,8 @@
          (dtache-shell-program "bash")
          (actual
           (dtache--magic-command
-           (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls" :redirect-only t)))
-         (expected "{ dtache-env ls; } &> /tmp/dtache/12345.log"))
+           (dtache--session-create :id 's12345 :session-directory "/tmp/dtache/" :command "ls" :redirect-only t)))
+         (expected "{ dtache-env ls; } &> /tmp/dtache/s12345.log"))
     (should (string= actual expected)))
 
   ;; Normal with dtache-env
@@ -220,8 +218,8 @@
          (dtache-shell-program "bash")
          (actual
           (dtache--magic-command
-           (dtache--session-create :id "12345" :session-directory "/tmp/dtache/" :command "ls")))
-         (expected "{ dtache-env ls; } 2>&1 | tee /tmp/dtache/12345.log"))
+           (dtache--session-create :id 's12345 :session-directory "/tmp/dtache/" :command "ls")))
+         (expected "{ dtache-env ls; } 2>&1 | tee /tmp/dtache/s12345.log"))
     (should (string= actual expected))))
 
 (ert-deftest dtache-test-redirect-only-p ()
@@ -233,9 +231,9 @@
   (cl-letf* (((symbol-function #'process-file) (lambda (_program _infile _buffer _display &rest _args)
                                                  (insert "\"USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\nuser    6699  0.0  0.0   4752  2304 ?        Ss   13:06   0:00 dtach -n /tmp/foo.socket\nuser    6698  0.0  0.0   4752  2304 ?        Ss   13:07   0:00 dtach -c /tmp/bar.socket\n")))
 
-             (session1 (dtache--session-create :id "foo" :session-directory "/tmp/"))
-             (session2 (dtache--session-create :id "bar" :session-directory "/tmp/"))
-             (session3 (dtache--session-create :id "baz" :session-directory "/tmp/")))
+             (session1 (dtache--session-create :id 'foo :session-directory "/tmp/"))
+             (session2 (dtache--session-create :id 'bar :session-directory "/tmp/"))
+             (session3 (dtache--session-create :id 'baz :session-directory "/tmp/")))
     (should (string= "6699" (dtache--session-pid session1)))
     (should (string= "6698" (dtache--session-pid session2)))
     (should (not (dtache--session-pid session3)))))

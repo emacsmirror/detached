@@ -206,7 +206,7 @@
   (dtache-sessions-mode)
   (dtache-update-sessions)
   (let* ((tabulated-list-entries
-          (seq-map #'dtache-get-sesssion-entry dtache--sessions)))
+          (seq-map #'dtache-get-sesssion-entry (dtache--db-get-sessions))))
     (tabulated-list-print t)))
 
 ;;;###autoload
@@ -300,7 +300,7 @@
            (dtache-select-session))))
   (if (dtache--session-active-p session)
       (message "Kill session first before removing it.")
-    (dtache--db-remove-session session)))
+    (dtache--db-remove-entry session)))
 
 ;;;###autoload
 (defun dtache-kill-session (session)
@@ -399,33 +399,27 @@ nil before closing."
 (defun dtache-select-session ()
   "Return selected session."
   (dtache-update-sessions)
-  (let ((sessions dtache--sessions))
-    (dtache-completing-read sessions)))
+  (dtache-completing-read (dtache--db-get-sessions)))
 
 (defun dtache-update-sessions ()
   "Update `dtache' sessions.
 
 Sessions running on  current host or localhost are updated."
-  (let ((current-host (dtache--host))
-        (updated-sessions))
-    (setq updated-sessions
-          (thread-last
-            dtache--sessions
-            (seq-map (lambda (it)
-                       (if (and (or (string= current-host (dtache--session-host it))
-                                    (string= "localhost" (dtache--session-host it)))
-                                (or (dtache--session-active it)
-                                    (dtache--session-deactivated-p it)))
-                           (dtache-update-session it)
-                         it)))
-            (seq-remove #'null)))
-    (dtache--db-update-sessions updated-sessions)))
+  (let ((current-host (dtache--host)))
+    (seq-do (lambda (it)
+              (if (and (or (string= current-host (dtache--session-host it))
+                           (string= "localhost" (dtache--session-host it)))
+                       (or (dtache--session-active it)
+                           (dtache--session-deactivated-p it)))
+                  (dtache-update-session it)))
+            (dtache--db-get-sessions))))
 
 (defun dtache-session-file (session file)
   "Return the path to SESSION's FILE."
   (let ((file-name
          (concat
-          (dtache--session-id session)
+          (symbol-name
+           (dtache--session-id session))
           (pcase file
             ('socket ".socket")
             ('log ".log"))))
@@ -481,7 +475,7 @@ Sessions running on  current host or localhost are updated."
     (setf (dtache--session-output-size session)
           (file-attribute-size (file-attributes
                                 (dtache-session-file session 'log))))
-    session))
+    (dtache--db-update-entry session)))
 
 (defun dtache-initialize ()
   "Initialize `dtache'."
@@ -491,24 +485,24 @@ Sessions running on  current host or localhost are updated."
     (unless (file-exists-p dtache-db-directory)
       (make-directory dtache-db-directory t))
 
-    (setq dtache--sessions
-          (thread-last (dtache--db-select-sessions)
-                       ;; Remove missing local sessions
-                       (seq-remove (lambda (it)
-                                     (and (string= "localhost" (dtache--session-host it))
-                                          (dtache--session-missing-p it))))
-                       ;; Update local active sessions
-                       (seq-map (lambda (it)
-                                  (if (and (string= "localhost" (dtache--session-host it))
-                                           (dtache--session-active it))
-                                      (dtache-update-session it)
-                                    it)))
-                       (seq-remove #'null)))
+    ;; Update database
+    (dtache--db-initialize)
+    (seq-do (lambda (session)
+              ;; Remove missing local sessions
+              (if (and (string= "localhost" (dtache--session-host session))
+                       (dtache--session-missing-p session))
+                  (dtache--db-remove-entry session)
+
+                  ;; Update local active sessions
+                  (when (and (string= "localhost" (dtache--session-host session))
+                             (dtache--session-active session))
+                    (dtache-update-session session))))
+            (dtache--db-get-sessions))
 
     ;; Setup notifications
-    (thread-last dtache--sessions
-      (seq-filter #'dtache--session-active)
-      (seq-do #'dtache-setup-notification))))
+    (thread-last (dtache--db-get-sessions)
+                 (seq-filter #'dtache--session-active)
+                 (seq-do #'dtache-setup-notification))))
 
 (defun dtache-update-remote-sessions ()
   "Update active remote sessions."
@@ -517,26 +511,25 @@ Sessions running on  current host or localhost are updated."
                      (dtache--session-active s)))))
 
     ;; Update sessions
-    (thread-last dtache--sessions
-      (seq-map (lambda (it)
+    (thread-last (dtache--db-get-sessions)
+      (seq-do (lambda (it)
                  (if (funcall predicate it)
                      (dtache-update-session it)
-                   it)))
-      (dtache--db-update-sessions))
+                   it))))
 
     ;; Cancel timer if no active remote sessions
-    (unless (> (seq-count predicate dtache--sessions) 0)
+    (unless (> (seq-count predicate (dtache--db-get-sessions)) 0)
       (cancel-timer dtache--remote-session-timer)
       (setq dtache--remote-session-timer nil))))
 
 (defun dtache-cleanup-host-sessions (host)
   "Run cleanuup on HOST sessions."
-  (dtache--db-update-sessions
-   (seq-remove
-    (lambda (it)
-      (and (string= host (dtache--session-host it))
-           (dtache--session-missing-p it)))
-    dtache--sessions)))
+  (seq-do
+   (lambda (it)
+     (when (and (string= host (dtache--session-host it))
+                (dtache--session-missing-p it))
+       (dtache--db-remove-entry it)))
+   (dtache--db-get-sessions)))
 
 (defun dtache-session-exit-code-status (session)
   "Return status based on exit-code in SESSION."
@@ -614,7 +607,7 @@ Sessions running on  current host or localhost are updated."
   "Return a dtach command for SESSION."
   (with-connection-local-variables
    (let* ((directory (dtache--session-session-directory session))
-          (file-name (dtache--session-id session))
+          (file-name (symbol-name (dtache--session-id session)))
           (socket (concat directory file-name ".socket"))
           ;; Construct the command line
           (command (dtache--magic-command session))
@@ -666,7 +659,7 @@ Sessions running on  current host or localhost are updated."
   "Create a `dtache' session from COMMAND."
   (dtache-create-session-directory)
   (let ((session
-         (dtache--session-create :id (dtache--create-id command)
+         (dtache--session-create :id (intern (dtache--create-id command))
                                  :command command
                                  :type dtache-session-type
                                  :open-function dtache-open-session-function
@@ -681,10 +674,8 @@ Sessions running on  current host or localhost are updated."
                                  :host (dtache--host)
                                  :metadata (dtache-metadata)
                                  :active t)))
-    ;; Update list of sessions
-    (push session dtache--sessions)
     ;; Update database
-    (dtache--db-update-sessions dtache--sessions)
+    (dtache--db-insert-entry session)
     session))
 
 (defun dtache--session-pid (session)
@@ -692,7 +683,7 @@ Sessions running on  current host or localhost are updated."
   (let* ((socket
           (concat
            (dtache--session-session-directory session)
-           (dtache--session-id session)
+           (symbol-name (dtache--session-id session))
            ".socket"))
          (regexp (rx-to-string `(and "dtach " (or "-n " "-c ") ,socket)))
          (ps-args '("aux" "-w")))
@@ -723,11 +714,6 @@ Sessions running on  current host or localhost are updated."
        (substring command 0 (/ dtache-max-command-length 2))
        "..."
        (substring command (- (length command) (/ dtache-max-command-length 2)) (length command))))))
-
-(defun dtache--session-short-id (session)
-  "Return the short representation of the SESSION's id."
-  (let ((id (dtache--session-id session)))
-    (substring  id (- (length id) 8) (length id))))
 
 (defun dtache--session-active-p (session)
   "Return t if SESSION is active."
@@ -760,7 +746,7 @@ Sessions running on  current host or localhost are updated."
      ,(format "Working directory: %s" (dtache--working-dir-str session))
      ,(format "Status: %s" (dtache--session-status session))
      ,(format "Created at: %s" (dtache--creation-str session))
-     ,(format "Id: %s" (dtache--session-id session))
+     ,(format "Id: %s" (symbol-name (dtache--session-id session)))
      ,(format "Metadata: %s" (dtache--metadata-str session))
      ,(format "Duration: %s" (dtache--duration-str session))
      "")
@@ -768,38 +754,43 @@ Sessions running on  current host or localhost are updated."
 
 ;;;;; Database
 
-(defun dtache--db-select-sessions ()
+(defun dtache--db-initialize ()
   "Return all sessions stored in database."
   (let ((db (expand-file-name "dtache.db" dtache-db-directory)))
     (when (file-exists-p db)
       (with-temp-buffer
         (insert-file-contents db)
         (cl-assert (eq (point) (point-min)))
-        (read (current-buffer))))))
+        (setq dtache--sessions
+              (read (current-buffer)))))))
 
-(defun dtache--db-remove-session (session)
-  "Remove SESSION from database."
-  (let ((id (dtache--session-id session)))
-    (setq dtache--sessions
-          (seq-remove (lambda (it)
-                        (string= id (dtache--session-id it)))
-                      dtache--sessions))
-    (dtache--db-update-sessions dtache--sessions)))
+(defun dtache--db-insert-entry (session)
+  "Insert SESSION into `dtache--sessions' and update database."
+  (push `(,(dtache--session-id session) . ,session) dtache--sessions)
+  (dtache--db-update-sessions))
 
-(defun dtache--db-update-session (session)
-  "Update SESSION in database."
-  (let ((id (dtache--session-id session)))
-    (setq dtache--sessions
-          (seq-map (lambda (it)
-                     (if (string= (dtache--session-id it) id)
-                         session
-                       it))
-                   dtache--sessions))
-    (dtache--db-update-sessions dtache--sessions)))
+(defun dtache--db-remove-entry (session)
+  "Remove SESSION from `dtache--sessions' and update database."
+  (setq dtache--sessions
+        (assq-delete-all (dtache--session-id session) dtache--sessions ))
+  (dtache--db-update-sessions))
 
-(defun dtache--db-update-sessions (sessions)
-  "Write SESSIONS to database."
-  (setq dtache--sessions sessions)
+(defun dtache--db-update-entry (session &optional update)
+  "Update SESSION in `dtache--sessions' optionally UPDATE database."
+  (setf (alist-get (dtache--session-id session) dtache--sessions) session)
+  (when update
+    (dtache--db-update-sessions)))
+
+(defun dtache--db-get-session (id)
+  "Return session with ID."
+  (alist-get id dtache--sessions))
+
+(defun dtache--db-get-sessions ()
+  "Return all sessions stored in the database."
+  (seq-map #'cdr dtache--sessions))
+
+(defun dtache--db-update-sessions ()
+  "Write `dtache--sessions' to database."
   (let ((db (expand-file-name "dtache.db" dtache-db-directory)))
     (with-temp-file db
       (prin1 dtache--sessions (current-buffer)))))
@@ -828,7 +819,7 @@ Sessions running on  current host or localhost are updated."
   "Make a final update to SESSION."
   (if (dtache--session-missing-p session)
       ;; Remove missing session
-      nil
+      (dtache--db-remove-entry session)
 
     ;; Update session
     (setf (dtache--session-output-size session)
@@ -840,9 +831,6 @@ Sessions running on  current host or localhost are updated."
     (setf (dtache--session-duration session)
           (- (time-to-seconds) (dtache--session-creation-time session)))
 
-    ;; Update session in database
-    (dtache--db-update-session session)
-
     ;; Update status
     (if-let ((status (dtache--session-status-function session)))
         (setf (dtache--session-status session) (funcall status session))
@@ -850,6 +838,9 @@ Sessions running on  current host or localhost are updated."
 
     ;; Send notification
     (dtache-session-finish-notification session)
+
+    ;; Update session in database
+    (dtache--db-update-entry session t)
 
     ;; Execute callback
     (when-let ((callback (dtache--session-callback-function session)))
@@ -876,7 +867,7 @@ Otherwise use tee to log stdout and stderr individually."
                  ,(shell-quote-argument (dtache--session-command session))) " ")
             `(,dtache-shell-program "-c" ,(shell-quote-argument (dtache--session-command session)))))
          (directory (dtache--session-session-directory session))
-         (file-name (dtache--session-id session))
+         (file-name (symbol-name (dtache--session-id session)))
          (log (concat directory file-name ".log")))
     (if (dtache--session-redirect-only session)
         (format "{ %s; } &> %s" command log)

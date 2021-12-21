@@ -92,7 +92,7 @@ This function also makes sure that the HISTFILE is disabled for local shells."
   (dtache-update-sessions)
   (let* ((current-host (dtache--host))
          (sessions
-          (thread-last dtache--sessions
+          (thread-last (dtache--db-get-sessions)
             (seq-filter (lambda (it)
                           (string= (dtache--session-host it) current-host)))
             (seq-filter #'dtache--session-active-p))))
