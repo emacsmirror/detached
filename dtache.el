@@ -576,7 +576,7 @@ Sessions running on  current host or localhost are updated."
                        (if (eq action 'metadata)
                            metadata
                          (complete-with-action action candidates string predicate))))
-         (cand (completing-read "Select session: " collection nil t nil 'dtache-session-history)))
+         (cand (completing-read "Select session: " collection nil t)))
     (cdr (assoc cand candidates))))
 
 (defun dtache-setup-notification (session)
