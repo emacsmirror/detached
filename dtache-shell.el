@@ -150,7 +150,7 @@ cluttering the comint-history with dtach commands."
          (socket
           (concat
            (dtache--session-session-directory dtache-shell--current-session)
-           (dtache--session-id dtache-shell--current-session)
+           (symbol-name (dtache--session-id dtache-shell--current-session))
            ".socket"))
          (input
           (concat dtache-dtach-program " " (dtache--dtach-arg) " " socket)))
