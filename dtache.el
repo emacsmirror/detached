@@ -33,9 +33,8 @@
 ;; other functions or packages.  This is also useful if the user wants
 ;; to advice packages to use it in favor of for example `compile'.
 
-;; To manage the sessions the user can either use
-;; `dtache-list-sessions' for a tabulated list interface, or
-;; `dtache-open-session' for a `completing-read' equivalent.
+;; To manage and interact with the sessions the the package provides
+;; the command `dtache-open-session'.
 
 ;; The package requires the program dtach[1] to be installed.
 ;;
@@ -96,7 +95,7 @@
 (defvar dtache-action-map
   (let ((map (make-sparse-keymap)))
     (define-key map "c" #'dtache-compile-session)
-    (define-key map "d" #'dtache-remove-session)
+    (define-key map "d" #'dtache-delete-session)
     (define-key map "i" #'dtache-insert-session-command)
     (define-key map "k" #'dtache-kill-session)
     (define-key map "o" #'dtache-open-output)
@@ -198,24 +197,10 @@
     (dtache-start-session command)))
 
 ;;;###autoload
-(defun dtache-list-sessions ()
-  "List `dtache' sessions."
-  (interactive)
-  (pop-to-buffer-same-window
-   (get-buffer-create "*dtache-sessions*"))
-  (dtache-sessions-mode)
-  (dtache-update-sessions)
-  (let* ((tabulated-list-entries
-          (seq-map #'dtache-get-sesssion-entry (dtache--db-get-sessions))))
-    (tabulated-list-print t)))
-
-;;;###autoload
 (defun dtache-open-session (session)
   "Open a `dtache' SESSION."
   (interactive
-   (list (if (eq major-mode 'dtache-sessions-mode)
-             (tabulated-list-get-id)
-           (dtache-select-session))))
+   (list (dtache-select-session)))
   (if-let ((open-function
             (dtache--session-open-function session)))
       (funcall open-function session)
@@ -225,9 +210,7 @@
 (defun dtache-compile-session (session)
   "Open log of SESSION in `compilation-mode'."
   (interactive
-   (list (if (eq major-mode 'dtache-sessions-mode)
-             (tabulated-list-get-id)
-           (dtache-select-session))))
+   (list (dtache-select-session)))
   (let ((buffer-name "*dtache-session-output*")
         (file
          (dtache-session-file session 'log))
@@ -251,24 +234,22 @@
 (defun dtache-rerun-session (session)
   "Rerun SESSION."
   (interactive
-   (list (if (eq major-mode 'dtache-sessions-mode)
-             (tabulated-list-get-id)
-           (dtache-select-session))))
+   (list (dtache-select-session)))
   (let* ((default-directory
            (dtache--session-working-directory session))
          (dtache-open-session-function
           (dtache--session-open-function session))
          (dtache-session-callback-function
-          (dtache--session-callback-function session)))
+          (dtache--session-callback-function session))
+         (dtache-session-status-function
+          (dtache--session-status-function session)))
     (dtache-start-session (dtache--session-command session))))
 
 ;;;###autoload
 (defun dtache-copy-session-output (session)
   "Copy SESSION's log."
   (interactive
-   (list (if (eq major-mode 'dtache-sessions-mode)
-             (tabulated-list-get-id)
-           (dtache-select-session))))
+   (list (dtache-select-session)))
   (with-temp-buffer
     (insert (dtache-session-output session))
     (kill-new (buffer-string))))
@@ -277,27 +258,21 @@
 (defun dtache-copy-session-command (session)
   "Copy SESSION command."
   (interactive
-   (list (if (eq major-mode 'dtache-sessions-mode)
-             (tabulated-list-get-id)
-           (dtache-select-session))))
+   (list (dtache-select-session)))
   (kill-new (dtache--session-command session)))
 
 ;;;###autoload
 (defun dtache-insert-session-command (session)
   "Insert SESSION."
   (interactive
-   (list (if (eq major-mode 'dtache-sessions-mode)
-             (tabulated-list-get-id)
-           (dtache-select-session))))
+   (list (dtache-select-session)))
   (insert (dtache--session-command session)))
 
 ;;;###autoload
-(defun dtache-remove-session (session)
-  "Remove SESSION."
+(defun dtache-delete-session (session)
+  "Delete SESSION."
   (interactive
-   (list (if (eq major-mode 'dtache-sessions-mode)
-             (tabulated-list-get-id)
-           (dtache-select-session))))
+   (list (dtache-select-session)))
   (if (dtache--session-active-p session)
       (message "Kill session first before removing it.")
     (dtache--db-remove-entry session)))
@@ -306,9 +281,7 @@
 (defun dtache-kill-session (session)
   "Send a TERM signal to SESSION."
   (interactive
-   (list (if (eq major-mode 'dtache-sessions-mode)
-             (tabulated-list-get-id)
-           (dtache-select-session))))
+   (list (dtache-select-session)))
   (let* ((pid (dtache--session-pid session)))
     (when pid
       (dtache--kill-processes pid))))
@@ -317,9 +290,7 @@
 (defun dtache-open-output (session)
   "Open SESSION's output."
   (interactive
-   (list (if (eq major-mode 'dtache-sessions-mode)
-             (tabulated-list-get-id)
-           (dtache-select-session))))
+   (list (dtache-select-session)))
   (let* ((buffer-name "*dtache-session-output*")
          (file-path
           (dtache-session-file session 'log))
@@ -340,9 +311,7 @@
 (defun dtache-tail-output (session)
   "Tail SESSION's output."
   (interactive
-   (list (if (eq major-mode 'dtache-sessions-mode)
-             (tabulated-list-get-id)
-           (dtache-select-session))))
+   (list (dtache-select-session)))
   (if (dtache--session-active-p session)
       (let* ((file-path
               (dtache-session-file session 'log))
@@ -971,48 +940,6 @@ the current time is used."
   (setq-local auto-revert-verbose nil)
   (auto-revert-tail-mode)
   (read-only-mode t))
-
-;;;; Tabulated list interface
-
-(define-derived-mode dtache-sessions-mode tabulated-list-mode "Dtache Sessions"
-  "Dtache sessions."
-  (setq tabulated-list-format
-        `[("Command" ,dtache-max-command-length nil)
-          ("Active" 10 nil)
-          ("Status" 10 nil)
-          ("Host" 20 nil)
-          ("Directory" 40 nil)
-          ("Metadata" 30 nil)
-          ("Duration" 10 nil)
-          ("Size" 10 nil)
-          ("Created" 20 nil)])
-  (setq tabulated-list-padding 2)
-  (setq tabulated-list-sort-key nil)
-  (tabulated-list-init-header))
-
-(defun dtache-get-sesssion-entry (session)
-  "Return expected format of SESSION."
-  `(,session
-    [,(dtache--session-command session)
-     ,(dtache--active-str session)
-     ,(dtache--status-str session)
-     ,(dtache--session-host session)
-     ,(dtache--working-dir-str session)
-     ,(dtache--metadata-str session)
-     ,(dtache--duration-str session)
-     ,(dtache--size-str session)
-     ,(dtache--creation-str session)]))
-
-(let ((map dtache-sessions-mode-map))
-  (define-key map (kbd "<return>") #'dtache-open-session)
-  (define-key map (kbd "c") #'dtache-compile-session)
-  (define-key map (kbd "d") #'dtache-remove-session)
-  (define-key map (kbd "k") #'dtache-kill-session)
-  (define-key map (kbd "o") #'dtache-open-output)
-  (define-key map (kbd "r") #'dtache-rerun-session)
-  (define-key map (kbd "t") #'dtache-tail-output)
-  (define-key map (kbd "w") #'dtache-copy-session-command)
-  (define-key map (kbd "W") #'dtache-copy-session-output))
 
 (provide 'dtache)
 
