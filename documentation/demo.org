@@ -72,7 +72,7 @@ The commands that are available.
 |-------------------------------+------------------------------+------------|
 | =dtache-open-session=         | A DWIM function              | Return     |
 | =dtache-compile-session=      | Post compilation             | c          |
-| =dtache-remove-session=       | Remove a session             | d          |
+| =dtache-delete-session=       | Delete an active session     | d          |
 | =dtache-kill-session=         | Kill an active session       | k          |
 | =dtache-open-output=          | Open sessions output         | o          |
 | =dtache-rerun-session=        | Rerun a session              | r          |
