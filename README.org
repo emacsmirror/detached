@@ -202,22 +202,6 @@ Some programs doesn't play well with =tee=, which =dtache= relies upon to redire
 
 Here a command beginning with =ls= would from now on be using redirect only.
 * Tips & Tricks
-** macOS support
-
-=Dtache= depends on =filenotify= to trigger events when a =dtach socket= is deleted, which defines the transition from active to inactive for a dtache session. Currently this implementation causes issues for macOS users, it should work, but until the root cause has been identified this provides a workaround solution.
-
-#+begin_src elisp :lexical t :results none
-  (defun my/dtache--add-end-of-session-notification-advice (session)
-    "Trigger an event when SESSION transition to inactive."
-    (let ((dtache-timer-configuration
-           '(:seconds 0.5 :repeat 0.5 :function run-with-idle-timer)))
-      (dtache--session-timer session)))
-
-  (advice-add 'dtache--add-end-of-session-notification :override #'my/dtache--add-end-of-session-notification-advice)
-#+end_src
-
-We replace the notification function with one based on a timer instead. This timer will periodically check if a session has gotten deactivated.
-
 ** System notifications
 
 By default =dtache= uses the echo area to notify the user when a session has finished. An alternative is to utilize the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.

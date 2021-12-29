@@ -468,10 +468,10 @@ Sessions running on  current host or localhost are updated."
                     (dtache-update-session session))))
             (dtache--db-get-sessions))
 
-    ;; Setup notifications
+    ;; Start monitors
     (thread-last (dtache--db-get-sessions)
                  (seq-filter #'dtache--session-active)
-                 (seq-do #'dtache-setup-notification))))
+                 (seq-do #'dtache-start-session-monitor))))
 
 (defun dtache-cleanup-host-sessions (host)
   "Run cleanuup on HOST sessions."
@@ -548,11 +548,13 @@ Sessions running on  current host or localhost are updated."
          (cand (completing-read "Select session: " collection nil t)))
     (cdr (assoc cand candidates))))
 
-(defun dtache-setup-notification (session)
-  "Setup notification for SESSION."
+(defun dtache-start-session-monitor (session)
+  "Start to monitor SESSION activity."
   (if (file-remote-p (dtache--session-working-directory session))
-      (dtache--session-timer session)
-    (dtache--add-end-of-session-notification session)))
+      (dtache--session-timer-monitor session)
+    (if (eq system-type 'darwin)
+        (dtache--session-macos-monitor session)
+      (dtache--session-filenotify-monitor session))))
 
 (defun dtache-dtach-command (session)
   "Return a dtach command for SESSION."
@@ -697,8 +699,9 @@ Sessions running on  current host or localhost are updated."
      "")
    "\n"))
 
-(defun dtache--session-timer (session)
-  "Create a timmer for SESSION according to `dtache-timer-configuration'."
+(defun dtache--session-timer-monitor (session)
+  "Configure a timer to monitor SESSION activity.
+ The timer object is configured according to `dtache-timer-configuration'."
   (let* ((timer)
          (callback
           (lambda ()
@@ -710,6 +713,22 @@ Sessions running on  current host or localhost are updated."
                    (plist-get dtache-timer-configuration :seconds)
                    (plist-get dtache-timer-configuration :repeat)
                    callback))))
+
+(defun dtache--session-filenotify-monitor (session)
+  "Configure `filenotify' to monitor SESSION activity."
+  (file-notify-add-watch
+   (dtache-session-file session 'socket)
+   '(change)
+   (lambda (event)
+     (pcase-let ((`(,_ ,action ,_) event))
+       (when (eq action 'deleted)
+         (dtache--session-final-update session))))))
+
+(defun dtache--session-macos-monitor (session)
+  "Configure a timer to monitor SESSION activity on macOS."
+  (let ((dtache-timer-configuration
+         '(:seconds 0.5 :repeat 0.5 :function run-with-idle-timer)))
+    (dtache--session-timer-monitor session)))
 
 ;;;;; Database
 
@@ -763,16 +782,6 @@ Sessions running on  current host or localhost are updated."
     ('create "-c")
     ('attach "-a")
     (_ "-n")))
-
-(defun dtache--add-end-of-session-notification (session)
-  "Trigger an event when SESSION is stopped."
-  (file-notify-add-watch
-   (dtache-session-file session 'socket)
-   '(change)
-   (lambda (event)
-     (pcase-let ((`(,_ ,action ,_) event))
-       (when (eq action 'deleted)
-         (dtache--session-final-update session))))))
 
 (defun dtache--session-final-update (session)
   "Make a final update to SESSION."

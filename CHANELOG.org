@@ -4,6 +4,8 @@
 
 * Development
 
+- macOS (monitor) support is added to the package.
+
 * Version 0.2 (2021-12-23)
 
 - With the recent improvements to =dtache-open-session=, the package is ready to harmonize the user interface. This means deprecating =dtache-list-sessions=.
