@@ -171,7 +171,7 @@ cluttering the comint-history with dtach commands."
                    dtache-shell-new-block-list)
                   'create
                 dtache--dtach-mode))
-             (session (dtache--create-session
+             (session (dtache-create-session
                        (substring-no-properties string)))
              (command (dtache-dtach-command session))
              (shell-command
@@ -179,9 +179,7 @@ cluttering the comint-history with dtach commands."
                                      ,@(butlast command)
                                      ,(shell-quote-argument (car (last command))))
                          " ")))
-       (progn
-         (dtache-setup-notification session)
-         (comint-simple-send proc shell-command))
+       (comint-simple-send proc shell-command)
      (comint-simple-send proc string))))
 
 (defun dtache-shell--comint-read-input-ring-advice (orig-fun &rest args)

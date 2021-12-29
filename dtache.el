@@ -356,12 +356,34 @@ nil before closing."
 
 ;;;;; Session
 
+(defun dtache-create-session (command)
+  "Create a `dtache' session from COMMAND."
+  (dtache-create-session-directory)
+  (let ((session
+         (dtache--session-create :id (intern (dtache--create-id command))
+                                 :command command
+                                 :type dtache-session-type
+                                 :open-function dtache-open-session-function
+                                 :callback-function dtache-session-callback-function
+                                 :status-function dtache-session-status-function
+                                 :working-directory (dtache-get-working-directory)
+                                 :redirect-only (dtache-redirect-only-p command)
+                                 :creation-time (time-to-seconds (current-time))
+                                 :status 'unknown
+                                 :output-size 0
+                                 :session-directory (file-name-as-directory dtache-session-directory)
+                                 :host (dtache--host)
+                                 :metadata (dtache-metadata)
+                                 :active t)))
+    (dtache--db-insert-entry session)
+    (dtache-start-session-monitor session)
+    session))
+
 (defun dtache-start-session (command)
   "Start a `dtache' session running COMMAND."
   (let* ((dtache--dtach-mode 'new)
-         (session (dtache--create-session command))
+         (session (dtache-create-session command))
          (dtache-command (dtache-dtach-command session)))
-    (dtache-setup-notification session)
     (apply #'start-file-process
            `("dtache" nil ,dtache-dtach-program ,@dtache-command))))
 
@@ -607,29 +629,6 @@ Sessions running on  current host or localhost are updated."
 ;;;; Support functions
 
 ;;;;; Session
-
-(defun dtache--create-session (command)
-  "Create a `dtache' session from COMMAND."
-  (dtache-create-session-directory)
-  (let ((session
-         (dtache--session-create :id (intern (dtache--create-id command))
-                                 :command command
-                                 :type dtache-session-type
-                                 :open-function dtache-open-session-function
-                                 :callback-function dtache-session-callback-function
-                                 :status-function dtache-session-status-function
-                                 :working-directory (dtache-get-working-directory)
-                                 :redirect-only (dtache-redirect-only-p command)
-                                 :creation-time (time-to-seconds (current-time))
-                                 :status 'unknown
-                                 :output-size 0
-                                 :session-directory (file-name-as-directory dtache-session-directory)
-                                 :host (dtache--host)
-                                 :metadata (dtache-metadata)
-                                 :active t)))
-    ;; Update database
-    (dtache--db-insert-entry session)
-    session))
 
 (defun dtache--session-pid (session)
   "Return SESSION's pid."

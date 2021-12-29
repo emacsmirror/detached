@@ -51,7 +51,7 @@
   "Create session with COMMAND running on HOST."
   (cl-letf* (((symbol-function #'dtache--host) (lambda () host))
              ((symbol-function #'dtache-metadata) (lambda () nil))
-             (session (dtache--create-session command)))
+             (session (dtache-create-session command)))
     (dtache-test--change-session-state session 'activate)
     session))
 
