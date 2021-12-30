@@ -163,6 +163,10 @@ The user have the possibility to integrate =dtache= with the package [[https://g
   (add-to-list 'embark-keymap-alist '(dtache . embark-dtache-map))
 #+end_src
 
+** Consult
+
+The [[https://gitlab.com/niklaseklund/consult-dtache][consult-dtache]] package provides the integration of =dtache= [[https://github.com/minad/consult][consult]]. The benefit of using this package is that the user has the ability to narrow the list of sessions based on different criterion. Since this package has external dependencies it is provided in its own repository.
+
 ** Alert
 
 By default =dtache= uses the echo area to notify the user when a session has finished. An alternative is to utilize the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.
