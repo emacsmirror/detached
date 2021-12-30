@@ -70,15 +70,20 @@
 ;;;; Tests
 
 (ert-deftest dtache-test-dtach-command ()
-  (cl-letf* (((symbol-function #'dtache--magic-command) (lambda (_) "command"))
-             (dtache-shell-program "zsh")
-             (dtache-dtach-program "/usr/bin/dtach")
-             (dtache--dtach-mode 'create)
-             (actual
-              (dtache-dtach-command
-               (dtache--session-create :id 's12345 :session-directory "/tmp/dtache/")))
-             (expected `(, "-c" "/tmp/dtache/s12345.socket" "-z" "zsh" "-c" "command")))
-    (should (equal expected actual))))
+  (dtache-test--with-temp-database
+   (cl-letf* ((dtache-env "dtache-env")
+              (dtache-shell-program "bash")
+              (dtache--dtach-mode 'create)
+              (session (dtache-create-session "ls -la"))
+              ((symbol-function #'dtache-create-session)
+               (lambda (_)
+                 session))
+              (expected `("-c" ,(dtache-session-file session 'socket t)
+                          "-z" ,dtache-shell-program
+                          "-c"
+                          ,(format "{ dtache-env ls\\ -la; } 2>&1 | tee %s"
+                                   (dtache-session-file session 'log t)))))
+     (should (equal expected (dtache-dtach-command "ls -la"))))))
 
 (ert-deftest dtache-test-metadata ()
   ;; No annotators
@@ -186,41 +191,29 @@
      (should (equal copy (car (dtache--db-get-sessions)))))))
 
 (ert-deftest dtache-test-magic-command ()
-  ;; Redirect only without dtache-env
-  (let* ((dtache-env nil)
-         (dtache-shell-program "bash")
-         (actual
-          (dtache--magic-command
-           (dtache--session-create :id 's12345 :session-directory "/tmp/dtache/" :command "ls" :redirect-only t)))
-         (expected "{ (bash -c ls); } &> /tmp/dtache/s12345.log"))
-    (should (string= actual expected)))
+  (let ((normal-session (dtache--session-create :session-directory "/tmp/dtache/"
+                                                :working-directory "/home/user/"
+                                                :command "ls -la"
+                                                :id 'foo123))
+        (redirect-session (dtache--session-create :session-directory "/tmp/dtache/"
+                                                :working-directory "/home/user/"
+                                                :command "ls -la"
+                                                :redirect-only t
+                                                :id 'foo123)))
+    ;; With dtache-env
+    (let ((dtache-env "dtache-env"))
+      (should (string= "{ dtache-env ls\\ -la; } 2>&1 | tee /tmp/dtache/foo123.log"
+                       (dtache--magic-command normal-session)))
+      (should (string= "{ dtache-env ls\\ -la; } &> /tmp/dtache/foo123.log"
+                       (dtache--magic-command redirect-session))))
 
-  ;; Normal without dtache-env
-  (let* ((dtache-env nil)
-         (dtache-shell-program "bash")
-         (actual
-          (dtache--magic-command
-           (dtache--session-create :id 's12345 :session-directory "/tmp/dtache/" :command "ls")))
-         (expected "{ (bash -c ls); } 2>&1 | tee /tmp/dtache/s12345.log"))
-    (should (string= actual expected)))
-
-  ;; Redirect only with dtache-env
-  (let* ((dtache-env "dtache-env")
-         (dtache-shell-program "bash")
-         (actual
-          (dtache--magic-command
-           (dtache--session-create :id 's12345 :session-directory "/tmp/dtache/" :command "ls" :redirect-only t)))
-         (expected "{ dtache-env ls; } &> /tmp/dtache/s12345.log"))
-    (should (string= actual expected)))
-
-  ;; Normal with dtache-env
-  (let* ((dtache-env "dtache-env")
-         (dtache-shell-program "bash")
-         (actual
-          (dtache--magic-command
-           (dtache--session-create :id 's12345 :session-directory "/tmp/dtache/" :command "ls")))
-         (expected "{ dtache-env ls; } 2>&1 | tee /tmp/dtache/s12345.log"))
-    (should (string= actual expected))))
+    ;; Without dtache-env
+    (let ((dtache-env nil)
+          (dtache-shell-program "bash"))
+      (should (string= "{ bash -c ls\\ -la; } 2>&1 | tee /tmp/dtache/foo123.log"
+                       (dtache--magic-command normal-session)))
+      (should (string= "{ bash -c ls\\ -la; } &> /tmp/dtache/foo123.log"
+                       (dtache--magic-command redirect-session))))))
 
 (ert-deftest dtache-test-redirect-only-p ()
   (let ((dtache-redirect-only-regexps '("ls")))
@@ -273,6 +266,26 @@
    (string= "~/repo"
             (dtache--working-dir-str
              (dtache--session-create :working-directory "~/repo")))))
+
+;;;;; Output filters
+
+(ert-deftest dtache-test-dtach-eof-message-filter ()
+  (let ((str "
+[EOF - dtach terminating]
+user@machine "))
+    (should (string= "user@machine " (dtache--dtach-eof-message-filter str)))))
+
+(ert-deftest dtache-test-dtach-detached-message-filter ()
+  (let ((str "
+[detached]
+user@machine "))
+    (should (string= "user@machine " (dtache--dtach-detached-message-filter str)))))
+
+(ert-deftest dtache-test-dtache-env-message-filter ()
+  (let ((str "output\n\nDtache session exited abnormally with code 127"))
+    (should (string= "output\n" (dtache--dtache-env-message-filter str))))
+  (let ((str "output\n\nDtache session finished"))
+    (should (string= "output\n" (dtache--dtache-env-message-filter str)))))
 
 (provide 'dtache-test)
 

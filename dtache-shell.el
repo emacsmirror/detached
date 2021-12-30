@@ -46,10 +46,6 @@
 
 (defconst dtache-shell-detach-character "\C-\\"
   "Character used to detach from a session.")
-(defconst dtache-shell-eof-message "\\[EOF - dtach terminating\\]\^M"
-  "Message printed when `dtach' finishes.")
-(defconst dtache-shell-detached-message "\\[detached\\]\^M"
-  "Message printed when `dtach' finishes.")
 
 ;;;;; Private
 
@@ -69,18 +65,6 @@ This function also makes sure that the HISTFILE is disabled for local shells."
   "Add hook to save history when killing `shell' buffer."
   (add-hook 'kill-buffer-hook #'dtache-shell-save-history 0 t))
 
-(defun dtache-shell-filter-dtach-eof (string)
-  "Remove eof message from dtach in STRING."
-  (if (string-match dtache-shell-eof-message string)
-      (replace-regexp-in-string (format "%s\n" dtache-shell-eof-message) "" string)
-    string))
-
-(defun dtache-shell-filter-dtach-detached (string)
-  "Remove detached message from dtach in STRING."
-  (if (string-match dtache-shell-detached-message string)
-      (replace-regexp-in-string (format "%s\n" dtache-shell-detached-message) "" string)
-    string))
-
 (defun dtache-shell-setup ()
   "Setup `dtache-shell'."
   (add-hook 'shell-mode-hook #'dtache-shell-save-history)
@@ -89,10 +73,9 @@ This function also makes sure that the HISTFILE is disabled for local shells."
 
 (defun dtache-shell-select-session ()
   "Return selected session."
-  (dtache-update-sessions)
   (let* ((current-host (dtache--host))
          (sessions
-          (thread-last (dtache--db-get-sessions)
+          (thread-last (dtache-get-sessions)
             (seq-filter (lambda (it)
                           (string= (dtache--session-host it) current-host)))
             (seq-filter #'dtache--session-active-p))))
@@ -147,13 +130,9 @@ cluttering the comint-history with dtach commands."
 (defun dtache-shell--attach-input-sender (proc _string)
   "Attach to `dtache--session' and send the attach command to PROC."
   (let* ((dtache--dtach-mode 'attach)
-         (socket
-          (concat
-           (dtache--session-session-directory dtache-shell--current-session)
-           (symbol-name (dtache--session-id dtache-shell--current-session))
-           ".socket"))
+         (socket (dtache-session-file dtache-shell--current-session 'socket t))
          (input
-          (concat dtache-dtach-program " " (dtache--dtach-arg) " " socket)))
+          (format "%s %s %s" dtache-dtach-program (dtache--dtach-arg) socket)))
     (comint-simple-send proc input)))
 
 (defun dtache-shell--create-input-sender (proc string)
@@ -171,9 +150,7 @@ cluttering the comint-history with dtach commands."
                    dtache-shell-new-block-list)
                   'create
                 dtache--dtach-mode))
-             (session (dtache-create-session
-                       (substring-no-properties string)))
-             (command (dtache-dtach-command session))
+             (command (dtache-dtach-command (substring-no-properties string)))
              (shell-command
               (mapconcat 'identity `(,dtache-dtach-program
                                      ,@(butlast command)
@@ -211,11 +188,11 @@ cluttering the comint-history with dtach commands."
   (with-connection-local-variables
    (if dtache-shell-mode
        (when dtache-shell-silence-dtach-messages
-         (add-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-eof 0 t)
-         (add-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-detached 0 t))
+         (add-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter 0 t)
+         (add-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter 0 t))
      (when dtache-shell-silence-dtach-messages
-       (remove-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-eof t)
-       (remove-hook 'comint-preoutput-filter-functions #'dtache-shell-filter-dtach-detached t)))))
+       (remove-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter t)
+       (remove-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter t)))))
 
 (provide 'dtache-shell)
 

@@ -4,6 +4,7 @@
 
 * Development
 
+- Add support for =eshell= through the =dtache-eshell= package.
 - macOS (monitor) support is added to the package.
 
 * Version 0.2 (2021-12-23)

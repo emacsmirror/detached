@@ -132,6 +132,28 @@ These are commands that the package provides and which the user is expected to b
 | dtache-shell-attach | Attach to a session   |
 | dtache-shell-detach | Detach from a session |
 
+** Dtache-eshell
+
+A =use-package= configuration of the =dtache-eshell= package. This package provides the integration with =eshell=, but since not all Emacs users use =eshell=, this package is made optional.
+
+#+begin_src elisp :lexical t :results none
+  (use-package dtache-eshell
+    :hook (after-init . dtache-eshell-setup)
+    :general
+    (:keymaps 'dtache-eshell-mode-map
+              "<S-return>" #'dtache-eshell-create-session
+              "<C-return>" #'dtache-eshell-attach))
+#+end_src
+
+These are commands that the package provides and which the user is expected to bind to convenient keys. The package provides a minor mode that will be enabled in =eshell=.
+
+| Command                      | Description         |
+|------------------------------+---------------------|
+| dtache-eshell-create-session | Create a session    |
+| dtache-eshell-attach         | Attach to a session |
+
+To detach from a session simply use =C-c C-c=.
+
 ** Embark
 
 The user have the possibility to integrate =dtache= with the package [[https://github.com/oantolin/embark/][embark]]. The =dtache-action-map= can be reused for this purpose, so the user doesn't need to bind it to any key. Instead the user simply adds the following to their =dtache= configuration in order to get embark actions for =dtache-open-session=.
@@ -139,6 +161,35 @@ The user have the possibility to integrate =dtache= with the package [[https://g
 #+begin_src elisp :lexical t :results none
   (defvar embark-dtache-map (make-composed-keymap dtache-action-map embark-general-map))
   (add-to-list 'embark-keymap-alist '(dtache . embark-dtache-map))
+#+end_src
+
+** Alert
+
+By default =dtache= uses the echo area to notify the user when a session has finished. An alternative is to utilize the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.
+
+#+begin_src elisp :lexical t :results none
+  (defun my/dtache-session-finish-alert (session)
+    "Send an alert notification when SESSION finish."
+    (let ((status (dtache--session-status session))
+          (title
+           (pcase (dtache--session-status session)
+             ('success "Dtache finished!")
+             ('failure "Dtache failed!"))))
+      (alert (dtache--session-command session)
+             :title title
+             :severity (pcase status
+                         ('success 'moderate)
+                         ('failure 'high))
+             :category 'compile
+             :id (pcase status
+                   ('success 'compile-ok)
+                   ('failure 'compile-fail)))))
+#+end_src
+
+With the usage of =advice= the user can override the default implantation with the alert version.
+
+#+begin_src elisp :lexical t :results none
+  (advice-add 'dtache-session-finish-notification :override #'my/dtache-session-finish-alert)
 #+end_src
 
 * Customization
@@ -202,35 +253,6 @@ Some programs doesn't play well with =tee=, which =dtache= relies upon to redire
 
 Here a command beginning with =ls= would from now on be using redirect only.
 * Tips & Tricks
-** System notifications
-
-By default =dtache= uses the echo area to notify the user when a session has finished. An alternative is to utilize the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.
-
-#+begin_src elisp :lexical t :results none
-  (defun dtache-session-finish-alert (session)
-    "Send an alert notification when SESSION finish."
-    (let ((status (dtache--session-status session))
-          (title
-           (pcase (dtache--session-status session)
-             ('success "Dtache finished!")
-             ('failure "Dtache failed!"))))
-      (alert (dtache--session-command session)
-             :title title
-             :severity (pcase status
-                         ('success 'moderate)
-                         ('failure 'high))
-             :category 'compile
-             :id (pcase status
-                   ('success 'compile-ok)
-                   ('failure 'compile-fail)))))
-#+end_src
-
-With the usage of =advice= the user can override the default implantation with the alert version.
-
-#+begin_src elisp :lexical t :results none
-  (advice-add 'dtache-session-finish-notification :override #'my/dtache-session-finish-alert)
-#+end_src
-
 ** Remote support
 
 The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Connection-Local-Variables.html][Connection Local Variables]] which allows you to change the variables used by =dtache= when running on a remote host. This useful when the user needs to alter dtache settings when running on a remote host.

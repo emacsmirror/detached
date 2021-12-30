@@ -1,6 +1,6 @@
-;;; dtache-shell-test.el --- Tests for dtache-shell.el -*- lexical-binding: t; -*-
+;;; dtache-eshell-test.el --- Tests for dtache-eshell.el -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2020-2021  Niklas Eklund
+;; Copyright (C) 2021  Niklas Eklund
 
 ;; Author: Niklas Eklund <niklas.eklund@posteo.net>
 ;; Url: https://gitlab.com/niklaseklund/dtache
@@ -22,15 +22,15 @@
 
 ;;; Commentary:
 
-;; Tests for `dtache-shell'.
+;; Tests for `dtache-eshell'.
 
 ;;; Code:
 
 (require 'ert)
-(require 'dtache-shell)
+(require 'dtache-eshell)
 
 ;;;; Tests
 
-(provide 'dtache-shell-test)
+(provide 'dtache-eshell-test)
 
-;;; dtache-shell-test.el ends here
+;;; dtache-eshell-test.el ends here
