@@ -452,17 +452,18 @@ Optionally make the path LOCAL to host."
         (setcar session (format "%s%s" (car session) (make-string identifier-width ?\s)))))
     (seq-reverse reverse-sessions)))
 
-(defun dtache-session-annotation (session)
-  "Return annotation string for SESSION."
-  (mapconcat
-   #'identity
-   (cl-loop for annotation in dtache-annotation-format
-            collect (let ((str (funcall (plist-get annotation :function) session)))
-                      (truncate-string-to-width
-                       (propertize str 'face (plist-get annotation :face))
-                       (plist-get annotation :width)
-                       0 ?\s)))
-   "   "))
+(defun dtache-session-annotation (item)
+  "Associate ITEM to a session and return ts annotation."
+  (let ((session (cdr (assoc item dtache--session-candidates))))
+    (mapconcat
+     #'identity
+     (cl-loop for annotation in dtache-annotation-format
+              collect (let ((str (funcall (plist-get annotation :function) session)))
+                        (truncate-string-to-width
+                         (propertize str 'face (plist-get annotation :face))
+                         (plist-get annotation :width)
+                         0 ?\s)))
+     "   ")))
 
 (defun dtache-update-session (session)
   "Update SESSION."
@@ -623,12 +624,11 @@ Optionally make the path LOCAL to host."
                      (category . dtache)
                      (cycle-sort-function . identity)
                      (display-sort-function . identity)
-                     (annotation-function . ,(lambda (s)
-                                               (dtache-session-annotation (cdr (assoc s candidates)))))
+                     (annotation-function . dtache-session-annotation)
                      (affixation-function .
                                           ,(lambda (cands)
                                              (seq-map (lambda (s)
-                                                        `(,s nil ,(dtache-session-annotation (cdr (assoc s candidates)))))
+                                                        `(,s nil ,(dtache-session-annotation s)))
                                                       cands)))))
          (collection (lambda (string predicate action)
                        (if (eq action 'metadata)
