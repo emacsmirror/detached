@@ -157,6 +157,8 @@
   "Mode of operation for dtach.")
 (defvar dtache--sessions nil
   "A list of sessions.")
+(defvar dtache--session-candidates nil
+  "An alist of session candidates.")
 (defconst dtache--dtach-eof-message "\\[EOF - dtach terminating\\]\^M"
   "Message printed when `dtach' finishes.")
 (defconst dtache--dtach-detached-message "\\[detached\\]\^M"
@@ -424,15 +426,16 @@ Optionally make the path LOCAL to host."
 
 (defun dtache-session-candidates (sessions)
   "Return an alist of SESSIONS candidates."
-  (thread-last sessions
-               (seq-map (lambda (it)
-                          `(,(dtache--session-truncate-command it)
-                            . ,it)))
-               (dtache--session-deduplicate)
-               (seq-map (lambda (it)
-                          ;; Max width is the ... padding + width of identifier
-                          (setcar it (truncate-string-to-width (car it) (+ 3 6 dtache-max-command-length) 0 ?\s))
-                          it))))
+  (setq dtache--session-candidates
+        (thread-last sessions
+                     (seq-map (lambda (it)
+                                `(,(dtache--session-truncate-command it)
+                                  . ,it)))
+                     (dtache--session-deduplicate)
+                     (seq-map (lambda (it)
+                                ;; Max width is the ... padding + width of identifier
+                                (setcar it (truncate-string-to-width (car it) (+ 3 6 dtache-max-command-length) 0 ?\s))
+                                it)))))
 
 (defun dtache--session-deduplicate (sessions)
   "Make car of SESSIONS unique by adding an identifier to it."
