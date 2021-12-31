@@ -41,9 +41,6 @@
   "A list of regexps to block non-supported input.")
 (defvar dtache-shell-new-block-list '("^sudo.*")
   "A list of regexps to block from creating a session without attaching.")
-(defvar dtache-shell-silence-dtach-messages t
-  "Filter out messages from the `dtach' program.")
-
 (defconst dtache-shell-detach-character "\C-\\"
   "Character used to detach from a session.")
 
@@ -187,12 +184,11 @@ cluttering the comint-history with dtach commands."
             map)
   (with-connection-local-variables
    (if dtache-shell-mode
-       (when dtache-shell-silence-dtach-messages
+       (progn
          (add-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter 0 t)
          (add-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter 0 t))
-     (when dtache-shell-silence-dtach-messages
-       (remove-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter t)
-       (remove-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter t)))))
+     (remove-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter t)
+     (remove-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter t))))
 
 (provide 'dtache-shell)
 

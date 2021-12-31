@@ -162,9 +162,9 @@
 (defvar dtache--session-candidates nil
   "An alist of session candidates.")
 (defconst dtache--dtach-eof-message "\\[EOF - dtach terminating\\]\^M"
-  "Message printed when `dtach' finishes.")
+  "Message printed when `dtach' terminates.")
 (defconst dtache--dtach-detached-message "\\[detached\\]\^M"
-  "Message printed when `dtach' finishes.")
+  "Message printed when detaching from `dtach'.")
 
 ;;;; Data structures
 
@@ -438,21 +438,6 @@ Optionally make the path LOCAL to host."
                                 ;; Max width is the ... padding + width of identifier
                                 (setcar it (truncate-string-to-width (car it) (+ 3 6 dtache-max-command-length) 0 ?\s))
                                 it)))))
-
-(defun dtache--session-deduplicate (sessions)
-  "Make car of SESSIONS unique by adding an identifier to it."
-  (let* ((ht (make-hash-table :test #'equal :size (length sessions)))
-         (identifier-width 6)
-         (reverse-sessions (seq-reverse sessions)))
-    (dolist (session reverse-sessions)
-      (if-let (count (gethash (car session) ht))
-          (setcar session (format "%s%s" (car session)
-                                  (truncate-string-to-width
-                                   (propertize (format " (%s)" (puthash (car session) (1+ count) ht)) 'face 'dtache-identifier-face)
-                                   identifier-width 0 ?\s)))
-        (puthash (car session) 0 ht)
-        (setcar session (format "%s%s" (car session) (make-string identifier-width ?\s)))))
-    (seq-reverse reverse-sessions)))
 
 (defun dtache-session-annotation (item)
   "Associate ITEM to a session and return ts annotation."
@@ -735,6 +720,21 @@ Optionally make the path LOCAL to host."
      (pcase-let ((`(,_ ,action ,_) event))
        (when (eq action 'deleted)
          (dtache--session-final-update session))))))
+
+(defun dtache--session-deduplicate (sessions)
+  "Make car of SESSIONS unique by adding an identifier to it."
+  (let* ((ht (make-hash-table :test #'equal :size (length sessions)))
+         (identifier-width 6)
+         (reverse-sessions (seq-reverse sessions)))
+    (dolist (session reverse-sessions)
+      (if-let (count (gethash (car session) ht))
+          (setcar session (format "%s%s" (car session)
+                                  (truncate-string-to-width
+                                   (propertize (format " (%s)" (puthash (car session) (1+ count) ht)) 'face 'dtache-identifier-face)
+                                   identifier-width 0 ?\s)))
+        (puthash (car session) 0 ht)
+        (setcar session (format "%s%s" (car session) (make-string identifier-width ?\s)))))
+    (seq-reverse reverse-sessions)))
 
 (defun dtache--session-macos-monitor (session)
   "Configure a timer to monitor SESSION activity on macOS."
