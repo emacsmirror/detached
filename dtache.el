@@ -70,8 +70,10 @@
   "Variable to specify the origin of the session.")
 (defvar dtache-open-session-function nil
   "Custom function to use to open a session.")
+(defvar dtache-notification-function #'dtache-inactive-session-notification
+  "Variable to specify notification function when a session becomes inactive.")
 (defvar dtache-session-callback-function nil
-  "Custom function to callback when a session finish.")
+  "Custom function to callback when a session becomes inactive.")
 (defvar dtache-session-status-function nil
   "Custom function to deduce the status of a session.")
 (defvar dtache-compile-hooks nil
@@ -535,8 +537,8 @@ Optionally make the path LOCAL to host."
                    (point-max))))
         (buffer-substring beginning end)))))
 
-(defun dtache-session-finish-notification (session)
-  "Send a notification when SESSION finish."
+(defun dtache-inactive-session-notification (session)
+  "Send a notification when SESSION becomes inactive."
   (let ((status (pcase (dtache--session-status session)
                   ('success "Dtache finished")
                   ('failure "Dtache failed")) ))
@@ -815,7 +817,7 @@ Optionally make the path LOCAL to host."
       (setf (dtache--session-status session) (dtache-session-exit-code-status session)))
 
     ;; Send notification
-    (dtache-session-finish-notification session)
+    (funcall dtache-notification-function session)
 
     ;; Update session in database
     (dtache--db-update-entry session t)

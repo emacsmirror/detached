@@ -172,8 +172,8 @@ The [[https://gitlab.com/niklaseklund/consult-dtache][consult-dtache]] package p
 By default =dtache= uses the echo area to notify the user when a session has finished. An alternative is to utilize the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.
 
 #+begin_src elisp :lexical t :results none
-  (defun my/dtache-session-finish-alert (session)
-    "Send an alert notification when SESSION finish."
+  (defun my/dtache-inactive-session-notification (session)
+    "Send an `alert' notification when SESSION becomes inactive."
     (let ((status (dtache--session-status session))
           (title
            (pcase (dtache--session-status session)
@@ -186,14 +186,10 @@ By default =dtache= uses the echo area to notify the user when a session has fin
                          ('failure 'high))
              :category 'compile
              :id (pcase status
-                   ('success 'compile-ok)
-                   ('failure 'compile-fail)))))
-#+end_src
+                   ('success 'dtache-success)
+                   ('failure 'dtache-failure)))))
 
-With the usage of =advice= the user can override the default implantation with the alert version.
-
-#+begin_src elisp :lexical t :results none
-  (advice-add 'dtache-session-finish-notification :override #'my/dtache-session-finish-alert)
+  (setq dtache-notification-function #'my/dtache-inactive-session-notification)
 #+end_src
 
 * Customization
