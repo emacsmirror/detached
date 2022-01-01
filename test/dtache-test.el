@@ -2,11 +2,6 @@
 
 ;; Copyright (C) 2020-2022  Niklas Eklund
 
-;; Author: Niklas Eklund <niklas.eklund@posteo.net>
-;; Url: https://gitlab.com/niklaseklund/dtache
-;; Package-Requires: ((emacs "27.1"))
-;; Version: 0.2
-
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or

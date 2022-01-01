@@ -2,12 +2,6 @@
 
 ;; Copyright (C) 2020-2022 Niklas Eklund
 
-;; Author: Niklas Eklund <niklas.eklund@posteo.net>
-;; URL: https://www.gitlab.com/niklaseklund/dtache.git
-;; Version: 0.2
-;; Package-Requires: ((emacs "27.1"))
-;; Keywords: convenience processes
-
 ;; This file is not part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify

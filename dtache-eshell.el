@@ -1,12 +1,6 @@
 ;;; dtache-eshell.el --- Dtache integration in eshell -*- lexical-binding: t -*-
 
-;; Copyright (C) 2021 Niklas Eklund
-
-;; Author: Niklas Eklund <niklas.eklund@posteo.net>
-;; URL: https://www.gitlab.com/niklaseklund/dtache.git
-;; Version: 0.2
-;; Package-Requires: ((emacs "27.1"))
-;; Keywords: convenience processes
+;; Copyright (C) 2021-2022 Niklas Eklund
 
 ;; This file is not part of GNU Emacs.
 
