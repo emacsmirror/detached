@@ -1,6 +1,6 @@
 ;;; dtache-shell-test.el --- Tests for dtache-shell.el -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2020-2021  Niklas Eklund
+;; Copyright (C) 2020-2022  Niklas Eklund
 
 ;; Author: Niklas Eklund <niklas.eklund@posteo.net>
 ;; Url: https://gitlab.com/niklaseklund/dtache

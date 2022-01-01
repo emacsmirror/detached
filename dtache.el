@@ -1,6 +1,6 @@
 ;;; dtache.el --- Dispatch and interact with dtache sessions -*- lexical-binding: t -*-
 
-;; Copyright (C) 2020-2021 Niklas Eklund
+;; Copyright (C) 2020-2022 Niklas Eklund
 
 ;; Author: Niklas Eklund <niklas.eklund@posteo.net>
 ;; URL: https://www.gitlab.com/niklaseklund/dtache.git
