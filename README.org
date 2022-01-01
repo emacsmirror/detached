@@ -154,6 +154,27 @@ These are commands that the package provides and which the user is expected to b
 
 To detach from a session simply use =C-c C-c=.
 
+** Consult
+
+A =use-package= configuration of the =dtache-consult= package. This package provides the integration with the [[https://github.com/minad/consult][consult]] package.
+
+#+begin_src elisp
+  (use-package dtache-consult
+    :commands dtache-consult-session)
+#+end_src
+
+This package provides the =dtache-consult-session= command which is a replacement for =dtache-open-session=. The difference is that the consult command provides multiple session sources, which is defined in the =dtache-consult-sources= variable. Users can customize which sources to use, as well as use individual sources in other =consult= commands, such as =consult-buffer=. The users can also narrow the list of sessions by entering a key. The list of supported keys are:
+
+| Type                  | Key |
+|-----------------------+-----|
+| Active sessions       | a   |
+| Inactive sessions     | i   |
+| Successful sessions   | s   |
+| Failed sessions       | f   |
+| Local host sessions   | l   |
+| Remote host sessions  | r   |
+| Current host sessions | c   |
+
 ** Embark
 
 The user have the possibility to integrate =dtache= with the package [[https://github.com/oantolin/embark/][embark]]. The =dtache-action-map= can be reused for this purpose, so the user doesn't need to bind it to any key. Instead the user simply adds the following to their =dtache= configuration in order to get embark actions for =dtache-open-session=.
@@ -162,10 +183,6 @@ The user have the possibility to integrate =dtache= with the package [[https://g
   (defvar embark-dtache-map (make-composed-keymap dtache-action-map embark-general-map))
   (add-to-list 'embark-keymap-alist '(dtache . embark-dtache-map))
 #+end_src
-
-** Consult
-
-The [[https://gitlab.com/niklaseklund/consult-dtache][consult-dtache]] package provides the integration of =dtache= [[https://github.com/minad/consult][consult]]. The benefit of using this package is that the user has the ability to narrow the list of sessions based on different criterion. Since this package has external dependencies it is provided in its own repository.
 
 ** Alert
 

@@ -622,7 +622,7 @@ Optionally make the path LOCAL to host."
                            metadata
                          (complete-with-action action candidates string predicate))))
          (cand (completing-read "Select session: " collection nil t)))
-    (cdr (assoc cand candidates))))
+    (dtache--decode-session cand)))
 
 ;;;; Support functions
 
@@ -741,6 +741,10 @@ Optionally make the path LOCAL to host."
   (let ((dtache-timer-configuration
          '(:seconds 0.5 :repeat 0.5 :function run-with-idle-timer)))
     (dtache--session-timer-monitor session)))
+
+(defun dtache--decode-session (item)
+  "Return the session assicated with ITEM."
+  (cdr (assoc item dtache--session-candidates)))
 
 ;;;;; Database
 
