@@ -348,6 +348,10 @@ The user also have the same possibility of customization when it comes to the va
 
 Information about the changes to the package can be found in the =CHANGELOG.org=.
 
+* Contributions
+
+For the time being I try to keep the possibility open to submit the package to [[https://elpa.gnu.org/][ELPA]], which means that if you want to contribute you should have gone through the copyright assignment procedure.
+
 * Credits
 
 I got inspired by =Ambrevar's= pursuits on [[https://ambrevar.xyz/emacs-eshell/][using eshell as his main shell]], and his [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]] got me into the idea of using =dtach= as a base for detachable shell commands.
