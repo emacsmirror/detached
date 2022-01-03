@@ -152,7 +152,7 @@ These are commands that the package provides and which the user is expected to b
 | dtache-eshell-create-session | Create a session    |
 | dtache-eshell-attach         | Attach to a session |
 
-To detach from a session simply use =C-c C-c=.
+To detach from a session simply use =C-c C-c=. In this [[https://niklaseklund.gitlab.io/blog/posts/dtache_eshell/][blog post]] there are examples and more information about the extension.
 
 ** Consult
 
@@ -174,6 +174,8 @@ This package provides the =dtache-consult-session= command which is a replacemen
 | Local host sessions   | l   |
 | Remote host sessions  | r   |
 | Current host sessions | c   |
+
+Examples of the different sources are featured in this [[https://niklaseklund.gitlab.io/blog/posts/dtache_consult/][blog post]].
 
 ** Embark
 
