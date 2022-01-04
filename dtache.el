@@ -544,7 +544,7 @@ Optionally make the path LOCAL to host."
 (defun dtache-session-output (session)
   "Return content of SESSION's output."
   (let* ((filename (dtache-session-file session 'log))
-         (dtache-message (rx (regexp "\n.*\nDtache session ") (or "finished" "exited"))))
+         (dtache-message (rx (regexp "\n?\nDtache session ") (or "finished" "exited"))))
     (with-temp-buffer
       (insert-file-contents filename)
       (goto-char (point-min))
