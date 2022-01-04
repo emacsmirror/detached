@@ -66,7 +66,8 @@
 
 (ert-deftest dtache-test-dtach-command ()
   (dtache-test--with-temp-database
-   (cl-letf* ((dtache-env "dtache-env")
+   (cl-letf* ((dtach-program "dtach")
+              (dtache-env "dtache-env")
               (dtache-shell-program "bash")
               (dtache--dtach-mode 'create)
               (session (dtache-create-session "ls -la"))
@@ -77,8 +78,16 @@
                           "-z" ,dtache-shell-program
                           "-c"
                           ,(format "{ dtache-env ls\\ -la; } 2>&1 | tee %s"
-                                   (dtache-session-file session 'log t)))))
-     (should (equal expected (dtache-dtach-command "ls -la"))))))
+                                   (dtache-session-file session 'log t))))
+              (expected-concat (format "%s -c %s -z %s -c %s"
+                                       dtach-program
+                                       (dtache-session-file session 'socket t)
+                                       dtache-shell-program
+                                       (shell-quote-argument
+                                        (format "{ dtache-env ls\\ -la; } 2>&1 | tee %s"
+                                                (dtache-session-file session 'log t))))))
+     (should (equal expected (dtache-dtach-command "ls -la")))
+     (should (equal expected-concat (dtache-dtach-command "ls -la" t))))))
 
 (ert-deftest dtache-test-metadata ()
   ;; No annotators

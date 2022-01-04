@@ -35,8 +35,6 @@
   "A list of regexps to block non-supported input.")
 (defvar dtache-shell-new-block-list '("^sudo.*")
   "A list of regexps to block from creating a session without attaching.")
-(defconst dtache-shell-detach-character "\C-\\"
-  "Character used to detach from a session.")
 
 ;;;;; Private
 
@@ -59,7 +57,6 @@ This function also makes sure that the HISTFILE is disabled for local shells."
 (defun dtache-shell-setup ()
   "Setup `dtache-shell'."
   (add-hook 'shell-mode-hook #'dtache-shell-save-history)
-  (add-hook 'shell-mode-hook #'dtache-shell-mode)
   (advice-add 'shell :around #'dtache-shell-override-history))
 
 (defun dtache-shell-select-session ()
@@ -91,14 +88,6 @@ This function also makes sure that the HISTFILE is disabled for local shells."
         (dtache--dtach-mode 'new)
         (comint-input-sender #'dtache-shell--create-input-sender))
     (comint-send-input)))
-
-;;;###autoload
-(defun dtache-shell-detach ()
-  "Detach from session."
-  (interactive)
-  (let ((proc (get-buffer-process (current-buffer)))
-        (input dtache-shell-detach-character))
-    (comint-simple-send proc input)))
 
 ;;;###autoload
 (defun dtache-shell-attach (session)
@@ -141,13 +130,8 @@ cluttering the comint-history with dtach commands."
                    dtache-shell-new-block-list)
                   'create
                 dtache--dtach-mode))
-             (command (dtache-dtach-command (substring-no-properties string)))
-             (shell-command
-              (mapconcat 'identity `(,dtache-dtach-program
-                                     ,@(butlast command)
-                                     ,(shell-quote-argument (car (last command))))
-                         " ")))
-       (comint-simple-send proc shell-command)
+             (dtach-command (dtache-dtach-command (substring-no-properties string) t)))
+       (comint-simple-send proc dtach-command)
      (comint-simple-send proc string))))
 
 (defun dtache-shell--comint-read-input-ring-advice (orig-fun &rest args)
@@ -168,21 +152,6 @@ cluttering the comint-history with dtach commands."
            (file-remote-p default-directory)
            dtache-shell-history-file)))
      (comint-write-input-ring))))
-
-;;;; Minor mode
-
-(define-minor-mode dtache-shell-mode
-  "Integrate `dtache' in shell-mode."
-  :lighter "dtache-shell"
-  :keymap (let ((map (make-sparse-keymap)))
-            map)
-  (with-connection-local-variables
-   (if dtache-shell-mode
-       (progn
-         (add-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter 0 t)
-         (add-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter 0 t))
-     (remove-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter t)
-     (remove-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter t))))
 
 (provide 'dtache-shell)
 

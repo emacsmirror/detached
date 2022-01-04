@@ -76,6 +76,8 @@ There are tree different ways to create a dtache session.
 
 The =dtache-shell-command= is for the Emacs users that are accustomed to running shell commands from =M-x shell-command= or =M-x async-shell-command=. The =dtache-start-session= is supposed to be called from custom user functions, or for other packages to integrate towards. The user can also choose to override built in functions with it, for example =compile=. Lastly there is the =dtache-shell-create-session= command which is supposed to be bound to a key. It is a command that the user can choose to invoke whilst in a =M-x shell= buffer.
 
+To detach from a session you started with =dtache-shell-command= you should bind the command =dtache-shell-detach= to something convenient in the =dtache-shell-mode-map=.
+
 ** Interacting with a session
 
 To interact with a session =dtache= provides the command =dtache-open-session=. This provides a convenient completion interface, enriched with annotations to provide useful information about the sessions. The =dtache-open-session= command is implemented as a do what I mean command. This results in =dtache= performing different actions depending on the state of a session.
@@ -124,13 +126,14 @@ A =use-package= configuration of the =dtache-shell= package. This package provid
     (setq dtache-shell-history-file "~/.bash_history"))
 #+end_src
 
-These are commands that the package provides and which the user is expected to bind to convenient keys. The package provides a minor mode that will be enabled in shell.
+These are commands that the package provides and which the user is expected to bind to convenient keys. The =dtache= package provides a minor mode named =dtache-shell-mode=, which will be enabled in shell.
 
 | Command             | Description           |
 |---------------------+-----------------------|
 | dtache-shell-create | Create a session      |
 | dtache-shell-attach | Attach to a session   |
-| dtache-shell-detach | Detach from a session |
+
+To detach from a session use the command =dtache-shell-detach=. As instructed earlier you can bind this command in the =dtache-shell-mode-map=.
 
 ** Dtache-eshell
 

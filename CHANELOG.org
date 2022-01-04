@@ -4,6 +4,7 @@
 
 * Development
 
+- Improve =dtache-shell-command=, the command is now very similar to =async-shell-command= and can be considered a replacement of the latter.
 - Add integration with the =consult= package through =dtache-consult.el=.
 - Add support for =eshell= through the =dtache-eshell= package.
 - macOS (monitor) support is added to the package.
