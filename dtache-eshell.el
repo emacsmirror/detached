@@ -104,13 +104,13 @@ If prefix-argument directly DETACH from the session."
   :lighter "dtache-eshell"
   :keymap (let ((map (make-sparse-keymap)))
             map)
-  (with-connection-local-variables
-   (if dtache-eshell-mode
-       (progn
-         (add-hook 'eshell-preoutput-filter-functions #'dtache--dtache-env-message-filter)
-         (add-hook 'eshell-preoutput-filter-functions #'dtache--dtach-eof-message-filter))
-     (remove-hook 'eshell-preoutput-filter-functions #'dtache--dtache-env-message-filter)
-     (remove-hook 'eshell-preoutput-filter-functions #'dtache--dtach-eof-message-filter))))
+  (make-local-variable 'eshell-preoutput-filter-functions)
+  (if dtache-eshell-mode
+      (progn
+        (add-hook 'eshell-preoutput-filter-functions #'dtache--dtache-env-message-filter)
+        (add-hook 'eshell-preoutput-filter-functions #'dtache--dtach-eof-message-filter))
+    (remove-hook 'eshell-preoutput-filter-functions #'dtache--dtache-env-message-filter)
+    (remove-hook 'eshell-preoutput-filter-functions #'dtache--dtach-eof-message-filter)))
 
 (provide 'dtache-eshell)
 
