@@ -490,6 +490,7 @@ Optionally make the path LOCAL to host."
                                 (dtache-session-file session 'log))))
     (dtache--db-update-entry session)))
 
+;;;###autoload
 (defun dtache-initialize ()
   "Initialize `dtache'."
 
@@ -989,6 +990,7 @@ the current time is used."
 
 ;;;; Minor modes
 
+;;;###autoload
 (define-minor-mode dtache-shell-mode
   "Integrate `dtache' in shell-mode."
   :lighter "dtache-shell"
@@ -1009,6 +1011,7 @@ the current time is used."
     map)
   "Keymap for `dtache-log-mode'.")
 
+;;;###autoload
 (define-derived-mode dtache-log-mode nil "Dtache Log"
   "Major mode for dtache logs."
   (read-only-mode t))
@@ -1019,6 +1022,7 @@ the current time is used."
     map)
   "Keymap for `dtache-tail-mode'.")
 
+;;;###autoload
 (define-derived-mode dtache-tail-mode auto-revert-tail-mode "Dtache Tail"
   "Major mode for tailing dtache logs."
   (setq-local auto-revert-interval dtache-tail-interval)

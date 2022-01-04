@@ -36,6 +36,7 @@
 
 ;;;; Functions
 
+;;;###autoload
 (defun dtache-eshell-setup ()
   "Setup `dtache-eshell'."
   (add-hook 'eshell-prepare-command-hook #'dtache-eshell-maybe-create-session)
@@ -95,10 +96,9 @@ If prefix-argument directly DETACH from the session."
       (insert " "))
     (call-interactively #'eshell-send-input)))
 
-;;;; Support functions
-
 ;;;; Minor mode
 
+;;;###autoload
 (define-minor-mode dtache-eshell-mode
   "Integrate `dtache' in eshell-mode."
   :lighter "dtache-eshell"

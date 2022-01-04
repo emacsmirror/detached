@@ -54,6 +54,7 @@ This function also makes sure that the HISTFILE is disabled for local shells."
   "Add hook to save history when killing `shell' buffer."
   (add-hook 'kill-buffer-hook #'dtache-shell-save-history 0 t))
 
+;;;###autoload
 (defun dtache-shell-setup ()
   "Setup `dtache-shell'."
   (add-hook 'shell-mode-hook #'dtache-shell-save-history)
