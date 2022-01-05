@@ -102,6 +102,7 @@ cluttering the comint-history with dtach commands."
       (cl-letf ((dtache-shell--current-session session)
                 (comint-input-sender #'dtache-shell--attach-input-sender)
                 ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
+        (setq dtache--buffer-session session)
         (comint-kill-input)
         (comint-send-input))
     (dtache-open-session session)))
@@ -111,9 +112,8 @@ cluttering the comint-history with dtach commands."
 (defun dtache-shell--attach-input-sender (proc _string)
   "Attach to `dtache--session' and send the attach command to PROC."
   (let* ((dtache--dtach-mode 'attach)
-         (socket (dtache-session-file dtache-shell--current-session 'socket t))
          (input
-          (format "%s %s %s" dtache-dtach-program (dtache--dtach-arg) socket)))
+          (dtache-dtach-command dtache-shell--current-session t)))
     (comint-simple-send proc input)))
 
 (defun dtache-shell--create-input-sender (proc string)
@@ -131,7 +131,8 @@ cluttering the comint-history with dtach commands."
                    dtache-shell-new-block-list)
                   'create
                 dtache--dtach-mode))
-             (dtach-command (dtache-dtach-command (substring-no-properties string) t)))
+             (session (dtache-create-session (substring-no-properties string)))
+             (dtach-command (dtache-dtach-command session t)))
        (comint-simple-send proc dtach-command)
      (comint-simple-send proc string))))
 

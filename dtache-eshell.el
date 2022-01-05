@@ -59,9 +59,17 @@
            (command (mapconcat #'identity
                                `(,eshell-last-command-name
                                  ,@eshell-last-arguments)
-                               " ")))
-      (setq eshell-last-arguments (dtache-dtach-command command)))
+                               " "))
+           (session (dtache-create-session command)))
+      (setq eshell-last-arguments (dtache-dtach-command session))
+      (setq dtache--buffer-session session))
     (setq eshell-last-command-name "dtach")))
+
+(defun dtache-eshell-get-dtach-process ()
+  "Return `eshell' process if `dtache' is running."
+  (when-let* ((process (and eshell-process-list (caar eshell-process-list))))
+    (and (string= (process-name process) "dtach")
+         process)))
 
 ;;;; Commands
 
@@ -82,9 +90,8 @@ If prefix-argument directly DETACH from the session."
   (interactive
    (list (dtache-eshell-select-session)))
   (cl-letf* ((dtache--dtach-mode 'attach)
-             (socket (dtache-session-file session 'socket t))
              (input
-              (format "%s %s %s" dtache-dtach-program (dtache--dtach-arg) socket))
+              (dtache-dtach-command session t))
              ((symbol-function #'eshell-add-to-history) #'ignore))
     (eshell-kill-input)
     ;; Hide the input from the user
@@ -94,6 +101,7 @@ If prefix-argument directly DETACH from the session."
       (setq end (point))
       (overlay-put (make-overlay begin end) 'invisible t)
       (insert " "))
+    (setq dtache--buffer-session session)
     (call-interactively #'eshell-send-input)))
 
 ;;;; Minor mode

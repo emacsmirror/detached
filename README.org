@@ -58,6 +58,9 @@ A minimal configuration for =dtache=.
 #+begin_src elisp :lexical t :results none
   (use-package dtache
     :hook (after-init . dtache-initialize)
+    :bind (([remap async-shell-command] . dtache-shell-command)
+           :map dtache-shell-mode-map
+           ("C-c C-q" . dtache-detach-session))
     :config
     (setq dtache-db-directory user-emacs-directory)
     (setq dtache-session-directory (expand-file-name "dtache" (temporary-file-directory))))
@@ -76,7 +79,7 @@ There are tree different ways to create a dtache session.
 
 The =dtache-shell-command= is for the Emacs users that are accustomed to running shell commands from =M-x shell-command= or =M-x async-shell-command=. The =dtache-start-session= is supposed to be called from custom user functions, or for other packages to integrate towards. The user can also choose to override built in functions with it, for example =compile=. Lastly there is the =dtache-shell-create-session= command which is supposed to be bound to a key. It is a command that the user can choose to invoke whilst in a =M-x shell= buffer.
 
-To detach from a session you started with =dtache-shell-command= you should bind the command =dtache-shell-detach= to something convenient in the =dtache-shell-mode-map=.
+To detach from a session you started with =dtache-shell-command= you should bind the command =dtache-detach-session= to something convenient in the =dtache-shell-mode-map=.
 
 ** Interacting with a session
 
@@ -118,10 +121,9 @@ A =use-package= configuration of the =dtache-shell= package. This package provid
 #+begin_src elisp :lexical t :results none
   (use-package dtache-shell
     :hook (after-init . dtache-shell-setup)
-    :general
-    (:keymaps 'dtache-shell-mode-map
-              "<S-return>" #'dtache-shell-create-session
-              "<C-return>" #'dtache-shell-attach)
+    :bind (:map dtache-shell-mode-map
+           (("<S-return>" . dtache-shell-create-session)
+            ("<C-return>" . dtache-shell-attach)))
     :config
     (setq dtache-shell-history-file "~/.bash_history"))
 #+end_src
@@ -133,7 +135,7 @@ These are commands that the package provides and which the user is expected to b
 | dtache-shell-create | Create a session      |
 | dtache-shell-attach | Attach to a session   |
 
-To detach from a session use the command =dtache-shell-detach=. As instructed earlier you can bind this command in the =dtache-shell-mode-map=.
+To detach from a session use the command =dtache-detach-session=. As instructed earlier you can bind this command in the =dtache-shell-mode-map=.
 
 ** Dtache-eshell
 
@@ -142,10 +144,10 @@ A =use-package= configuration of the =dtache-eshell= package. This package provi
 #+begin_src elisp :lexical t :results none
   (use-package dtache-eshell
     :hook (after-init . dtache-eshell-setup)
-    :general
-    (:keymaps 'dtache-eshell-mode-map
-              "<S-return>" #'dtache-eshell-create-session
-              "<C-return>" #'dtache-eshell-attach))
+    :bind (:map dtache-eshell-mode-map
+           (("<S-return>" . dtache-eshell-create-session)
+            ("<C-return>" . dtache-eshell-attach)
+            ("C-c C-q" . dtache-detach-session))))
 #+end_src
 
 These are commands that the package provides and which the user is expected to bind to convenient keys. The package provides a minor mode that will be enabled in =eshell=.
@@ -156,6 +158,19 @@ These are commands that the package provides and which the user is expected to b
 | dtache-eshell-attach         | Attach to a session |
 
 To detach from a session simply use =C-c C-c=. In this [[https://niklaseklund.gitlab.io/blog/posts/dtache_eshell/][blog post]] there are examples and more information about the extension.
+
+** TODO Compile
+
+Add text here.
+
+#+begin_src elisp
+  (use-package dtache-compile
+    :hook (after-init . dtache-compile-setup)
+    :bind (([remap compile] . dtache-compile)
+           ([remap recompile] . dtache-compile-recompile)
+           :map dtache-compilation-mode-map
+           ("C-c C-q" . dtache-detach-session)))
+#+end_src
 
 ** Consult
 
@@ -290,35 +305,6 @@ The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_n
 
   (connection-local-set-profiles
    '(:application tramp :protocol "ssh") 'remote-dtache)
-#+end_src
-
-** Replace compile with dtache
-*** Unconditionally
-
-=Dtache= can be seen as a replacement for =compile=. To unconditionally replace the latter with the former one can apply this advice.
-
-#+begin_src elisp :lexical t :results none
-  (defun my/dtache-compile-override (command &optional _)
-    "Run COMMAND with `dtache'."
-    (dtache-start-session command))
-
-  (advice-add 'compile :override #'my/dtache-compile-override)
-#+end_src
-
-*** Selectively
-
-Maybe you like the behavior of =compile= but for some specific commands you would like to replace the usage of =compile= with =dtache=. That can be done with the following advice, in this case replacing the usage of =compile= within function =foo=.
-
-#+begin_src elisp :lexical t :results none
-  (defun my/dtache-replace-compile-advice (orig-fun &rest args)
-    "Replace `compile' with `dtache'.
-  This is done before ORIG-FUN is passed ARGS."
-    (cl-letf* (((symbol-function 'compile)
-                (lambda (command &optional _)
-                  (dtache-start-session command))))
-      (apply orig-fun args)))
-
-  (advice-add #'foo :around #'my/dtache-replace-compile-advice)
 #+end_src
 
 ** Customize an individual session

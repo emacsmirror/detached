@@ -4,6 +4,9 @@
 
 * Development
 
+- Add dtache-type-open-dispatch variable for users to customize how to open a function which doesn't have an open function implemented. This together with the new attach functions for shell-command/compile makes it possible to seamlessly reattach to sessions started with shell-command/compile.
+- Add a generic detach command, =dtache-detach-session=. This command is supposed to be used to detach from sessions in all supported modes.
+- Add =dtache-compile.el=. This library provides commands =dtache-compile= and =dtache-compile-recompile= which are supposed to be used instead of =compile=/=recompile=.
 - Improve =dtache-shell-command=, the command is now very similar to =async-shell-command= and can be considered a replacement of the latter.
 - Add integration with the =consult= package through =dtache-consult.el=.
 - Add support for =eshell= through the =dtache-eshell= package.

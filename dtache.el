@@ -49,6 +49,8 @@
 (require 'simple)
 (require 'tramp)
 
+(declare-function dtache-eshell-get-dtach-process "dtache-eshell")
+
 ;;;; Variables
 
 (defvar dtache-session-directory nil
@@ -85,6 +87,11 @@
   "An alist of annotators for metadata.")
 (defvar dtache-timer-configuration '(:seconds 10 :repeat 60 :function run-with-timer)
   "A property list defining how often to run a timer.")
+(defvar dtache-type-open-dispatch '((shell-command . dtache-shell-command-attach)
+                                    (shell . dtache-shell-command-attach)
+                                    (eshell . dtache-shell-command-attach)
+                                    (compile . dtache-compile-attach))
+  "How to open an active session based on type.")
 
 (defvar dtache-annotation-format
   `((:width 3 :function dtache--active-str :face dtache-active-face)
@@ -162,9 +169,14 @@
   "Mode of operation for dtach.")
 (defvar dtache--sessions nil
   "A list of sessions.")
+(defvar dtache--buffer-session nil
+  "The `dtache-session' session in current buffer.")
+(defvar dtache--current-session nil
+  "The current session.")
+(make-variable-buffer-local 'dtache--buffer-session)
 (defvar dtache--session-candidates nil
   "An alist of session candidates.")
-(defconst dtache--dtach-eof-message "\\[EOF - dtach terminating\\]\^M"
+(defconst dtache--dtach-eof-message "\\[EOF - dtach terminating\\]"
   "Message printed when `dtach' terminates.")
 (defconst dtache--dtach-detached-message "\\[detached\\]\^M"
   "Message printed when detaching from `dtach'.")
@@ -207,7 +219,17 @@ If called with prefix-argument the output is suppressed."
                                              default-directory))
                           "Dtache shell command: ")
                         nil 'dtache-shell-command-history)))
-  (dtache-start-session command current-prefix-arg))
+  (let ((dtache-session-type 'shell-command))
+    (dtache-start-session command current-prefix-arg)))
+
+;;;###autoload
+(defun dtache-shell-command-attach (session)
+  "Attach to `dtache' SESSION."
+  (interactive
+   (list (dtache-completing-read (dtache-get-sessions))))
+  (let* ((dtache--current-session session)
+         (dtache--dtach-mode 'attach))
+    (dtache-start-session nil)))
 
 ;;;###autoload
 (defun dtache-open-session (session)
@@ -355,16 +377,32 @@ If called with prefix-argument the output is suppressed."
     (ediff-buffers buffer1 buffer2)))
 
 ;;;###autoload
-(defun dtache-shell-detach ()
-  "Detach from session."
+(defun dtache-detach-session ()
+  "Detach from current session.
+
+This command is only activated if `dtache--buffer-session' is set and
+`dtache--session-active-p' returns t."
   (interactive)
-  (let ((proc (get-buffer-process (current-buffer)))
-        (input dtache--dtach-detach-character))
-    (comint-simple-send proc input)
-    (when (string-match "\*Dtache Shell Command" (buffer-name))
-      (let ((kill-buffer-query-functions nil))
-        (kill-buffer-and-window)
-        (message "[detached]")))))
+  (if (dtache-session-p dtache--buffer-session)
+      (if (dtache--session-active-p dtache--buffer-session)
+          (if-let ((process (and (eq major-mode 'eshell-mode)
+                                 (dtache-eshell-get-dtach-process))))
+              (progn
+                (setq dtache--buffer-session nil)
+                (process-send-string process dtache--dtach-detach-character))
+            (let ((proc (get-buffer-process (current-buffer)))
+                  (input dtache--dtach-detach-character))
+              (comint-simple-send proc input)
+              (setq dtache--buffer-session nil)
+              (when
+                  (cond ((string-match "\*Dtache Shell Command" (buffer-name)) t)
+                        ((string-match "\*dtache-compilation" (buffer-name)) t)
+                        (t nil))
+                (let ((kill-buffer-query-functions nil))
+                  (kill-buffer-and-window)
+                  (message "[detached]")))))
+        (setq dtache--buffer-session nil))
+    (message "No `dtache-session' found in buffer.")))
 
 ;;;###autoload
 (defun dtache-quit-tail-output ()
@@ -408,19 +446,23 @@ nil before closing."
   "Start a `dtache' session running COMMAND.
 
 Optionally SUPPRESS-OUTPUT."
-  (if (or suppress-output
-          (dtache-redirect-only-p command))
+  (if (and (not (eq dtache--dtach-mode 'attach))
+           (or suppress-output
+               (dtache-redirect-only-p command)))
       (let* ((inhibit-message t)
              (dtache--dtach-mode 'new)
-             (dtach-command (dtache-dtach-command command)))
+             (session (dtache-create-session command))
+             (dtach-command (dtache-dtach-command session)))
         (apply #'start-file-process
                `("dtache" nil ,dtache-dtach-program ,@dtach-command)))
     (cl-letf* ((inhibit-message t)
                ((symbol-function #'set-process-sentinel) #'ignore)
-               (dtache-session-type 'standard)
-               (dtache--dtach-mode 'create)
-               (dtach-command (dtache-dtach-command command t)))
-      (funcall #'async-shell-command dtach-command "*Dtache Shell Command*"))))
+               (dtache--dtach-mode (or dtache--dtach-mode 'create))
+               (buffer "*Dtache Shell Command*")
+               (session (or dtache--current-session (dtache-create-session command)))
+               (dtach-command (dtache-dtach-command session t)))
+      (funcall #'async-shell-command dtach-command buffer)
+      (with-current-buffer buffer (setq dtache--buffer-session session)))))
 
 (defun dtache-update-sessions ()
   "Update `dtache' sessions.
@@ -564,7 +606,10 @@ Optionally make the path LOCAL to host."
 (defun dtache-open-dwim (session)
   "Open SESSION in a do what I mean fashion."
   (cond ((dtache--session-active session)
-         (dtache-tail-output session))
+         (if-let ((open-fun (alist-get
+                             (dtache--session-type session) dtache-type-open-dispatch)))
+             (funcall open-fun session)
+           (dtache-tail-output session)))
         ((eq 'success (dtache--session-status session))
          (dtache-open-output session))
         ((eq 'failure (dtache--session-status session))
@@ -588,27 +633,35 @@ Optionally make the path LOCAL to host."
         (dtache--session-macos-monitor session)
       (dtache--session-filenotify-monitor session))))
 
-(defun dtache-dtach-command (command &optional concat)
-  "Return a list of arguments to run COMMAND with dtach.
+(defun dtache-dtach-command (session &optional concat)
+  "Return a list of arguments to run SESSION.
 
 Optionally CONCAT the command return command into a string."
   (with-connection-local-variables
-   (let* ((session (dtache-create-session command))
-          (socket (dtache-session-file session 'socket t))
-          (dtache--dtach-mode (if (dtache--session-redirect-only session)
-                                  'new
-                                dtache--dtach-mode)))
-     (if concat
-         (mapconcat 'identity
-                    `(,dtache-dtach-program
-                      ,(dtache--dtach-arg)
-                      ,socket "-z"
-                      ,dtache-shell-program "-c"
-                      ,(shell-quote-argument (dtache--magic-command session)))
-                    " ")
-       `(,(dtache--dtach-arg) ,socket "-z"
-         ,dtache-shell-program "-c"
-         ,(dtache--magic-command session))))))
+   (let* ((dtache--dtach-mode (cond ((eq dtache--dtach-mode 'attach) 'attach)
+                                    ((dtache--session-redirect-only session) 'new)
+                                    (t dtache--dtach-mode)))
+          (socket (dtache-session-file session 'socket t)))
+     (setq dtache--buffer-session session)
+     (if (eq dtache--dtach-mode 'attach)
+         (if concat
+             (mapconcat 'identity
+                        `(,dtache-dtach-program
+                          ,(dtache--dtach-arg)
+                          ,socket)
+                        " ")
+           `(,(dtache--dtach-arg) ,socket))
+       (if concat
+             (mapconcat 'identity
+                        `(,dtache-dtach-program
+                          ,(dtache--dtach-arg)
+                          ,socket "-z"
+                          ,dtache-shell-program "-c"
+                          ,(shell-quote-argument (dtache--magic-command session)))
+                        " ")
+           `(,(dtache--dtach-arg) ,socket "-z"
+             ,dtache-shell-program "-c"
+             ,(dtache--magic-command session)))))))
 
 (defun dtache-redirect-only-p (command)
   "Return t if COMMAND should run in degreaded mode."
@@ -924,7 +977,7 @@ the current time is used."
 
 (defun dtache--dtach-eof-message-filter (str)
   "Remove `dtache--dtach-eof-message' in STR."
-  (replace-regexp-in-string (format "\n?%s\n" dtache--dtach-eof-message) "" str))
+  (replace-regexp-in-string (format "\n?%s\^M\n" dtache--dtach-eof-message) "" str))
 
 (defun dtache--dtach-detached-message-filter (str)
   "Remove `dtache--dtach-detached-message' in STR."
