@@ -223,15 +223,6 @@ If called with prefix-argument the output is suppressed."
     (dtache-start-session command current-prefix-arg)))
 
 ;;;###autoload
-(defun dtache-shell-command-attach (session)
-  "Attach to `dtache' SESSION."
-  (interactive
-   (list (dtache-completing-read (dtache-get-sessions))))
-  (let* ((dtache--current-session session)
-         (dtache--dtach-mode 'attach))
-    (dtache-start-session nil)))
-
-;;;###autoload
 (defun dtache-open-session (session)
   "Open a `dtache' SESSION."
   (interactive

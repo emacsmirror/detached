@@ -57,16 +57,6 @@ Optionally EDIT-COMMAND."
          (dtache--dtach-mode 'create))
     (recompile edit-command)))
 
-;;;###autoload
-(defun dtache-compile-attach (session)
-  "Attach to SESSION with `compile'."
-  (interactive
-   (list (dtache-completing-read (dtache-get-sessions))))
-  (let* ((dtache-compile-command t)
-         (dtache--dtach-mode 'attach)
-         (dtache--current-session session))
-    (compilation-start nil)))
-
 ;;;;; Functions
 
 (defun dtache-compile-advice (compilation-start &rest args)
@@ -94,6 +84,13 @@ Optionally EDIT-COMMAND."
     (dtache-compile--replace-modesetter)
     (add-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter 0 t)
     (add-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter 0 t)))
+
+(defun dtache-compile-attach (session)
+  "Attach to SESSION with `compile'."
+  (let* ((dtache-compile-command t)
+         (dtache--dtach-mode 'attach)
+         (dtache--current-session session))
+    (compilation-start nil)))
 
 ;;;###autoload
 (defun dtache-compile-setup ()
