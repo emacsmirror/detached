@@ -213,7 +213,7 @@ If called with prefix-argument the output is suppressed."
 (defun dtache-open-session (session)
   "Open a `dtache' SESSION."
   (interactive
-   (list (dtache-completing-read)))
+   (list (dtache-completing-read (dtache-get-sessions))))
   (if-let ((open-function
             (dtache--session-open-function session)))
       (funcall open-function session)
@@ -223,7 +223,7 @@ If called with prefix-argument the output is suppressed."
 (defun dtache-compile-session (session)
   "Open log of SESSION in `compilation-mode'."
   (interactive
-   (list (dtache-completing-read)))
+   (list (dtache-completing-read (dtache-get-sessions))))
   (let ((buffer-name "*dtache-session-output*")
         (file
          (dtache-session-file session 'log))
@@ -247,7 +247,7 @@ If called with prefix-argument the output is suppressed."
 (defun dtache-rerun-session (session)
   "Rerun SESSION."
   (interactive
-   (list (dtache-completing-read)))
+   (list (dtache-completing-read (dtache-get-sessions))))
   (let* ((default-directory
            (dtache--session-working-directory session))
          (dtache-open-session-function
@@ -262,7 +262,7 @@ If called with prefix-argument the output is suppressed."
 (defun dtache-copy-session-output (session)
   "Copy SESSION's log."
   (interactive
-   (list (dtache-completing-read)))
+   (list (dtache-completing-read (dtache-get-sessions))))
   (with-temp-buffer
     (insert (dtache-session-output session))
     (kill-new (buffer-string))))
@@ -271,21 +271,21 @@ If called with prefix-argument the output is suppressed."
 (defun dtache-copy-session-command (session)
   "Copy SESSION command."
   (interactive
-   (list (dtache-completing-read)))
+   (list (dtache-completing-read (dtache-get-sessions))))
   (kill-new (dtache--session-command session)))
 
 ;;;###autoload
 (defun dtache-insert-session-command (session)
   "Insert SESSION."
   (interactive
-   (list (dtache-completing-read)))
+   (list (dtache-completing-read (dtache-get-sessions))))
   (insert (dtache--session-command session)))
 
 ;;;###autoload
 (defun dtache-delete-session (session)
   "Delete SESSION."
   (interactive
-   (list (dtache-completing-read)))
+   (list (dtache-completing-read (dtache-get-sessions))))
   (if (dtache--session-active-p session)
       (message "Kill session first before removing it.")
     (dtache--db-remove-entry session)))
@@ -294,7 +294,7 @@ If called with prefix-argument the output is suppressed."
 (defun dtache-kill-session (session)
   "Send a TERM signal to SESSION."
   (interactive
-   (list (dtache-completing-read)))
+   (list (dtache-completing-read (dtache-get-sessions))))
   (let* ((pid (dtache--session-pid session)))
     (when pid
       (dtache--kill-processes pid))))
@@ -303,7 +303,7 @@ If called with prefix-argument the output is suppressed."
 (defun dtache-open-output (session)
   "Open SESSION's output."
   (interactive
-   (list (dtache-completing-read)))
+   (list (dtache-completing-read (dtache-get-sessions))))
   (let* ((buffer-name "*dtache-session-output*")
          (file-path
           (dtache-session-file session 'log))
@@ -324,7 +324,7 @@ If called with prefix-argument the output is suppressed."
 (defun dtache-tail-output (session)
   "Tail SESSION's output."
   (interactive
-   (list (dtache-completing-read)))
+   (list (dtache-completing-read (dtache-get-sessions))))
   (if (dtache--session-active-p session)
       (let* ((file-path
               (dtache-session-file session 'log))
@@ -339,9 +339,9 @@ If called with prefix-argument the output is suppressed."
 (defun dtache-diff-session (session1 session2)
   "Diff SESSION1 with SESSION2."
   (interactive
-   (list
-    (dtache-completing-read)
-    (dtache-completing-read)))
+   (let ((sessions (dtache-get-sessions)))
+     `(,(dtache-completing-read sessions)
+       ,(dtache-completing-read sessions))))
   (let ((buffer1 "*dtache-session-output-1*")
         (buffer2 "*dtache-session-output-2*"))
     (with-current-buffer (get-buffer-create buffer1)
@@ -645,10 +645,9 @@ Optionally CONCAT the command return command into a string."
                               short-home
                               (expand-file-name default-directory))))
 
-(defun dtache-completing-read (&optional sessions)
+(defun dtache-completing-read (sessions)
   "Select a session from SESSIONS through `completing-read'."
-  (let* ((sessions (or sessions (dtache-get-sessions)))
-         (candidates (dtache-session-candidates sessions))
+  (let* ((candidates (dtache-session-candidates sessions))
          (metadata `(metadata
                      (category . dtache)
                      (cycle-sort-function . identity)
