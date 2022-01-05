@@ -597,10 +597,12 @@ Optionally make the path LOCAL to host."
 (defun dtache-open-dwim (session)
   "Open SESSION in a do what I mean fashion."
   (cond ((dtache--session-active session)
-         (if-let ((open-fun (alist-get
-                             (dtache--session-type session) dtache-type-open-dispatch)))
-             (funcall open-fun session)
-           (dtache-tail-output session)))
+         (if (dtache--session-redirect-only session)
+             (dtache-tail-output session)
+           (if-let ((open-fun (alist-get
+                               (dtache--session-type session) dtache-type-open-dispatch)))
+               (funcall open-fun session)
+             (dtache-tail-output session))))
         ((eq 'success (dtache--session-status session))
          (dtache-open-output session))
         ((eq 'failure (dtache--session-status session))
@@ -613,6 +615,12 @@ Optionally make the path LOCAL to host."
   "Update and return sessions."
   (dtache-update-sessions)
   (dtache--db-get-sessions))
+
+(defun dtache-shell-command-attach (session)
+  "Attach to `dtache' SESSION."
+  (let* ((dtache--current-session session)
+         (dtache--dtach-mode 'attach))
+    (dtache-start-session nil)))
 
 ;;;;; Other
 

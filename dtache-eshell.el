@@ -89,20 +89,23 @@ If prefix-argument directly DETACH from the session."
   "Attach to SESSION."
   (interactive
    (list (dtache-eshell-select-session)))
-  (cl-letf* ((dtache--dtach-mode 'attach)
-             (input
-              (dtache-dtach-command session t))
-             ((symbol-function #'eshell-add-to-history) #'ignore))
-    (eshell-kill-input)
-    ;; Hide the input from the user
-    (let ((begin (point))
-          (end))
-      (insert input)
-      (setq end (point))
-      (overlay-put (make-overlay begin end) 'invisible t)
-      (insert " "))
-    (setq dtache--buffer-session session)
-    (call-interactively #'eshell-send-input)))
+  (if (and (dtache--session-active-p session)
+           (not (dtache--session-redirect-only session)))
+      (cl-letf* ((dtache--dtach-mode 'attach)
+                 (input
+                  (dtache-dtach-command session t))
+                 ((symbol-function #'eshell-add-to-history) #'ignore))
+        (eshell-kill-input)
+        ;; Hide the input from the user
+        (let ((begin (point))
+              (end))
+          (insert input)
+          (setq end (point))
+          (overlay-put (make-overlay begin end) 'invisible t)
+          (insert " "))
+        (setq dtache--buffer-session session)
+        (call-interactively #'eshell-send-input))
+    (dtache-open-session session)))
 
 ;;;; Minor mode
 
