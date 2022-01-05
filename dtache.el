@@ -793,17 +793,18 @@ Optionally CONCAT the command return command into a string."
 (defun dtache--session-timer-monitor (session)
   "Configure a timer to monitor SESSION activity.
  The timer object is configured according to `dtache-timer-configuration'."
-  (let* ((timer)
-         (callback
-          (lambda ()
-            (when (dtache--session-deactivated-p session)
-              (dtache--session-final-update session)
-              (cancel-timer timer)))))
-    (setq timer
-          (funcall (plist-get dtache-timer-configuration :function)
-                   (plist-get dtache-timer-configuration :seconds)
-                   (plist-get dtache-timer-configuration :repeat)
-                   callback))))
+  (with-connection-local-variables
+   (let* ((timer)
+          (callback
+           (lambda ()
+             (when (dtache--session-deactivated-p session)
+               (dtache--session-final-update session)
+               (cancel-timer timer)))))
+     (setq timer
+           (funcall (plist-get dtache-timer-configuration :function)
+                    (plist-get dtache-timer-configuration :seconds)
+                    (plist-get dtache-timer-configuration :repeat)
+                    callback)))))
 
 (defun dtache--session-filenotify-monitor (session)
   "Configure `filenotify' to monitor SESSION activity."
