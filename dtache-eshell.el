@@ -33,6 +33,7 @@
 ;;;; Variables
 
 (defvar dtache-eshell-command nil)
+(defvar dtache-shell-session-action '(:attach dtache-shell-command-attach :view dtache-view-dwim))
 
 ;;;; Functions
 
@@ -56,6 +57,7 @@
   "Create a session if `dtache-eshell-command' value is t."
   (when dtache-eshell-command
     (let* ((dtache--dtach-mode 'create)
+           (dtache-session-action dtache-shell-session-action)
            (command (mapconcat #'identity
                                `(,eshell-last-command-name
                                  ,@eshell-last-arguments)

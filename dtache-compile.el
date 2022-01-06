@@ -32,8 +32,7 @@
 
 (defvar dtache-compile-command nil
   "This variable has value t if `compile' is supposed to run with `dtache'.")
-(defvar dtache-compile-history nil
-  "History of commands run with `dtache-compile'.")
+(defvar dtache-compile-session-action '(:attach dtache-compile-attach :view dtache-compile-session))
 
 ;;;; Commands
 
@@ -43,6 +42,7 @@
 Optionally enable COMINT if prefix-argument is provided."
   (interactive)
   (let* ((dtache-compile-command t)
+         (dtache-session-action dtache-compile-session-action)
          (dtache-session-type 'compile)
          (dtache--dtach-mode 'create))
     (call-interactively #'compile)))
@@ -53,6 +53,7 @@ Optionally enable COMINT if prefix-argument is provided."
 Optionally EDIT-COMMAND."
   (interactive)
   (let* ((dtache-compile-command t)
+         (dtache-session-action dtache-compile-session-action)
          (dtache-session-type 'compile)
          (dtache--dtach-mode 'create))
     (recompile edit-command)))

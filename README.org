@@ -325,32 +325,6 @@ A part from the extensions provided with this package the users of =dtache= can 
   (advice-add #'dired-rsync--do-run :around #'my/dtache-dired-rsync-advice)
 #+end_src
 
-** Customize an individual session
-
-=Dtache= tries to leave possibilities for the users to customize the usage. One key feature is that the customization can happen on session level. Meaning that the user can choose to customize a session right before it is started. The customization will then be embedded into the session object and persist for as long as the session exists.
-
-#+begin_src elisp :lexical t :dir ~/code/python :results none
-  (defun my/dtache-custom-open-session (command)
-    "Run COMMAND in a session and control how it should be opened."
-    (let ((dtache-open-session-function
-           (lambda (session)
-             (let ((dtache-compile-hooks
-                    `(,@dtache-compile-hooks
-                      ,(lambda ()
-                         (make-variable-buffer-local 'compilation-parse-errors-function)
-                         (setq compilation-parse-errors-filename-function
-                               (lambda (_)
-                                 (format "~/.bashrc")))))))
-               (dtache-open-dwim session)))))
-      (dtache-start-session command)))
-
-  (demo/dtache-custom-session "pylint demo.py")
-#+end_src
-
-The example in the code block is creating a custom open function that will modify the =compilation-parse-errors-function= and set it locally in the buffer that will be opened with =dtache-compile-session=. In the example regardless of what errors pylint manages to find the links in the compile buffer will all open =~/.bashrc=. This customization only affects the sessions that are started with the =my/dtache-custom-open-session=.
-
-The user also have the same possibility of customization when it comes to the variables =dtache-session-callback-function= and =dtache-session-status-function=.
-
 * Versions
 
 Information about the changes to the package can be found in the =CHANGELOG.org=.

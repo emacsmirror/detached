@@ -73,25 +73,19 @@
   "Interval in seconds for the update rate when tailing a session.")
 (defvar dtache-session-type nil
   "Variable to specify the origin of the session.")
-(defvar dtache-open-session-function nil
-  "Custom function to use to open a session.")
 (defvar dtache-notification-function #'dtache-inactive-session-notification
   "Variable to specify notification function when a session becomes inactive.")
-(defvar dtache-session-callback-function nil
-  "Custom function to callback when a session becomes inactive.")
-(defvar dtache-session-status-function nil
-  "Custom function to deduce the status of a session.")
 (defvar dtache-compile-hooks nil
   "Hooks to run when compiling a session.")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 (defvar dtache-timer-configuration '(:seconds 10 :repeat 60 :function run-with-timer)
   "A property list defining how often to run a timer.")
-(defvar dtache-type-open-dispatch '((shell-command . dtache-shell-command-attach)
-                                    (shell . dtache-shell-command-attach)
-                                    (eshell . dtache-shell-command-attach)
-                                    (compile . dtache-compile-open))
-  "How to open an active session based on type.")
+
+(defvar dtache-session-action nil
+  "A property list of actions for a session.")
+(defvar dtache-shell-command-action '(:attach dtache-shell-command-attach :view dtache-view-dwim)
+  "Actions for a session created with `dtache-shell-command'.")
 
 (defvar dtache-annotation-format
   `((:width 3 :function dtache--active-str :face dtache-active-face)
@@ -190,15 +184,13 @@
   (id nil :read-only t)
   (command nil :read-only t)
   (type nil :read-only t)
-  (open-function nil :read-only t)
-  (callback-function nil :read-only t)
-  (status-function nil :read-only t)
   (working-directory nil :read-only t)
   (creation-time nil :read-only t)
   (session-directory nil :read-only t)
   (metadata nil :read-only t)
   (host nil :read-only t)
   (redirect-only nil :read-only t)
+  (action nil :read-only t)
   (status nil)
   (duration nil)
   (output-size nil)
@@ -219,7 +211,8 @@ If called with prefix-argument the output is suppressed."
                                              default-directory))
                           "Dtache shell command: ")
                         nil 'dtache-shell-command-history)))
-  (let ((dtache-session-type 'shell-command))
+  (let ((dtache-session-type 'shell-command)
+        (dtache-session-action dtache-shell-command-action))
     (dtache-start-session command current-prefix-arg)))
 
 ;;;###autoload
@@ -228,10 +221,15 @@ If called with prefix-argument the output is suppressed."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
-    (if-let ((open-function
-              (dtache--session-open-function session)))
-        (funcall open-function session)
-      (dtache-open-dwim session))))
+    (if (dtache--session-active-p session)
+        (if (dtache--session-redirect-only session)
+            (dtache-tail-output session)
+          (let ((attach (or (plist-get (dtache--session-action session) :attach)
+                            #'dtache-tail-output)))
+            (funcall attach session)))
+      (let ((view (or (plist-get (dtache--session-action session) :view)
+                      #'dtache-view-dwim)))
+        (funcall view session)))))
 
 ;;;###autoload
 (defun dtache-compile-session (session)
@@ -266,12 +264,7 @@ If called with prefix-argument the output is suppressed."
   (when (dtache-valid-session session)
     (let* ((default-directory
              (dtache--session-working-directory session))
-           (dtache-open-session-function
-            (dtache--session-open-function session))
-           (dtache-session-callback-function
-            (dtache--session-callback-function session))
-           (dtache-session-status-function
-            (dtache--session-status-function session)))
+           (dtache-session-action (dtache--session-action session)))
       (dtache-start-session (dtache--session-command session)))))
 
 ;;;###autoload
@@ -429,9 +422,7 @@ nil before closing."
          (dtache--session-create :id (intern (dtache--create-id command))
                                  :command command
                                  :type dtache-session-type
-                                 :open-function dtache-open-session-function
-                                 :callback-function dtache-session-callback-function
-                                 :status-function dtache-session-status-function
+                                 :action dtache-session-action
                                  :working-directory (dtache-get-working-directory)
                                  :redirect-only (dtache-redirect-only-p command)
                                  :creation-time (time-to-seconds (current-time))
@@ -616,16 +607,9 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
                   ('failure "Dtache failed")) ))
     (message "%s: %s" status (dtache--session-command session))))
 
-(defun dtache-open-dwim (session)
-  "Open SESSION in a do what I mean fashion."
-  (cond ((dtache--session-active session)
-         (if (dtache--session-redirect-only session)
-             (dtache-tail-output session)
-           (if-let ((open-fun (alist-get
-                               (dtache--session-type session) dtache-type-open-dispatch)))
-               (funcall open-fun session)
-             (dtache-tail-output session))))
-        ((eq 'success (dtache--session-status session))
+(defun dtache-view-dwim (session)
+  "View SESSION in a do what I mean fashion."
+  (cond ((eq 'success (dtache--session-status session))
          (dtache-open-output session))
         ((eq 'failure (dtache--session-status session))
          (dtache-compile-session session))
@@ -644,6 +628,11 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
     (let* ((dtache--current-session session)
            (dtache--dtach-mode 'attach))
       (dtache-start-session nil))))
+
+(defun dtache-delete-sessions ()
+  "Delete all `dtache' sessions."
+  (seq-do #'dtache--db-remove-entry
+          (dtache-get-sessions)))
 
 ;;;;; Other
 
@@ -942,9 +931,9 @@ Optionally CONCAT the command return command into a string."
           (- (time-to-seconds) (dtache--session-creation-time session)))
 
     ;; Update status
-    (if-let ((status (dtache--session-status-function session)))
-        (setf (dtache--session-status session) (funcall status session))
-      (setf (dtache--session-status session) (dtache-session-exit-code-status session)))
+    (let ((status (or (plist-get (dtache--session-action session) :status)
+                      #'dtache-session-exit-code-status)))
+      (setf (dtache--session-status session) (funcall status session)))
 
     ;; Send notification
     (funcall dtache-notification-function session)
@@ -953,7 +942,7 @@ Optionally CONCAT the command return command into a string."
     (dtache--db-update-entry session t)
 
     ;; Execute callback
-    (when-let ((callback (dtache--session-callback-function session)))
+    (when-let ((callback (plist-get (dtache--session-action session) :callback)))
       (funcall callback session))))
 
 (defun dtache--kill-processes (pid)
