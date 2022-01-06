@@ -455,8 +455,7 @@ Optionally SUPPRESS-OUTPUT."
                (dtache-redirect-only-p command)))
       (let* ((inhibit-message t)
              (dtache--dtach-mode 'new)
-             (session (dtache-create-session command))
-             (dtach-command (dtache-dtach-command session)))
+             (dtach-command (dtache-dtach-command command)))
         (apply #'start-file-process
                `("dtache" nil ,dtache-dtach-program ,@dtach-command)))
     (cl-letf* ((inhibit-message t)
@@ -655,8 +654,17 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
         (dtache--session-macos-monitor session)
       (dtache--session-filenotify-monitor session))))
 
-(defun dtache-dtach-command (session &optional concat)
-  "Return a list of arguments to run SESSION.
+(cl-defgeneric dtache-dtach-command (entity &optional concat)
+  "Return dtach command for ENTITY optionally CONCAT.")
+
+(cl-defgeneric dtache-dtach-command ((command string) &optional concat)
+  "Return dtach command for COMMAND.
+
+Optionally CONCAT the command return command into a string."
+  (dtache-dtach-command (dtache-create-session command) concat))
+
+(cl-defgeneric dtache-dtach-command ((session dtache-session) &optional concat)
+  "Return dtach command for SESSION.
 
 Optionally CONCAT the command return command into a string."
   (with-connection-local-variables
@@ -674,16 +682,16 @@ Optionally CONCAT the command return command into a string."
                         " ")
            `(,(dtache--dtach-arg) ,socket))
        (if concat
-             (mapconcat 'identity
-                        `(,dtache-dtach-program
-                          ,(dtache--dtach-arg)
-                          ,socket "-z"
-                          ,dtache-shell-program "-c"
-                          ,(shell-quote-argument (dtache--magic-command session)))
-                        " ")
-           `(,(dtache--dtach-arg) ,socket "-z"
-             ,dtache-shell-program "-c"
-             ,(dtache--magic-command session)))))))
+           (mapconcat 'identity
+                      `(,dtache-dtach-program
+                        ,(dtache--dtach-arg)
+                        ,socket "-z"
+                        ,dtache-shell-program "-c"
+                        ,(shell-quote-argument (dtache--magic-command session)))
+                      " ")
+         `(,(dtache--dtach-arg) ,socket "-z"
+           ,dtache-shell-program "-c"
+           ,(dtache--magic-command session)))))))
 
 (defun dtache-redirect-only-p (command)
   "Return t if COMMAND should run in degreaded mode."

@@ -133,8 +133,7 @@ cluttering the comint-history with dtach commands."
                    dtache-shell-new-block-list)
                   'create
                 dtache--dtach-mode))
-             (session (dtache-create-session (substring-no-properties string)))
-             (dtach-command (dtache-dtach-command session t)))
+             (dtach-command (dtache-dtach-command (substring-no-properties string) t)))
        (comint-simple-send proc dtach-command)
      (comint-simple-send proc string))))
 
