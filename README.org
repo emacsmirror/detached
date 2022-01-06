@@ -306,6 +306,19 @@ The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_n
   (connection-local-set-profiles
    '(:application tramp :protocol "ssh") 'remote-dtache)
 #+end_src
+** Enhance a command with dtache
+
+A part from the extensions provided with this package the users of =dtache= can leverage the package to instruct other commands to use =dtache=. Here is an example where the package =dired-rsync= is modified to utilize =dtache=.
+
+#+begin_src elisp
+  (defun my/dtache-dired-rsync-advice (orig-fun &rest args)
+    "Always run `dired-rsync' with `dtache'."
+    (pcase-let* ((`(,command ,details) args)
+                 (dtache--dtach-mode 'new))
+      (apply orig-fun `(,(dtache-dtach-command command t) ,details))))
+
+  (advice-add #'dired-rsync--do-run :around #'my/dtache-dired-rsync-advice)
+#+end_src
 
 ** Customize an individual session
 
