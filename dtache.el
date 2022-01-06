@@ -90,7 +90,7 @@
 (defvar dtache-type-open-dispatch '((shell-command . dtache-shell-command-attach)
                                     (shell . dtache-shell-command-attach)
                                     (eshell . dtache-shell-command-attach)
-                                    (compile . dtache-compile-attach))
+                                    (compile . dtache-compile-open))
   "How to open an active session based on type.")
 
 (defvar dtache-annotation-format
@@ -640,9 +640,10 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
 
 (defun dtache-shell-command-attach (session)
   "Attach to `dtache' SESSION."
-  (let* ((dtache--current-session session)
-         (dtache--dtach-mode 'attach))
-    (dtache-start-session nil)))
+  (when (dtache-valid-session session)
+    (let* ((dtache--current-session session)
+           (dtache--dtach-mode 'attach))
+      (dtache-start-session nil))))
 
 ;;;;; Other
 

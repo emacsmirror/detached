@@ -87,10 +87,18 @@ Optionally EDIT-COMMAND."
 
 (defun dtache-compile-attach (session)
   "Attach to SESSION with `compile'."
-  (let* ((dtache-compile-command t)
-         (dtache--dtach-mode 'attach)
-         (dtache--current-session session))
-    (compilation-start nil)))
+  (when (dtache-valid-session session)
+    (let* ((dtache-compile-command t)
+           (dtache--dtach-mode 'attach)
+           (dtache--current-session session))
+      (compilation-start nil))))
+
+(defun dtache-compile-open (session)
+  "Open SESSION with `dtache-compile'."
+  (when (dtache-valid-session session)
+    (if (dtache--session-active session)
+        (dtache-compile-attach session)
+      (dtache-compile-session session))))
 
 ;;;###autoload
 (defun dtache-compile-setup ()
