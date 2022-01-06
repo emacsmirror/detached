@@ -227,126 +227,136 @@ If called with prefix-argument the output is suppressed."
   "Open a `dtache' SESSION."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
-  (if-let ((open-function
-            (dtache--session-open-function session)))
-      (funcall open-function session)
-    (dtache-open-dwim session)))
+  (when (dtache-valid-session session)
+    (if-let ((open-function
+              (dtache--session-open-function session)))
+        (funcall open-function session)
+      (dtache-open-dwim session))))
 
 ;;;###autoload
 (defun dtache-compile-session (session)
   "Open log of SESSION in `compilation-mode'."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
-  (let ((buffer-name "*dtache-session-output*")
-        (file
-         (dtache-session-file session 'log))
-        (tramp-verbose 1))
-    (when (file-exists-p file)
-      (with-current-buffer (get-buffer-create buffer-name)
-        (setq-local buffer-read-only nil)
-        (erase-buffer)
-        (insert (dtache-session-output session))
-        (setq-local default-directory
-                    (dtache--session-working-directory session))
-        (run-hooks 'dtache-compile-hooks)
-        (dtache-log-mode)
-        (compilation-minor-mode)
-        (setq-local font-lock-defaults '(compilation-mode-font-lock-keywords t))
-        (font-lock-mode)
-        (read-only-mode))
-      (pop-to-buffer buffer-name))))
+  (when (dtache-valid-session session)
+    (let ((buffer-name "*dtache-session-output*")
+          (file
+           (dtache-session-file session 'log))
+          (tramp-verbose 1))
+      (when (file-exists-p file)
+        (with-current-buffer (get-buffer-create buffer-name)
+          (setq-local buffer-read-only nil)
+          (erase-buffer)
+          (insert (dtache-session-output session))
+          (setq-local default-directory
+                      (dtache--session-working-directory session))
+          (run-hooks 'dtache-compile-hooks)
+          (dtache-log-mode)
+          (compilation-minor-mode)
+          (setq-local font-lock-defaults '(compilation-mode-font-lock-keywords t))
+          (font-lock-mode)
+          (read-only-mode))
+        (pop-to-buffer buffer-name)))))
 
 ;;;###autoload
 (defun dtache-rerun-session (session)
   "Rerun SESSION."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
-  (let* ((default-directory
-           (dtache--session-working-directory session))
-         (dtache-open-session-function
-          (dtache--session-open-function session))
-         (dtache-session-callback-function
-          (dtache--session-callback-function session))
-         (dtache-session-status-function
-          (dtache--session-status-function session)))
-    (dtache-start-session (dtache--session-command session))))
+  (when (dtache-valid-session session)
+    (let* ((default-directory
+             (dtache--session-working-directory session))
+           (dtache-open-session-function
+            (dtache--session-open-function session))
+           (dtache-session-callback-function
+            (dtache--session-callback-function session))
+           (dtache-session-status-function
+            (dtache--session-status-function session)))
+      (dtache-start-session (dtache--session-command session)))))
 
 ;;;###autoload
 (defun dtache-copy-session-output (session)
   "Copy SESSION's log."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
-  (with-temp-buffer
-    (insert (dtache-session-output session))
-    (kill-new (buffer-string))))
+  (when (dtache-valid-session session)
+    (with-temp-buffer
+      (insert (dtache-session-output session))
+      (kill-new (buffer-string)))))
 
 ;;;###autoload
 (defun dtache-copy-session-command (session)
   "Copy SESSION command."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
-  (kill-new (dtache--session-command session)))
+  (when (dtache-valid-session session)
+    (kill-new (dtache--session-command session))))
 
 ;;;###autoload
 (defun dtache-insert-session-command (session)
   "Insert SESSION."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
-  (insert (dtache--session-command session)))
+  (when (dtache-valid-session session)
+    (insert (dtache--session-command session))))
 
 ;;;###autoload
 (defun dtache-delete-session (session)
   "Delete SESSION."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
-  (if (dtache--session-active-p session)
-      (message "Kill session first before removing it.")
-    (dtache--db-remove-entry session)))
+  (when (dtache-valid-session session)
+    (if (dtache--session-active-p session)
+        (message "Kill session first before removing it.")
+      (dtache--db-remove-entry session))))
 
 ;;;###autoload
 (defun dtache-kill-session (session)
   "Send a TERM signal to SESSION."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
-  (let* ((pid (dtache--session-pid session)))
-    (when pid
-      (dtache--kill-processes pid))))
+  (when (dtache-valid-session session)
+    (let* ((pid (dtache--session-pid session)))
+      (when pid
+        (dtache--kill-processes pid)))))
 
 ;;;###autoload
 (defun dtache-open-output (session)
   "Open SESSION's output."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
-  (let* ((buffer-name "*dtache-session-output*")
-         (file-path
-          (dtache-session-file session 'log))
-         (tramp-verbose 1))
-    (if (file-exists-p file-path)
-        (progn
-          (with-current-buffer (get-buffer-create buffer-name)
-            (setq-local buffer-read-only nil)
-            (erase-buffer)
-            (insert (dtache-session-output session))
-            (setq-local default-directory (dtache--session-working-directory session))
-            (dtache-log-mode)
-            (goto-char (point-max)))
-          (pop-to-buffer buffer-name))
-      (message "Dtache can't find file: %s" file-path))))
+  (when (dtache-valid-session session)
+    (let* ((buffer-name "*dtache-session-output*")
+           (file-path
+            (dtache-session-file session 'log))
+           (tramp-verbose 1))
+      (if (file-exists-p file-path)
+          (progn
+            (with-current-buffer (get-buffer-create buffer-name)
+              (setq-local buffer-read-only nil)
+              (erase-buffer)
+              (insert (dtache-session-output session))
+              (setq-local default-directory (dtache--session-working-directory session))
+              (dtache-log-mode)
+              (goto-char (point-max)))
+            (pop-to-buffer buffer-name))
+        (message "Dtache can't find file: %s" file-path)))))
 
 ;;;###autoload
 (defun dtache-tail-output (session)
   "Tail SESSION's output."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
-  (if (dtache--session-active-p session)
-      (let* ((file-path
-              (dtache-session-file session 'log))
-             (tramp-verbose 1))
-        (when (file-exists-p file-path)
-          (find-file-other-window file-path)
-          (dtache-tail-mode)
-          (goto-char (point-max))))
-    (dtache-open-output session)))
+  (when (dtache-valid-session session)
+    (if (dtache--session-active-p session)
+        (let* ((file-path
+                (dtache-session-file session 'log))
+               (tramp-verbose 1))
+          (when (file-exists-p file-path)
+            (find-file-other-window file-path)
+            (dtache-tail-mode)
+            (goto-char (point-max))))
+      (dtache-open-output session))))
 
 ;;;###autoload
 (defun dtache-diff-session (session1 session2)
@@ -355,17 +365,19 @@ If called with prefix-argument the output is suppressed."
    (let ((sessions (dtache-get-sessions)))
      `(,(dtache-completing-read sessions)
        ,(dtache-completing-read sessions))))
-  (let ((buffer1 "*dtache-session-output-1*")
-        (buffer2 "*dtache-session-output-2*"))
-    (with-current-buffer (get-buffer-create buffer1)
-      (erase-buffer)
-      (insert (dtache--session-header session1))
-      (insert (dtache-session-output session1)))
-    (with-current-buffer (get-buffer-create buffer2)
-      (erase-buffer)
-      (insert (dtache--session-header session2))
-      (insert (dtache-session-output session2)))
-    (ediff-buffers buffer1 buffer2)))
+  (when (and (dtache-valid-session session1)
+             (dtache-valid-session session2))
+    (let ((buffer1 "*dtache-session-output-1*")
+          (buffer2 "*dtache-session-output-2*"))
+      (with-current-buffer (get-buffer-create buffer1)
+        (erase-buffer)
+        (insert (dtache--session-header session1))
+        (insert (dtache-session-output session1)))
+      (with-current-buffer (get-buffer-create buffer2)
+        (erase-buffer)
+        (insert (dtache--session-header session2))
+        (insert (dtache-session-output session2)))
+      (ediff-buffers buffer1 buffer2))))
 
 ;;;###autoload
 (defun dtache-detach-session ()
@@ -439,6 +451,7 @@ nil before closing."
 Optionally SUPPRESS-OUTPUT."
   (if (and (not (eq dtache--dtach-mode 'attach))
            (or suppress-output
+               (eq dtache--dtach-mode 'new)
                (dtache-redirect-only-p command)))
       (let* ((inhibit-message t)
              (dtache--dtach-mode 'new)
@@ -554,14 +567,24 @@ Optionally make the path LOCAL to host."
     ;; Add `dtache-shell-mode'
     (add-hook 'shell-mode-hook #'dtache-shell-mode)))
 
+(defun dtache-valid-session (session)
+  "Ensure that SESSION is valid.
+
+If session is not valid trigger an automatic cleanup on SESSION's host."
+  (when (dtache-session-p session)
+    (if (not (dtache--session-missing-p session))
+        t
+      (let ((host (dtache--session-host session)))
+        (message "Session does not exist. Initiate sesion cleanup on host %s" host)
+        (dtache-cleanup-host-sessions host)
+        nil))))
+
 (defun dtache-cleanup-host-sessions (host)
   "Run cleanuup on HOST sessions."
-  (seq-do
-   (lambda (it)
-     (when (and (string= host (dtache--session-host it))
-                (dtache--session-missing-p it))
-       (dtache--db-remove-entry it)))
-   (dtache--db-get-sessions)))
+  (thread-last (dtache--db-get-sessions)
+               (seq-filter (lambda (it) (string= host (dtache--session-host it))))
+               (seq-filter #'dtache--session-missing-p)
+               (seq-do #'dtache--db-remove-entry)))
 
 (defun dtache-session-exit-code-status (session)
   "Return status based on exit-code in SESSION."

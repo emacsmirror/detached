@@ -98,15 +98,16 @@ This function also makes sure that the HISTFILE is disabled for local shells."
 cluttering the comint-history with dtach commands."
   (interactive
    (list (dtache-shell-select-session)))
-  (if (and (dtache--session-active-p session)
-           (not (dtache--session-redirect-only session)))
-      (cl-letf ((dtache-shell--current-session session)
-                (comint-input-sender #'dtache-shell--attach-input-sender)
-                ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
-        (setq dtache--buffer-session session)
-        (comint-kill-input)
-        (comint-send-input))
-    (dtache-open-session session)))
+  (when (dtache-valid-session session)
+    (if (and (dtache--session-active-p session)
+             (not (dtache--session-redirect-only session)))
+        (cl-letf ((dtache-shell--current-session session)
+                  (comint-input-sender #'dtache-shell--attach-input-sender)
+                  ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
+          (setq dtache--buffer-session session)
+          (comint-kill-input)
+          (comint-send-input))
+      (dtache-open-session session))))
 
 ;;;; Support functions
 
