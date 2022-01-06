@@ -71,15 +71,17 @@ A minimal configuration for =dtache=.
 
 There are tree different ways to create a dtache session.
 
-| Function                      | Description                   |
-|-------------------------------+-------------------------------|
-| =dtache-shell-command=        | Called from M-x               |
-| =dtache-start-session=        | Called from within a function |
-| =dtache-shell-create-session= | Called from inside M-x shell  |
+| Function                       | Description                   |
+|--------------------------------+-------------------------------|
+| =dtache-shell-command=         | Called from M-x               |
+| =dtache-shell-create-session=  | Called from inside M-x shell  |
+| =dtache-eshell-create-session= | Called from inside eshell     |
+| =dtache-compile=               | Called from M-x               |
+| =dtache-start-session=         | Called from within a function |
 
 The =dtache-shell-command= is for the Emacs users that are accustomed to running shell commands from =M-x shell-command= or =M-x async-shell-command=. The =dtache-start-session= is supposed to be called from custom user functions, or for other packages to integrate towards. The user can also choose to override built in functions with it, for example =compile=. Lastly there is the =dtache-shell-create-session= command which is supposed to be bound to a key. It is a command that the user can choose to invoke whilst in a =M-x shell= buffer.
 
-To detach from a session you started with =dtache-shell-command= you should bind the command =dtache-detach-session= to something convenient in the =dtache-shell-mode-map=.
+To detach from a =dtache= session you should use the univeral =dtache-detach-session=.
 
 ** Interacting with a session
 
@@ -111,12 +113,12 @@ These commands are available through the =dtache-action-map=. The user can bind 
   (global-set-key (kbd "C-c d") dtache-action-map)
 #+end_src
 
-The upon invocation the user can choose an action, keybindings listed in the table above, and then choose a session to perform the action upon.
+Then upon invocation the user can choose an action, keybindings listed in the table above, and then choose a session to perform the action upon.
 
 * Extensions
 ** Dtache-shell
 
-A =use-package= configuration of the =dtache-shell= package. This package provides the integration with =M-x shell=, but since not all Emacs users use =shell=, this package is made optional.
+A =use-package= configuration of the =dtache-shell= extension, which provides the integration with =M-x shell=.
 
 #+begin_src elisp :lexical t :results none
   (use-package dtache-shell
@@ -128,18 +130,17 @@ A =use-package= configuration of the =dtache-shell= package. This package provid
     (setq dtache-shell-history-file "~/.bash_history"))
 #+end_src
 
-These are commands that the package provides and which the user is expected to bind to convenient keys. The =dtache= package provides a minor mode named =dtache-shell-mode=, which will be enabled in shell.
+A minor mode named =dtache-shell-mode= is provided, and will be enabled in =shell=. The commands that are implemented are:
 
-| Command             | Description           |
-|---------------------+-----------------------|
-| dtache-shell-create | Create a session      |
-| dtache-shell-attach | Attach to a session   |
-
-To detach from a session use the command =dtache-detach-session=. As instructed earlier you can bind this command in the =dtache-shell-mode-map=.
+| Command               | Description           |
+|-----------------------+-----------------------|
+| dtache-shell-create   | Create a session      |
+| dtache-shell-attach   | Attach to a session   |
+| dtache-detach-session | Detach from a session |
 
 ** Dtache-eshell
 
-A =use-package= configuration of the =dtache-eshell= package. This package provides the integration with =eshell=, but since not all Emacs users use =eshell=, this package is made optional.
+A =use-package= configuration of the =dtache-eshell= extension, which provides the integration with =eshell=.
 
 #+begin_src elisp :lexical t :results none
   (use-package dtache-eshell
@@ -150,18 +151,19 @@ A =use-package= configuration of the =dtache-eshell= package. This package provi
             ("C-c C-q" . dtache-detach-session))))
 #+end_src
 
-These are commands that the package provides and which the user is expected to bind to convenient keys. The package provides a minor mode that will be enabled in =eshell=.
+A minor mode named =dtache-eshell-mode= is provided, and will be enabled in =eshell=. The commands that are implemented are:
 
-| Command                      | Description         |
-|------------------------------+---------------------|
-| dtache-eshell-create-session | Create a session    |
-| dtache-eshell-attach         | Attach to a session |
+| Command                      | Description           |
+|------------------------------+-----------------------|
+| dtache-eshell-create-session | Create a session      |
+| dtache-eshell-attach         | Attach to a session   |
+| dtache-detach-session        | Detach from a session |
 
-To detach from a session simply use =C-c C-c=. In this [[https://niklaseklund.gitlab.io/blog/posts/dtache_eshell/][blog post]] there are examples and more information about the extension.
+In this [[https://niklaseklund.gitlab.io/blog/posts/dtache_eshell/][blog post]] there are examples and more information about the extension.
 
-** TODO Compile
+** Compile
 
-Add text here.
+A =use-package= configuration of the =dtache-compile= extension, which provides the integration with =compile=.
 
 #+begin_src elisp
   (use-package dtache-compile
@@ -172,16 +174,18 @@ Add text here.
            ("C-c C-q" . dtache-detach-session)))
 #+end_src
 
+The package implements the commands =dtache-compile= and =dtache-compile-recompile=, which are thin wrappers around the original =compile= and =recompile= commands. The users should be able to use the former as replacements for the latter without noticing any difference except from the possibility to =detach=.
+
 ** Consult
 
-A =use-package= configuration of the =dtache-consult= package. This package provides the integration with the [[https://github.com/minad/consult][consult]] package.
+A =use-package= configuration of the =dtache-consult= extension, which provides the integration with the [[https://github.com/minad/consult][consult]] package.
 
 #+begin_src elisp
   (use-package dtache-consult
     :commands dtache-consult-session)
 #+end_src
 
-This package provides the =dtache-consult-session= command which is a replacement for =dtache-open-session=. The difference is that the consult command provides multiple session sources, which is defined in the =dtache-consult-sources= variable. Users can customize which sources to use, as well as use individual sources in other =consult= commands, such as =consult-buffer=. The users can also narrow the list of sessions by entering a key. The list of supported keys are:
+The command =dtache-consult-session= is a replacement for =dtache-open-session=. The difference is that the consult command provides multiple session sources, which is defined in the =dtache-consult-sources= variable. Users can customize which sources to use, as well as use individual sources in other =consult= commands, such as =consult-buffer=. The users can also narrow the list of sessions by entering a key. The list of supported keys are:
 
 | Type                  | Key |
 |-----------------------+-----|
@@ -195,7 +199,8 @@ This package provides the =dtache-consult-session= command which is a replacemen
 
 Examples of the different sources are featured in this [[https://niklaseklund.gitlab.io/blog/posts/dtache_consult/][blog post]].
 
-** Embark
+** 3rd party
+*** Embark
 
 The user have the possibility to integrate =dtache= with the package [[https://github.com/oantolin/embark/][embark]]. The =dtache-action-map= can be reused for this purpose, so the user doesn't need to bind it to any key. Instead the user simply adds the following to their =dtache= configuration in order to get embark actions for =dtache-open-session=.
 
@@ -204,7 +209,7 @@ The user have the possibility to integrate =dtache= with the package [[https://g
   (add-to-list 'embark-keymap-alist '(dtache . embark-dtache-map))
 #+end_src
 
-** Alert
+*** Alert
 
 By default =dtache= uses the echo area to notify the user when a session has finished. An alternative is to utilize the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.
 
