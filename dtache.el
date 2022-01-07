@@ -63,16 +63,12 @@
   "Shell to run the dtach command in.")
 (defvar dtache-env nil
   "The name of the `dtache' program.")
-(defvar dtache-shell-command-history nil
-  "History of commands run with `dtache-shell-command'.")
 (defvar dtache-max-command-length 90
   "Maximum length of displayed command.")
 (defvar dtache-redirect-only-regexps '()
   "Regexps for commands that should be run with redirect only.")
 (defvar dtache-tail-interval 2
   "Interval in seconds for the update rate when tailing a session.")
-(defvar dtache-session-type nil
-  "Variable to specify the origin of the session.")
 (defvar dtache-notification-function #'dtache-inactive-session-notification
   "Variable to specify notification function when a session becomes inactive.")
 (defvar dtache-compile-hooks nil
@@ -81,14 +77,19 @@
   "An alist of annotators for metadata.")
 (defvar dtache-timer-configuration '(:seconds 10 :repeat 60 :function run-with-timer)
   "A property list defining how often to run a timer.")
-(defvar dtache-session-action nil
-  "A property list of actions for a session.")
 (defvar dtache-shell-command-action '(:attach dtache-shell-command-attach :view dtache-view-dwim)
   "Actions for a session created with `dtache-shell-command'.")
+
 (defvar dtache-enabled nil)
 (defvar dtache-session-mode nil
   "Mode of operation for session.
 Valid values are: create, new and attach")
+(defvar dtache-session-origin nil
+  "Variable to specify the origin of the session.")
+(defvar dtache-session-action nil
+  "A property list of actions for a session.")
+(defvar dtache-shell-command-history nil
+  "History of commands run with `dtache-shell-command'.")
 
 (defvar dtache-annotation-format
   `((:width 3 :function dtache--active-str :face dtache-active-face)
@@ -184,7 +185,7 @@ Valid values are: create, new and attach")
                               (:conc-name dtache--session-))
   (id nil :read-only t)
   (command nil :read-only t)
-  (type nil :read-only t)
+  (origin nil :read-only t)
   (working-directory nil :read-only t)
   (creation-time nil :read-only t)
   (session-directory nil :read-only t)
@@ -213,7 +214,7 @@ Optionally SUPPRESS-OUTPUT."
                           "Dtache shell command: ")
                         nil 'dtache-shell-command-history)
     current-prefix-arg))
-  (let ((dtache-session-type 'shell-command)
+  (let ((dtache-session-origin 'shell-command)
         (dtache-session-action dtache-shell-command-action))
     (dtache-start-session command suppress-output)))
 
@@ -423,7 +424,7 @@ nil before closing."
   (let ((session
          (dtache--session-create :id (intern (dtache--create-id command))
                                  :command command
-                                 :type dtache-session-type
+                                 :origin dtache-session-origin
                                  :action dtache-session-action
                                  :working-directory (dtache-get-working-directory)
                                  :redirect-only (dtache-redirect-only-p command)

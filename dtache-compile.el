@@ -47,7 +47,7 @@ Optionally enable COMINT if prefix-argument is provided."
     (consp current-prefix-arg)))
   (let* ((dtache-enabled t)
          (dtache-session-action dtache-post-compile-session-action)
-         (dtache-session-type 'compile)
+         (dtache-session-origin 'compile)
          (dtache-session-mode 'create))
     (compile command comint)))
 
@@ -58,7 +58,7 @@ Optionally EDIT-COMMAND."
   (interactive "P")
   (let* ((dtache-enabled t)
          (dtache-session-action dtache-post-compile-session-action)
-         (dtache-session-type 'compile)
+         (dtache-session-origin 'compile)
          (dtache-session-mode 'create))
     (recompile edit-command)))
 

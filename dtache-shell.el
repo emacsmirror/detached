@@ -78,7 +78,7 @@ This function also makes sure that the HISTFILE is disabled for local shells."
 (defun dtache-shell-create-session (&optional detach)
   "Create a session and attach to it unless DETACH."
   (interactive "P")
-  (let* ((dtache-session-type 'shell)
+  (let* ((dtache-session-origin 'shell)
          (dtache-session-action dtache-shell-session-action)
          (dtache-session-mode (if detach 'new 'create))
          (comint-input-sender #'dtache-shell--create-input-sender))

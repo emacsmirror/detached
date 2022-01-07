@@ -81,7 +81,7 @@
 
 If prefix-argument directly DETACH from the session."
   (interactive "P")
-  (let* ((dtache-session-type 'eshell)
+  (let* ((dtache-session-origin 'eshell)
          (dtache-session-mode (if detach 'new 'create))
          (dtache-eshell-command t))
     (call-interactively #'eshell-send-input)))
