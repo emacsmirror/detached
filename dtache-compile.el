@@ -30,8 +30,6 @@
 
 ;;;; Variables
 
-(defvar dtache-compile-command nil
-  "This variable has value t if `compile' is supposed to run with `dtache'.")
 (defvar dtache-compile-session-action '(:attach dtache-compile-attach :view dtache-compile-session))
 
 ;;;; Commands
@@ -41,7 +39,7 @@
   "Run COMMAND through `compile' but in a 'dtache' session.
 Optionally enable COMINT if prefix-argument is provided."
   (interactive)
-  (let* ((dtache-compile-command t)
+  (let* ((dtache-enabled t)
          (dtache-session-action dtache-compile-session-action)
          (dtache-session-type 'compile)
          (dtache--dtach-mode 'create))
@@ -52,7 +50,7 @@ Optionally enable COMINT if prefix-argument is provided."
   "Re-compile by running `compile' but in a 'dtache' session.
 Optionally EDIT-COMMAND."
   (interactive)
-  (let* ((dtache-compile-command t)
+  (let* ((dtache-enabled t)
          (dtache-session-action dtache-compile-session-action)
          (dtache-session-type 'compile)
          (dtache--dtach-mode 'create))
@@ -62,25 +60,24 @@ Optionally EDIT-COMMAND."
 
 (defun dtache-compile-advice (compilation-start &rest args)
   "Optionally create a `dtache' session before running COMPILATION-START with ARGS."
-  (if (not dtache-compile-command)
-      (apply compilation-start args)
-    (pcase-let ((`(,command ,mode ,_ ,highlight-regexp) args)
-                (buffer-name "*dtache-compilation*"))
-      (if (and (not (eq dtache--dtach-mode 'attach))
-               (dtache-redirect-only-p command))
-          (dtache-start-session command t)
-        (cl-letf* ((name-function (lambda (_) buffer-name))
-                   (dtache--current-session (or dtache--current-session
-                                                (dtache-create-session command)))
-                   (dtache-command (dtache-dtach-command dtache--current-session t)))
-          (apply compilation-start `(,dtache-command
-                                     ,(or mode 'dtache-compilation-mode)
-                                     ,name-function
-                                     ,highlight-regexp)))))))
+  (if dtache-enabled
+      (pcase-let ((`(,command ,mode ,_ ,highlight-regexp) args)
+                  (buffer-name "*dtache-compilation*"))
+        (if (and (not (eq dtache--dtach-mode 'attach))
+                 (dtache-redirect-only-p command))
+            (dtache-start-session command t)
+          (cl-letf* ((name-function (lambda (_) buffer-name))
+                     (dtache--current-session (or dtache--current-session
+                                                  (dtache-create-session command))))
+            (apply compilation-start `(,command
+                                       ,(or mode 'dtache-compilation-mode)
+                                       ,name-function
+                                       ,highlight-regexp)))))
+    (apply compilation-start args)))
 
 (defun dtache-compile-maybe-start (_proc)
   "Maybe run when compilation starts."
-  (when dtache-compile-command
+  (when dtache-enabled
     (setq dtache--buffer-session dtache--current-session)
     (dtache-compile--replace-modesetter)
     (add-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter 0 t)
@@ -89,10 +86,10 @@ Optionally EDIT-COMMAND."
 (defun dtache-compile-attach (session)
   "Attach to SESSION with `compile'."
   (when (dtache-valid-session session)
-    (let* ((dtache-compile-command t)
+    (let* ((dtache-enabled t)
            (dtache--dtach-mode 'attach)
            (dtache--current-session session))
-      (compilation-start nil))))
+      (compilation-start (dtache--session-command session)))))
 
 (defun dtache-compile-open (session)
   "Open SESSION with `dtache-compile'."

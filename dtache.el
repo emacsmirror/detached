@@ -81,11 +81,11 @@
   "An alist of annotators for metadata.")
 (defvar dtache-timer-configuration '(:seconds 10 :repeat 60 :function run-with-timer)
   "A property list defining how often to run a timer.")
-
 (defvar dtache-session-action nil
   "A property list of actions for a session.")
 (defvar dtache-shell-command-action '(:attach dtache-shell-command-attach :view dtache-view-dwim)
   "Actions for a session created with `dtache-shell-command'.")
+(defvar dtache-enabled nil)
 
 (defvar dtache-annotation-format
   `((:width 3 :function dtache--active-str :face dtache-active-face)
@@ -446,17 +446,17 @@ Optionally SUPPRESS-OUTPUT."
                (dtache-redirect-only-p command)))
       (let* ((inhibit-message t)
              (dtache--dtach-mode 'new)
-             (dtach-command (dtache-dtach-command command)))
-        (apply #'start-file-process
-               `("dtache" nil ,dtache-dtach-program ,@dtach-command)))
+             (dtache--current-session (dtache-create-session command)))
+        (apply #'start-file-process-shell-command
+               `("dtache" nil ,command)))
     (cl-letf* ((inhibit-message t)
                ((symbol-function #'set-process-sentinel) #'ignore)
                (dtache--dtach-mode (or dtache--dtach-mode 'create))
                (buffer "*Dtache Shell Command*")
-               (session (or dtache--current-session (dtache-create-session command)))
-               (dtach-command (dtache-dtach-command session t)))
-      (funcall #'async-shell-command dtach-command buffer)
-      (with-current-buffer buffer (setq dtache--buffer-session session)))))
+               (dtache--current-session (or dtache--current-session (dtache-create-session command)))
+               (dtache-enabled t))
+      (funcall #'async-shell-command command buffer)
+      (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session)))))
 
 (defun dtache-update-sessions ()
   "Update `dtache' sessions.
@@ -554,6 +554,9 @@ Optionally make the path LOCAL to host."
                  (seq-filter #'dtache--session-active)
                  (seq-do #'dtache-start-session-monitor))
 
+    ;; Advices
+    (advice-add #'start-process :around #'dtache-start-process-advice)
+
     ;; Add `dtache-shell-mode'
     (add-hook 'shell-mode-hook #'dtache-shell-mode)))
 
@@ -627,7 +630,7 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
   (when (dtache-valid-session session)
     (let* ((dtache--current-session session)
            (dtache--dtach-mode 'attach))
-      (dtache-start-session nil))))
+      (dtache-start-session (dtache--session-command session)))))
 
 (defun dtache-delete-sessions ()
   "Delete all `dtache' sessions."
@@ -635,6 +638,27 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
           (dtache-get-sessions)))
 
 ;;;;; Other
+
+(defun dtache-start-process-advice (start-process-fun name buffer &rest args)
+  "Optionally make `start-process' use `dtache'."
+  (if dtache-enabled
+      (with-connection-local-variables
+       (let* ((command
+               (string-remove-prefix
+                ;; If start-process called from e.g. `start-file-process-shell-command'
+                ;; we need to strip the shell command and switch at the start.
+                (format (format "%s %s " shell-file-name shell-command-switch))
+                (string-join args " ")))
+              (dtache--current-session
+               (if (and dtache--current-session
+                        (string=
+                         (dtache--session-command dtache--current-session)
+                         command))
+                   dtache--current-session
+                 (dtache-create-session command)))
+              (dtach-command `(,dtache-dtach-program ,@(dtache-dtach-command dtache--current-session))))
+         (apply start-process-fun `(,name ,buffer ,@dtach-command))))
+    (apply start-process-fun `(,name ,buffer ,@args))))
 
 (defun dtache-start-session-monitor (session)
   "Start to monitor SESSION activity."

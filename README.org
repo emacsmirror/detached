@@ -313,16 +313,25 @@ The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_n
 #+end_src
 ** Enhance a command with dtache
 
-A part from the extensions provided with this package the users of =dtache= can leverage the package to instruct other commands to use =dtache=. Here is an example where the package =dired-rsync= is modified to utilize =dtache=.
+A part from the extensions provided with this package the users of =dtache= can leverage the package to instruct other commands to use =dtache=. Here is an example with a command from the package [[https://github.com/stsquad/dired-rsync][dired-rsync]].
 
 #+begin_src elisp
-  (defun my/dtache-dired-rsync-advice (orig-fun &rest args)
-    "Always run `dired-rsync' with `dtache'."
-    (pcase-let* ((`(,command ,details) args)
-                 (dtache--dtach-mode 'new))
-      (apply orig-fun `(,(dtache-dtach-command command t) ,details))))
+  (defun my/dtache-dired-rsync ()
+    "Run `dired-rsync' with `dtache'."
+    (interactive)
+    (let* ((dtache-enabled t)
+           (dtache--dtach-mode 'new))
+      (call-interactively #'dired-rsync)))
+#+end_src
 
-  (advice-add #'dired-rsync--do-run :around #'my/dtache-dired-rsync-advice)
+Or enhancing the built in =dired-do-async-shell-command=.
+
+#+begin_src elisp
+  (defun my/dtache-dired-do-async-shell-command ()
+    (interactive)
+    (let* ((dtache-enabled t)
+           (dtache--dtach-mode 'create))
+      (call-interactively #'dired-do-async-shell-command)))
 #+end_src
 
 * Versions
