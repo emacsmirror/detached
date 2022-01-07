@@ -199,10 +199,10 @@
 ;;;; Commands
 
 ;;;###autoload
-(defun dtache-shell-command (command)
+(defun dtache-shell-command (command &optional suppress-output)
   "Execute COMMAND asynchronously with `dtache'.
 
-If called with prefix-argument the output is suppressed."
+Optionally SUPPRESS-OUTPUT."
   (interactive
    (list
     (read-shell-command (if shell-command-prompt-show-cwd
@@ -210,10 +210,11 @@ If called with prefix-argument the output is suppressed."
                                             (abbreviate-file-name
                                              default-directory))
                           "Dtache shell command: ")
-                        nil 'dtache-shell-command-history)))
+                        nil 'dtache-shell-command-history)
+    current-prefix-arg))
   (let ((dtache-session-type 'shell-command)
         (dtache-session-action dtache-shell-command-action))
-    (dtache-start-session command current-prefix-arg)))
+    (dtache-start-session command suppress-output)))
 
 ;;;###autoload
 (defun dtache-open-session (session)
@@ -440,23 +441,24 @@ nil before closing."
   "Start a `dtache' session running COMMAND.
 
 Optionally SUPPRESS-OUTPUT."
-  (if (and (not (eq dtache--dtach-mode 'attach))
-           (or suppress-output
-               (eq dtache--dtach-mode 'new)
-               (dtache-redirect-only-p command)))
-      (let* ((inhibit-message t)
-             (dtache--dtach-mode 'new)
-             (dtache--current-session (dtache-create-session command)))
+  (let ((inhibit-message t)
+        (dtache-enabled t)
+        (dtache--current-session
+         (or dtache--current-session
+             (dtache-create-session command))))
+    (if-let ((run-in-background
+              (and (not (eq dtache--dtach-mode 'attach))
+                   (or suppress-output
+                       (eq dtache--dtach-mode 'new)
+                       (dtache-redirect-only-p command))))
+             (dtache--dtach-mode 'new))
         (apply #'start-file-process-shell-command
-               `("dtache" nil ,command)))
-    (cl-letf* ((inhibit-message t)
-               ((symbol-function #'set-process-sentinel) #'ignore)
-               (dtache--dtach-mode (or dtache--dtach-mode 'create))
-               (buffer "*Dtache Shell Command*")
-               (dtache--current-session (or dtache--current-session (dtache-create-session command)))
-               (dtache-enabled t))
-      (funcall #'async-shell-command command buffer)
-      (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session)))))
+               `("dtache" nil ,command))
+      (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
+                 (dtache--dtach-mode (or dtache--dtach-mode 'create))
+                 (buffer "*Dtache Shell Command*"))
+        (funcall #'async-shell-command command buffer)
+        (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session))))))
 
 (defun dtache-update-sessions ()
   "Update `dtache' sessions.

@@ -182,7 +182,8 @@ A =use-package= configuration of the =dtache-consult= extension, which provides 
 
 #+begin_src elisp
   (use-package dtache-consult
-    :commands dtache-consult-session)
+    :after dtache
+    :bind ([remap dtache-open-session] . dtache-consult-session))
 #+end_src
 
 The command =dtache-consult-session= is a replacement for =dtache-open-session=. The difference is that the consult command provides multiple session sources, which is defined in the =dtache-consult-sources= variable. Users can customize which sources to use, as well as use individual sources in other =consult= commands, such as =consult-buffer=. The users can also narrow the list of sessions by entering a key. The list of supported keys are:

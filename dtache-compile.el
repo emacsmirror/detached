@@ -35,21 +35,27 @@
 ;;;; Commands
 
 ;;;###autoload
-(defun dtache-compile ()
+(defun dtache-compile (command &optional comint)
   "Run COMMAND through `compile' but in a 'dtache' session.
 Optionally enable COMINT if prefix-argument is provided."
-  (interactive)
+  (interactive
+   (list
+    (let ((command (eval compile-command)))
+      (if (or compilation-read-command current-prefix-arg)
+          (compilation-read-command command)
+        command))
+    (consp current-prefix-arg)))
   (let* ((dtache-enabled t)
          (dtache-session-action dtache-compile-session-action)
          (dtache-session-type 'compile)
          (dtache--dtach-mode 'create))
-    (call-interactively #'compile)))
+    (compile command comint)))
 
 ;;;###autoload
 (defun dtache-compile-recompile (&optional edit-command)
   "Re-compile by running `compile' but in a 'dtache' session.
 Optionally EDIT-COMMAND."
-  (interactive)
+  (interactive "P")
   (let* ((dtache-enabled t)
          (dtache-session-action dtache-compile-session-action)
          (dtache-session-type 'compile)
