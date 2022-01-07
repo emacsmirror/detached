@@ -32,8 +32,7 @@
 
 ;;;; Variables
 
-(defvar dtache-eshell-command nil)
-(defvar dtache-shell-session-action '(:attach dtache-shell-command-attach :view dtache-view-dwim))
+(defvar dtache-eshell-session-action '(:attach dtache-shell-command-attach :view dtache-view-dwim))
 
 ;;;; Functions
 
@@ -54,18 +53,16 @@
     (dtache-completing-read sessions)))
 
 (defun dtache-eshell-maybe-create-session ()
-  "Create a session if `dtache-eshell-command' value is t."
-  (when dtache-eshell-command
+  "Create a session if `dtache-enabled' value is t."
+  (when dtache-enabled
     (let* ((dtache-session-mode 'create)
-           (dtache-session-action dtache-shell-session-action)
+           (dtache-session-action dtache-eshell-session-action)
            (command (mapconcat #'identity
                                `(,eshell-last-command-name
                                  ,@eshell-last-arguments)
-                               " "))
-           (session (dtache-create-session command)))
-      (setq eshell-last-arguments (dtache-dtach-command session))
-      (setq dtache--buffer-session session))
-    (setq eshell-last-command-name "dtach")))
+                               " ")))
+      (setq dtache--current-session (dtache-create-session command))
+      (setq dtache--buffer-session dtache--current-session))))
 
 (defun dtache-eshell-get-dtach-process ()
   "Return `eshell' process if `dtache' is running."
@@ -83,7 +80,8 @@ If prefix-argument directly DETACH from the session."
   (interactive "P")
   (let* ((dtache-session-origin 'eshell)
          (dtache-session-mode (if detach 'new 'create))
-         (dtache-eshell-command t))
+         (dtache-enabled t)
+         (dtache--current-session nil))
     (call-interactively #'eshell-send-input)))
 
 ;;;###autoload

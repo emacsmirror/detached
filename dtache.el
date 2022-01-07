@@ -456,7 +456,7 @@ Optionally SUPPRESS-OUTPUT."
               (and (not (eq dtache-session-mode 'attach))
                    (or suppress-output
                        (eq dtache-session-mode 'new)
-                       (dtache-redirect-only-p command))))
+                       (dtache--session-redirect-only dtache--current-session))))
              (dtache-session-mode 'new))
         (apply #'start-file-process-shell-command
                `("dtache" nil ,command))
