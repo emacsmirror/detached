@@ -53,6 +53,8 @@
 
 ;;;; Variables
 
+;;;;; Customizable
+
 (defvar dtache-session-directory nil
   "The directory to store `dtache' sessions.")
 (defvar dtache-db-directory user-emacs-directory
@@ -79,18 +81,6 @@
   "A property list defining how often to run a timer.")
 (defvar dtache-shell-command-action '(:attach dtache-shell-command-attach :view dtache-view-dwim)
   "Actions for a session created with `dtache-shell-command'.")
-
-(defvar dtache-enabled nil)
-(defvar dtache-session-mode nil
-  "Mode of operation for session.
-Valid values are: create, new and attach")
-(defvar dtache-session-origin nil
-  "Variable to specify the origin of the session.")
-(defvar dtache-session-action nil
-  "A property list of actions for a session.")
-(defvar dtache-shell-command-history nil
-  "History of commands run with `dtache-shell-command'.")
-
 (defvar dtache-annotation-format
   `((:width 3 :function dtache--active-str :face dtache-active-face)
     (:width 3 :function dtache--status-str :face dtache-failure-face)
@@ -115,6 +105,19 @@ Valid values are: create, new and attach")
     (define-key map "W" #'dtache-copy-session-output)
     (define-key map "=" #'dtache-diff-session)
     map))
+
+;;;;; Internal
+
+(defvar dtache-enabled nil)
+(defvar dtache-session-mode nil
+  "Mode of operation for session.
+Valid values are: create, new and attach")
+(defvar dtache-session-origin nil
+  "Variable to specify the origin of the session.")
+(defvar dtache-session-action nil
+  "A property list of actions for a session.")
+(defvar dtache-shell-command-history nil
+  "History of commands run with `dtache-shell-command'.")
 
 ;;;;; Faces
 
@@ -172,6 +175,7 @@ Valid values are: create, new and attach")
 (make-variable-buffer-local 'dtache--buffer-session)
 (defvar dtache--session-candidates nil
   "An alist of session candidates.")
+
 (defconst dtache--dtach-eof-message "\\[EOF - dtach terminating\\]"
   "Message printed when `dtach' terminates.")
 (defconst dtache--dtach-detached-message "\\[detached\\]\^M"
