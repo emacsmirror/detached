@@ -86,6 +86,9 @@
 (defvar dtache-shell-command-action '(:attach dtache-shell-command-attach :view dtache-view-dwim)
   "Actions for a session created with `dtache-shell-command'.")
 (defvar dtache-enabled nil)
+(defvar dtache-session-mode nil
+  "Mode of operation for session.
+Valid values are: create, new and attach")
 
 (defvar dtache-annotation-format
   `((:width 3 :function dtache--active-str :face dtache-active-face)
@@ -100,7 +103,7 @@
 
 (defvar dtache-action-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "c" #'dtache-compile-session)
+    (define-key map "c" #'dtache-post-compile-session)
     (define-key map "d" #'dtache-delete-session)
     (define-key map "i" #'dtache-insert-session-command)
     (define-key map "k" #'dtache-kill-session)
@@ -159,8 +162,6 @@
 
 (defvar dtache--sessions-initialized nil
   "Sessions are initialized.")
-(defvar dtache-session-mode nil
-  "Mode of operation for dtach.")
 (defvar dtache--sessions nil
   "A list of sessions.")
 (defvar dtache--buffer-session nil
@@ -233,8 +234,8 @@ Optionally SUPPRESS-OUTPUT."
         (funcall view session)))))
 
 ;;;###autoload
-(defun dtache-compile-session (session)
-  "Open log of SESSION in `compilation-mode'."
+(defun dtache-post-compile-session (session)
+  "Post `compile' by opening the output of a SESSION in `compilation-mode'."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
@@ -617,7 +618,7 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
   (cond ((eq 'success (dtache--session-status session))
          (dtache-open-output session))
         ((eq 'failure (dtache--session-status session))
-         (dtache-compile-session session))
+         (dtache-post-compile-session session))
         ((eq 'unknown (dtache--session-status session))
          (dtache-open-output session))
         (t (message "Dtache session is in an unexpected state."))))

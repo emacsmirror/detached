@@ -99,7 +99,7 @@ To interact with a session =dtache= provides the command =dtache-open-session=. 
 | dtache-open-output (o)            | Open a session's output                     |
 | dtache-tail-output  (t)           | Tail the output of an active session        |
 | dtache-diff-session (=)           | Diff a session with another session         |
-| dtache-compile-session (c)        | Open the session output in compilation mode |
+| dtache-post-compile-session (c)        | Open the session output in compilation mode |
 | dtache-rerun-session (r)          | Rerun a session                             |
 | dtache-insert-session-command (i) | Insert the session's command at point       |
 | dtache-copy-session-command (w)   | Copy the session's shell command            |

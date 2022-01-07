@@ -71,7 +71,7 @@ The commands that are available.
 | Command                       | Description                  | Keybinding |
 |-------------------------------+------------------------------+------------|
 | =dtache-open-session=         | A DWIM function              | Return     |
-| =dtache-compile-session=      | Post compilation             | c          |
+| =dtache-post-compile-session=      | Post compilation             | c          |
 | =dtache-delete-session=       | Delete an active session     | d          |
 | =dtache-kill-session=         | Kill an active session       | k          |
 | =dtache-open-output=          | Open sessions output         | o          |

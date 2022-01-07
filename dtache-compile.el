@@ -30,7 +30,7 @@
 
 ;;;; Variables
 
-(defvar dtache-compile-session-action '(:attach dtache-compile-attach :view dtache-compile-session))
+(defvar dtache-post-compile-session-action '(:attach dtache-compile-attach :view dtache-post-compile-session))
 
 ;;;; Commands
 
@@ -46,7 +46,7 @@ Optionally enable COMINT if prefix-argument is provided."
         command))
     (consp current-prefix-arg)))
   (let* ((dtache-enabled t)
-         (dtache-session-action dtache-compile-session-action)
+         (dtache-session-action dtache-post-compile-session-action)
          (dtache-session-type 'compile)
          (dtache-session-mode 'create))
     (compile command comint)))
@@ -57,7 +57,7 @@ Optionally enable COMINT if prefix-argument is provided."
 Optionally EDIT-COMMAND."
   (interactive "P")
   (let* ((dtache-enabled t)
-         (dtache-session-action dtache-compile-session-action)
+         (dtache-session-action dtache-post-compile-session-action)
          (dtache-session-type 'compile)
          (dtache-session-mode 'create))
     (recompile edit-command)))
@@ -102,7 +102,7 @@ Optionally EDIT-COMMAND."
   (when (dtache-valid-session session)
     (if (dtache--session-active session)
         (dtache-compile-attach session)
-      (dtache-compile-session session))))
+      (dtache-post-compile-session session))))
 
 ;;;###autoload
 (defun dtache-compile-setup ()
