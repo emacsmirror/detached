@@ -53,16 +53,19 @@
     (dtache-completing-read sessions)))
 
 (defun dtache-eshell-maybe-create-session ()
-  "Create a session if `dtache-enabled' value is t."
+  "Create a session if `dtache-eshell-command' value is t."
   (when dtache-enabled
     (let* ((dtache-session-mode 'create)
            (dtache-session-action dtache-eshell-session-action)
            (command (mapconcat #'identity
                                `(,eshell-last-command-name
                                  ,@eshell-last-arguments)
-                               " ")))
-      (setq dtache--current-session (dtache-create-session command))
-      (setq dtache--buffer-session dtache--current-session))))
+                               " "))
+           (session (dtache-create-session command)))
+      (setq eshell-last-arguments (dtache-dtach-command session))
+      (setq dtache--buffer-session session)
+      (setq dtache-enabled nil)
+      (setq eshell-last-command-name "dtach"))))
 
 (defun dtache-eshell-get-dtach-process ()
   "Return `eshell' process if `dtache' is running."
