@@ -75,7 +75,7 @@ Optionally EDIT-COMMAND."
           (cl-letf* ((name-function (lambda (_) buffer-name))
                      (dtache--current-session (or dtache--current-session
                                                   (dtache-create-session command))))
-            (apply compilation-start `(,command
+            (apply compilation-start `(,(dtache-dtach-command command t)
                                        ,(or mode 'dtache-compilation-mode)
                                        ,name-function
                                        ,highlight-regexp)))))

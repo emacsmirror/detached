@@ -452,11 +452,14 @@ Optionally SUPPRESS-OUTPUT."
                        (eq dtache-session-mode 'new)
                        (dtache--session-redirect-only dtache--current-session))))
              (dtache-session-mode 'new))
-        (apply #'start-file-process-shell-command `("dtache" nil ,command))
+        (progn (setq dtache-enabled nil)
+               (apply #'start-file-process-shell-command
+                      `("dtache" nil ,(dtache-dtach-command dtache--current-session t))))
       (cl-letf* ((dtache-session-mode 'create)
                   ((symbol-function #'set-process-sentinel) #'ignore)
                  (buffer "*Dtache Shell Command*"))
-        (funcall #'async-shell-command command buffer)
+        (setq dtache-enabled nil)
+        (funcall #'async-shell-command (dtache-dtach-command dtache--current-session t) buffer)
         (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session))))))
 
 (defun dtache-update-sessions ()
@@ -556,7 +559,7 @@ Optionally make the path LOCAL to host."
                  (seq-do #'dtache-start-session-monitor))
 
     ;; Advices
-    (advice-add #'start-process :around #'dtache-start-process-advice)
+    ;; (advice-add #'start-process :around #'dtache-start-process-advice)
 
     ;; Add `dtache-shell-mode'
     (add-hook 'shell-mode-hook #'dtache-shell-mode)))
