@@ -321,7 +321,7 @@ A part from the extensions provided with this package the users of =dtache= can 
     "Run `dired-rsync' with `dtache'."
     (interactive)
     (let* ((dtache-enabled t)
-           (dtache--dtach-mode 'new))
+           (dtache-session-mode 'new))
       (call-interactively #'dired-rsync)))
 #+end_src
 
@@ -331,7 +331,7 @@ Or enhancing the built in =dired-do-async-shell-command=.
   (defun my/dtache-dired-do-async-shell-command ()
     (interactive)
     (let* ((dtache-enabled t)
-           (dtache--dtach-mode 'create))
+           (dtache-session-mode 'create))
       (call-interactively #'dired-do-async-shell-command)))
 #+end_src
 

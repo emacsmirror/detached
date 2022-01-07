@@ -159,7 +159,7 @@
 
 (defvar dtache--sessions-initialized nil
   "Sessions are initialized.")
-(defvar dtache--dtach-mode nil
+(defvar dtache-session-mode nil
   "Mode of operation for dtach.")
 (defvar dtache--sessions nil
   "A list of sessions.")
@@ -447,15 +447,15 @@ Optionally SUPPRESS-OUTPUT."
          (or dtache--current-session
              (dtache-create-session command))))
     (if-let ((run-in-background
-              (and (not (eq dtache--dtach-mode 'attach))
+              (and (not (eq dtache-session-mode 'attach))
                    (or suppress-output
-                       (eq dtache--dtach-mode 'new)
+                       (eq dtache-session-mode 'new)
                        (dtache-redirect-only-p command))))
-             (dtache--dtach-mode 'new))
+             (dtache-session-mode 'new))
         (apply #'start-file-process-shell-command
                `("dtache" nil ,command))
       (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
-                 (dtache--dtach-mode (or dtache--dtach-mode 'create))
+                 (dtache-session-mode (or dtache-session-mode 'create))
                  (buffer "*Dtache Shell Command*"))
         (funcall #'async-shell-command command buffer)
         (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session))))))
@@ -631,7 +631,7 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
   "Attach to `dtache' SESSION."
   (when (dtache-valid-session session)
     (let* ((dtache--current-session session)
-           (dtache--dtach-mode 'attach))
+           (dtache-session-mode 'attach))
       (dtache-start-session (dtache--session-command session)))))
 
 (defun dtache-delete-sessions ()
@@ -684,12 +684,12 @@ Optionally CONCAT the command return command into a string."
 
 Optionally CONCAT the command return command into a string."
   (with-connection-local-variables
-   (let* ((dtache--dtach-mode (cond ((eq dtache--dtach-mode 'attach) 'attach)
+   (let* ((dtache-session-mode (cond ((eq dtache-session-mode 'attach) 'attach)
                                     ((dtache--session-redirect-only session) 'new)
-                                    (t dtache--dtach-mode)))
+                                    (t dtache-session-mode)))
           (socket (dtache-session-file session 'socket t)))
      (setq dtache--buffer-session session)
-     (if (eq dtache--dtach-mode 'attach)
+     (if (eq dtache-session-mode 'attach)
          (if concat
              (mapconcat 'identity
                         `(,dtache-dtach-program
@@ -933,8 +933,8 @@ Optionally CONCAT the command return command into a string."
 ;;;;; Other
 
 (defun dtache--dtach-arg ()
-  "Return dtach argument based on mode."
-  (pcase dtache--dtach-mode
+  "Return dtach argument based on `dtache-session-mode'."
+  (pcase dtache-session-mode
     ('new "-n")
     ('create "-c")
     ('attach "-a")

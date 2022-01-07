@@ -80,7 +80,7 @@ This function also makes sure that the HISTFILE is disabled for local shells."
   (interactive "P")
   (let* ((dtache-session-type 'shell)
          (dtache-session-action dtache-shell-session-action)
-         (dtache--dtach-mode (if detach 'new 'create))
+         (dtache-session-mode (if detach 'new 'create))
          (comint-input-sender #'dtache-shell--create-input-sender))
     (comint-send-input)))
 
@@ -107,7 +107,7 @@ cluttering the comint-history with dtach commands."
 
 (defun dtache-shell--attach-input-sender (proc _string)
   "Attach to `dtache--session' and send the attach command to PROC."
-  (let* ((dtache--dtach-mode 'attach)
+  (let* ((dtache-session-mode 'attach)
          (input
           (dtache-dtach-command dtache-shell--current-session t)))
     (comint-simple-send proc input)))
@@ -120,13 +120,13 @@ cluttering the comint-history with dtach commands."
                     (lambda (blocked)
                       (string-match-p blocked string))
                     dtache-shell-block-list)))
-             (dtache--dtach-mode
+             (dtache-session-mode
               (if (seq-find
                    (lambda (blocked)
                      (string-match-p blocked string))
                    dtache-shell-new-block-list)
                   'create
-                dtache--dtach-mode))
+                dtache-session-mode))
              (dtach-command (dtache-dtach-command (substring-no-properties string) t)))
        (comint-simple-send proc dtach-command)
      (comint-simple-send proc string))))

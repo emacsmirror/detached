@@ -48,7 +48,7 @@ Optionally enable COMINT if prefix-argument is provided."
   (let* ((dtache-enabled t)
          (dtache-session-action dtache-compile-session-action)
          (dtache-session-type 'compile)
-         (dtache--dtach-mode 'create))
+         (dtache-session-mode 'create))
     (compile command comint)))
 
 ;;;###autoload
@@ -59,7 +59,7 @@ Optionally EDIT-COMMAND."
   (let* ((dtache-enabled t)
          (dtache-session-action dtache-compile-session-action)
          (dtache-session-type 'compile)
-         (dtache--dtach-mode 'create))
+         (dtache-session-mode 'create))
     (recompile edit-command)))
 
 ;;;;; Functions
@@ -69,7 +69,7 @@ Optionally EDIT-COMMAND."
   (if dtache-enabled
       (pcase-let ((`(,command ,mode ,_ ,highlight-regexp) args)
                   (buffer-name "*dtache-compilation*"))
-        (if (and (not (eq dtache--dtach-mode 'attach))
+        (if (and (not (eq dtache-session-mode 'attach))
                  (dtache-redirect-only-p command))
             (dtache-start-session command t)
           (cl-letf* ((name-function (lambda (_) buffer-name))
@@ -93,7 +93,7 @@ Optionally EDIT-COMMAND."
   "Attach to SESSION with `compile'."
   (when (dtache-valid-session session)
     (let* ((dtache-enabled t)
-           (dtache--dtach-mode 'attach)
+           (dtache-session-mode 'attach)
            (dtache--current-session session))
       (compilation-start (dtache--session-command session)))))
 

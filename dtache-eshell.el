@@ -56,7 +56,7 @@
 (defun dtache-eshell-maybe-create-session ()
   "Create a session if `dtache-eshell-command' value is t."
   (when dtache-eshell-command
-    (let* ((dtache--dtach-mode 'create)
+    (let* ((dtache-session-mode 'create)
            (dtache-session-action dtache-shell-session-action)
            (command (mapconcat #'identity
                                `(,eshell-last-command-name
@@ -82,7 +82,7 @@
 If prefix-argument directly DETACH from the session."
   (interactive "P")
   (let* ((dtache-session-type 'eshell)
-         (dtache--dtach-mode (if detach 'new 'create))
+         (dtache-session-mode (if detach 'new 'create))
          (dtache-eshell-command t))
     (call-interactively #'eshell-send-input)))
 
@@ -94,7 +94,7 @@ If prefix-argument directly DETACH from the session."
   (when (dtache-valid-session session)
     (if (and (dtache--session-active-p session)
              (not (dtache--session-redirect-only session)))
-        (cl-letf* ((dtache--dtach-mode 'attach)
+        (cl-letf* ((dtache-session-mode 'attach)
                    (input
                     (dtache-dtach-command session t))
                    ((symbol-function #'eshell-add-to-history) #'ignore))

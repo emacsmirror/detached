@@ -73,7 +73,7 @@
               ((symbol-function #'dtache-create-session)
                (lambda (_)
                  session)))
-     (let* ((dtache--dtach-mode 'create)
+     (let* ((dtache-session-mode 'create)
             (expected `("-c" ,(dtache-session-file session 'socket t)
                         "-z" ,dtache-shell-program
                         "-c"
@@ -88,7 +88,7 @@
                                               (dtache-session-file session 'log t))))))
        (should (equal expected (dtache-dtach-command session)))
        (should (equal expected-concat (dtache-dtach-command session t))))
-     (let* ((dtache--dtach-mode 'attach)
+     (let* ((dtache-session-mode 'attach)
             (expected `("-a" ,(dtache-session-file session 'socket t)))
             (expected-concat (format "%s -a %s"
                                      dtach-program
