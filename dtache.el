@@ -229,14 +229,8 @@ Optionally SUPPRESS-OUTPUT."
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
     (if (dtache--session-active-p session)
-        (if (dtache--session-redirect-only session)
-            (dtache-tail-output session)
-          (let ((attach (or (plist-get (dtache--session-action session) :attach)
-                            #'dtache-tail-output)))
-            (funcall attach session)))
-      (let ((view (or (plist-get (dtache--session-action session) :view)
-                      #'dtache-view-dwim)))
-        (funcall view session)))))
+        (dtache-attach-session session)
+      (dtache-view-session session))))
 
 ;;;###autoload
 (defun dtache-post-compile-session (session)
@@ -453,15 +447,13 @@ Optionally SUPPRESS-OUTPUT."
          (or dtache--current-session
              (dtache-create-session command))))
     (if-let ((run-in-background
-              (and (not (eq dtache-session-mode 'attach))
-                   (or suppress-output
+              (and (or suppress-output
                        (eq dtache-session-mode 'new)
                        (dtache--session-redirect-only dtache--current-session))))
              (dtache-session-mode 'new))
-        (apply #'start-file-process-shell-command
-               `("dtache" nil ,command))
-      (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
-                 (dtache-session-mode (or dtache-session-mode 'create))
+        (apply #'start-file-process-shell-command `("dtache" nil ,command))
+      (cl-letf* ((dtache-session-mode 'create)
+                  ((symbol-function #'set-process-sentinel) #'ignore)
                  (buffer "*Dtache Shell Command*"))
         (funcall #'async-shell-command command buffer)
         (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session))))))
@@ -637,13 +629,33 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
   "Attach to `dtache' SESSION."
   (when (dtache-valid-session session)
     (let* ((dtache--current-session session)
-           (dtache-session-mode 'attach))
-      (dtache-start-session (dtache--session-command session)))))
+           (dtache-session-mode 'attach)
+           (inhibit-message t))
+      (if (dtache--session-redirect-only session)
+          (dtache-attach-session session)
+        (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
+                   (buffer "*Dtache Shell Command*"))
+          (funcall #'async-shell-command (dtache--session-command session) buffer)
+          (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session)))))))
 
 (defun dtache-delete-sessions ()
   "Delete all `dtache' sessions."
   (seq-do #'dtache--db-remove-entry
           (dtache-get-sessions)))
+
+(defun dtache-attach-session (session)
+  "Attach to SESSION."
+  (if (dtache--session-redirect-only session)
+      (dtache-tail-output session)
+    (if-let ((attach-fun (plist-get (dtache--session-action session) :attach)))
+        (funcall attach-fun session)
+      (dtache-tail-output session))))
+
+(defun dtache-view-session (session)
+  "View SESSION."
+  (if-let ((view-fun (plist-get (dtache--session-action session) :view)))
+      (funcall view-fun session)
+    (dtache-view-dwim session)))
 
 ;;;;; Other
 

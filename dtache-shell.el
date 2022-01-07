@@ -31,16 +31,8 @@
 
 (defvar dtache-shell-history-file nil
   "File to store history.")
-(defvar dtache-shell-block-list '("^$")
-  "A list of regexps to block non-supported input.")
-(defvar dtache-shell-new-block-list '("^sudo.*")
-  "A list of regexps to block from creating a session without attaching.")
 (defvar dtache-shell-session-action '(:attach dtache-shell-command-attach :view dtache-view-dwim)
   "Actions for a session created with `dtache-shell'.")
-
-;;;;; Private
-
-(defvar dtache-shell--current-session nil "The current session.")
 
 ;;;; Functions
 
@@ -95,7 +87,7 @@ cluttering the comint-history with dtach commands."
   (when (dtache-valid-session session)
     (if (and (dtache--session-active-p session)
              (not (dtache--session-redirect-only session)))
-        (cl-letf ((dtache-shell--current-session session)
+        (cl-letf ((dtache--current-session session)
                   (comint-input-sender #'dtache-shell--attach-input-sender)
                   ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
           (setq dtache--buffer-session session)
@@ -109,27 +101,18 @@ cluttering the comint-history with dtach commands."
   "Attach to `dtache--session' and send the attach command to PROC."
   (let* ((dtache-session-mode 'attach)
          (input
-          (dtache-dtach-command dtache-shell--current-session t)))
+          (dtache-dtach-command dtache--current-session t)))
     (comint-simple-send proc input)))
 
 (defun dtache-shell--create-input-sender (proc string)
   "Create a dtache session based on STRING and send to PROC."
   (with-connection-local-variables
-   (if-let* ((supported-input
-              (not (seq-find
-                    (lambda (blocked)
-                      (string-match-p blocked string))
-                    dtache-shell-block-list)))
-             (dtache-session-mode
-              (if (seq-find
-                   (lambda (blocked)
-                     (string-match-p blocked string))
-                   dtache-shell-new-block-list)
-                  'create
-                dtache-session-mode))
-             (dtach-command (dtache-dtach-command (substring-no-properties string) t)))
-       (comint-simple-send proc dtach-command)
-     (comint-simple-send proc string))))
+   (let* ((command (substring-no-properties string))
+          (dtache-session-mode (if (dtache-redirect-only-p command)
+                                   'new
+                                 'create))
+          (dtach-command (dtache-dtach-command command t)))
+     (comint-simple-send proc dtach-command))))
 
 (defun dtache-shell--comint-read-input-ring-advice (orig-fun &rest args)
   "Set `comint-input-ring-file-name' before calling ORIG-FUN with ARGS."
