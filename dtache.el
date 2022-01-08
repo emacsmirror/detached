@@ -218,9 +218,9 @@ Optionally SUPPRESS-OUTPUT."
                           "Dtache shell command: ")
                         nil 'dtache-shell-command-history)
     current-prefix-arg))
-  (let ((dtache-session-origin 'shell-command)
-        (dtache-session-action dtache-shell-command-action)
-        (dtache--current-session (dtache-create-session command)))
+  (let* ((dtache-session-origin 'shell-command)
+         (dtache-session-action dtache-shell-command-action)
+         (dtache--current-session (dtache-create-session command)))
     (dtache-start-session command suppress-output)))
 
 ;;;###autoload
