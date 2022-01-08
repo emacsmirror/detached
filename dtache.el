@@ -558,9 +558,6 @@ Optionally make the path LOCAL to host."
                  (seq-filter #'dtache--session-active)
                  (seq-do #'dtache-start-session-monitor))
 
-    ;; Advices
-    ;; (advice-add #'start-process :around #'dtache-start-process-advice)
-
     ;; Add `dtache-shell-mode'
     (add-hook 'shell-mode-hook #'dtache-shell-mode)))
 
@@ -662,27 +659,6 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
     (dtache-view-dwim session)))
 
 ;;;;; Other
-
-(defun dtache-start-process-advice (start-process-fun name buffer &rest args)
-  "Optionally make `start-process' use `dtache'."
-  (if dtache-enabled
-      (with-connection-local-variables
-       (let* ((command
-               (string-remove-prefix
-                ;; If start-process called from e.g. `start-file-process-shell-command'
-                ;; we need to strip the shell command and switch at the start.
-                (format (format "%s %s " shell-file-name shell-command-switch))
-                (string-join args " ")))
-              (dtache--current-session
-               (if (and dtache--current-session
-                        (string=
-                         (dtache--session-command dtache--current-session)
-                         command))
-                   dtache--current-session
-                 (dtache-create-session command)))
-              (dtach-command `(,dtache-dtach-program ,@(dtache-dtach-command dtache--current-session))))
-         (apply start-process-fun `(,name ,buffer ,@dtach-command))))
-    (apply start-process-fun `(,name ,buffer ,@args))))
 
 (defun dtache-start-session-monitor (session)
   "Start to monitor SESSION activity."
