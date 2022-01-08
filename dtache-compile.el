@@ -1,7 +1,6 @@
 ;;; dtache-compile.el --- Dtache integration with compile -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2022 Niklas Eklund
-
 ;; This file is not part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -75,7 +74,7 @@ Optionally EDIT-COMMAND."
           (cl-letf* ((name-function (lambda (_) buffer-name))
                      (dtache--current-session (or dtache--current-session
                                                   (dtache-create-session command))))
-            (apply compilation-start `(,(dtache-dtach-command command t)
+            (apply compilation-start `(,(dtache-dtach-command dtache--current-session t)
                                        ,(or mode 'dtache-compilation-mode)
                                        ,name-function
                                        ,highlight-regexp)))))
