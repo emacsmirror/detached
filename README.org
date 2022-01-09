@@ -60,7 +60,7 @@ A minimal configuration for =dtache=.
     :hook (after-init . dtache-setup)
     :bind (([remap async-shell-command] . dtache-shell-command)
            :map dtache-shell-mode-map
-           ("C-c C-q" . dtache-detach-dwim)))
+           ("C-c C-q" . dtache-detach)))
 #+end_src
 
 * Commands
@@ -71,14 +71,14 @@ There are tree different ways to create a dtache session.
 | Function                       | Description                   |
 |--------------------------------+-------------------------------|
 | =dtache-shell-command=         | Called from M-x               |
-| =dtache-shell-create-session=  | Called from inside M-x shell  |
-| =dtache-eshell-create-session= | Called from inside eshell     |
+| =dtache-shell-send-input=  | Called from inside M-x shell  |
+| =dtache-eshell-send-input= | Called from inside eshell     |
 | =dtache-compile=               | Called from M-x               |
 | =dtache-start-session=         | Called from within a function |
 
 The =dtache-shell-command= is for the Emacs users that are accustomed to running shell commands from =M-x shell-command= or =M-x async-shell-command=. The =dtache-start-session= is supposed to be called from custom user functions, or for other packages to integrate towards. The user can also choose to override built in functions with it, for example =compile=. Lastly there is the =dtache-shell-create-session= command which is supposed to be bound to a key. It is a command that the user can choose to invoke whilst in a =M-x shell= buffer.
 
-To detach from a =dtache= session you should use the univeral =dtache-detach-dwim=.
+To detach from a =dtache= session you should use the univeral =dtache-detach=.
 
 ** Interacting with a session
 
@@ -121,7 +121,7 @@ A =use-package= configuration of the =dtache-shell= extension, which provides th
   (use-package dtache-shell
     :hook (after-init . dtache-shell-setup)
     :bind (:map dtache-shell-mode-map
-           (("<S-return>" . dtache-shell-create-session)
+           (("<S-return>" . dtache-shell-send-input)
             ("<C-return>" . dtache-shell-attach)))
     :config
     (setq dtache-shell-history-file "~/.bash_history"))
@@ -133,7 +133,7 @@ A minor mode named =dtache-shell-mode= is provided, and will be enabled in =shel
 |-----------------------+-----------------------|
 | dtache-shell-create   | Create a session      |
 | dtache-shell-attach   | Attach to a session   |
-| dtache-detach-dwim | Detach from a session |
+| dtache-detach | Detach from a session |
 
 ** Dtache-eshell
 
@@ -143,18 +143,18 @@ A =use-package= configuration of the =dtache-eshell= extension, which provides t
   (use-package dtache-eshell
     :hook (after-init . dtache-eshell-setup)
     :bind (:map dtache-eshell-mode-map
-           (("<S-return>" . dtache-eshell-create-session)
+           (("<S-return>" . dtache-eshell-send-input)
             ("<C-return>" . dtache-eshell-attach)
-            ("C-c C-q" . dtache-detach-dwim))))
+            ("C-c C-q" . dtache-detach))))
 #+end_src
 
 A minor mode named =dtache-eshell-mode= is provided, and will be enabled in =eshell=. The commands that are implemented are:
 
 | Command                      | Description           |
 |------------------------------+-----------------------|
-| dtache-eshell-create-session | Create a session      |
+| dtache-eshell-send-input | Create a session      |
 | dtache-eshell-attach         | Attach to a session   |
-| dtache-detach-dwim        | Detach from a session |
+| dtache-detach        | Detach from a session |
 
 In this [[https://niklaseklund.gitlab.io/blog/posts/dtache_eshell/][blog post]] there are examples and more information about the extension.
 
@@ -168,7 +168,7 @@ A =use-package= configuration of the =dtache-compile= extension, which provides 
     :bind (([remap compile] . dtache-compile)
            ([remap recompile] . dtache-compile-recompile)
            :map dtache-compilation-mode-map
-           ("C-c C-q" . dtache-detach-dwim)))
+           ("C-c C-q" . dtache-detach)))
 #+end_src
 
 The package implements the commands =dtache-compile= and =dtache-compile-recompile=, which are thin wrappers around the original =compile= and =recompile= commands. The users should be able to use the former as replacements for the latter without noticing any difference except from the possibility to =detach=.

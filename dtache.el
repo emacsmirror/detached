@@ -55,35 +55,38 @@
 
 ;;;;; Customizable
 
-(defvar dtache-session-directory (expand-file-name "dtache" (temporary-file-directory))
-  "The directory to store `dtache' sessions.")
-(defvar dtache-db-directory user-emacs-directory
-  "The directory to store `dtache' database.")
-(defvar dtache-dtach-program "dtach"
-  "The name of the `dtach' program.")
-(defvar dtache-shell-program "bash"
-  "Shell to run the dtach command in.")
-(defvar dtache-env nil
-  "The name of the `dtache' program.")
-(defvar dtache-max-command-length 90
-  "Maximum length of displayed command.")
-(defvar dtache-redirect-only-regexps '()
-  "Regexps for commands that should be run with redirect only.")
-(defvar dtache-tail-interval 2
-  "Interval in seconds for the update rate when tailing a session.")
-(defvar dtache-notification-function #'dtache-inactive-session-notification
-  "Variable to specify notification function when a session becomes inactive.")
-(defvar dtache-compile-hooks nil
-  "Hooks to run when compiling a session.")
-(defvar dtache-metadata-annotators-alist nil
-  "An alist of annotators for metadata.")
-(defvar dtache-timer-configuration '(:seconds 10 :repeat 60 :function run-with-timer)
-  "A property list defining how often to run a timer.")
-(defvar dtache-shell-command-action '(:attach dtache-shell-command-attach :view dtache-view-dwim :run dtache-shell-command)
-  "Actions for a session created with `dtache-shell-command'.")
+(defcustom dtache-session-directory (expand-file-name "dtache" (temporary-file-directory))
+  "The directory to store `dtache' sessions."
+  :type 'string
+  :group 'dtache)
 
-(defvar dtache-annotation-format
-  `((:width 3 :function dtache--active-str :face dtache-active-face)
+(defcustom dtache-db-directory user-emacs-directory
+  "The directory to store `dtache' database."
+  :type 'string
+  :group 'dtache)
+
+(defcustom dtache-dtach-program "dtach"
+  "The name of the `dtach' program."
+  :type 'string
+  :group 'dtache)
+
+(defcustom dtache-shell-program "bash"
+  "Shell to run the dtach command in."
+  :type 'string
+  :group 'dtache)
+
+(defcustom dtache-timer-configuration '(:seconds 10 :repeat 60 :function run-with-timer)
+  "A property list defining how often to run a timer."
+  :type 'plist
+  :group 'dtache)
+
+(defcustom dtache-env nil
+  "The name of the `dtache' program."
+  :type 'string
+  :group 'dtache)
+
+(defcustom dtache-annotation-format
+  '((:width 3 :function dtache--active-str :face dtache-active-face)
     (:width 3 :function dtache--status-str :face dtache-failure-face)
     (:width 10 :function dtache--session-host :face dtache-host-face)
     (:width 40 :function dtache--working-dir-str :face dtache-working-dir-face)
@@ -91,7 +94,55 @@
     (:width 10 :function dtache--duration-str :face dtache-duration-face)
     (:width 8 :function dtache--size-str :face dtache-size-face)
     (:width 12 :function dtache--creation-str :face dtache-creation-face))
-  "The format of the annotations.")
+  "The format of the annotations."
+  :type '(repeat symbol)
+  :group 'dtache)
+
+(defcustom dtache-max-command-length 90
+  "Maximum length of displayed command."
+  :type 'integer
+  :group 'dtache)
+
+(defcustom dtache-tail-interval 2
+  "Interval in seconds for the update rate when tailing a session."
+  :type 'integer
+  :group 'dtache)
+
+(defcustom dtache-shell-command-action
+  '(:attach dtache-shell-command-attach
+            :view dtache-view-dwim
+            :run dtache-shell-command)
+  "Actions for a session created with `dtache-shell-command'."
+  :group 'dtache
+  :type 'plist)
+
+(defcustom dtache-redirect-only-regexps nil
+  "Regexps for commands that should be run with redirect only."
+  :type '(repeat (regexp :format "%v"))
+  :group 'dtache)
+
+(defcustom dtache-notification-function #'dtache-inactive-session-notification
+  "Variable to specify notification function when a session becomes inactive."
+  :type 'function
+  :group 'dtache)
+
+;;;;; Public
+
+(defvar dtache-enabled nil)
+(defvar dtache-session-mode nil
+  "Mode of operation for session.
+Valid values are: create, new and attach")
+(defvar dtache-session-origin nil
+  "Variable to specify the origin of the session.")
+(defvar dtache-session-action nil
+  "A property list of actions for a session.")
+(defvar dtache-shell-command-history nil
+  "History of commands run with `dtache-shell-command'.")
+
+(defvar dtache-compile-hooks nil
+  "Hooks to run when compiling a session.")
+(defvar dtache-metadata-annotators-alist nil
+  "An alist of annotators for metadata.")
 
 (defvar dtache-action-map
   (let ((map (make-sparse-keymap)))
@@ -106,19 +157,6 @@
     (define-key map "W" #'dtache-copy-session-output)
     (define-key map "=" #'dtache-diff-session)
     map))
-
-;;;;; Internal
-
-(defvar dtache-enabled nil)
-(defvar dtache-session-mode nil
-  "Mode of operation for session.
-Valid values are: create, new and attach")
-(defvar dtache-session-origin nil
-  "Variable to specify the origin of the session.")
-(defvar dtache-session-action nil
-  "A property list of actions for a session.")
-(defvar dtache-shell-command-history nil
-  "History of commands run with `dtache-shell-command'.")
 
 ;;;;; Faces
 
@@ -379,7 +417,7 @@ Optionally SUPPRESS-OUTPUT."
       (ediff-buffers buffer1 buffer2))))
 
 ;;;###autoload
-(defun dtache-detach-dwim ()
+(defun dtache-detach ()
   "Detach from current session.
 
 This command is only activated if `dtache--buffer-session' is set and

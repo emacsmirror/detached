@@ -56,7 +56,7 @@
 ;;;; Commands
 
 ;;;###autoload
-(defun dtache-shell-create-session (&optional detach)
+(defun dtache-shell-send-input (&optional detach)
   "Create a session and attach to it unless DETACH."
   (interactive "P")
   (let* ((dtache-session-origin 'shell)

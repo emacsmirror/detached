@@ -62,7 +62,7 @@
 ;;;; Commands
 
 ;;;###autoload
-(defun dtache-eshell-create-session (&optional detach)
+(defun dtache-eshell-send-input (&optional detach)
   "Create a session and attach to it.
 
 If prefix-argument directly DETACH from the session."

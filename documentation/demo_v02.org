@@ -122,7 +122,7 @@ The package adds support for integration with =M-x shell=.
     :hook (after-init . dtache-shell-setup)
     :general
     (:keymaps 'dtache-shell-mode-map
-              "<S-return>" #'dtache-shell-create-session
+              "<S-return>" #'dtache-shell-send-input
               "<C-return>" #'dtache-shell-attach)
     :config
     (setq dtache-shell-history-file "~/.bash_history"))
