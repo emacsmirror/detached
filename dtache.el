@@ -393,10 +393,10 @@ This command is only activated if `dtache--buffer-session' is set and
           ;; `dtache-shell-command' or `dtache-compile'
           (let ((kill-buffer-query-functions nil))
             (when-let ((process (get-buffer-process (current-buffer))))
-              (comint-simple-send process dtache--dtach-detach-character))
+              (comint-simple-send process dtache--dtach-detach-character)
+              (message "[detached]"))
             (setq dtache--buffer-session nil)
-            (kill-buffer-and-window)
-            (message "[detached]"))
+            (kill-buffer-and-window))
         (if (dtache--session-active-p dtache--buffer-session)
             ;; `dtache-eshell'
             (if-let ((process (and (eq major-mode 'eshell-mode)
