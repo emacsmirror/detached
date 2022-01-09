@@ -81,6 +81,7 @@
   "A property list defining how often to run a timer.")
 (defvar dtache-shell-command-action '(:attach dtache-shell-command-attach :view dtache-view-dwim :run dtache-shell-command)
   "Actions for a session created with `dtache-shell-command'.")
+
 (defvar dtache-annotation-format
   `((:width 3 :function dtache--active-str :face dtache-active-face)
     (:width 3 :function dtache--status-str :face dtache-failure-face)
@@ -539,7 +540,7 @@ Optionally make the path LOCAL to host."
     (dtache--db-update-entry session)))
 
 ;;;###autoload
-(defun dtache-initialize ()
+(defun dtache-setup ()
   "Initialize `dtache'."
 
   ;; Initialize sessions

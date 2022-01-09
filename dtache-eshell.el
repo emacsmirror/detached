@@ -39,6 +39,7 @@
 ;;;###autoload
 (defun dtache-eshell-setup ()
   "Setup `dtache-eshell'."
+  (dtache-setup)
   (add-hook 'eshell-prepare-command-hook #'dtache-eshell-maybe-create-session)
   (add-hook 'eshell-mode-hook #'dtache-eshell-mode))
 

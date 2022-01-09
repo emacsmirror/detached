@@ -51,6 +51,7 @@ This function also makes sure that the HISTFILE is disabled for local shells."
 ;;;###autoload
 (defun dtache-shell-setup ()
   "Setup `dtache-shell'."
+  (dtache-setup)
   (add-hook 'shell-mode-hook #'dtache-shell-save-history)
   (advice-add 'shell :around #'dtache-shell-override-history))
 

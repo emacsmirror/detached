@@ -38,7 +38,7 @@
           (dtache--remote-session-timer))
      (unwind-protect
          (progn
-           (dtache-initialize)
+           (dtache-setup)
            ,@body)
        (delete-directory temp-directory t))))
 

@@ -106,6 +106,7 @@ Optionally EDIT-COMMAND."
 ;;;###autoload
 (defun dtache-compile-setup ()
   "Setup `dtache-compile'."
+  (dtache-setup)
   (advice-add #'compilation-start :around #'dtache-compile-advice)
   (add-hook 'compilation-start-hook #'dtache-compile-maybe-start))
 

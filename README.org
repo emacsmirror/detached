@@ -57,7 +57,7 @@ A minimal configuration for =dtache=.
 
 #+begin_src elisp :lexical t :results none
   (use-package dtache
-    :hook (after-init . dtache-initialize)
+    :hook (after-init . dtache-setup)
     :bind (([remap async-shell-command] . dtache-shell-command)
            :map dtache-shell-mode-map
            ("C-c C-q" . dtache-detach-dwim)))
