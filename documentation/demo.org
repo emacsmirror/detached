@@ -218,7 +218,7 @@ Sometimes you need to tweak =dtache's= behavior in how to interact with specific
                (with-current-buffer buffer
                  (erase-buffer)
                  (insert "This is a custom view of the session\n")
-                 (insert (dtache-session-output session)))
+                 (insert (dtache--session-output session)))
                (pop-to-buffer buffer)))))
       (dtache-start-session command)))
 

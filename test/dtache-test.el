@@ -55,12 +55,12 @@
   (pcase state
     ('activate
      (dolist (type `(socket log))
-       (with-temp-file (dtache-session-file session type))))
+       (with-temp-file (dtache--session-file session type))))
     ('deactivate
-     (delete-file (dtache-session-file session 'socket)))
+     (delete-file (dtache--session-file session 'socket)))
     ('kill
-     (delete-file (dtache-session-file session 'socket))
-     (delete-file (dtache-session-file session 'log)))))
+     (delete-file (dtache--session-file session 'socket))
+     (delete-file (dtache--session-file session 'log)))))
 
 ;;;; Tests
 
@@ -74,25 +74,25 @@
                (lambda (_)
                  session)))
      (let* ((dtache-session-mode 'create)
-            (expected `("-c" ,(dtache-session-file session 'socket t)
+            (expected `("-c" ,(dtache--session-file session 'socket t)
                         "-z" ,dtache-shell-program
                         "-c"
                         ,(format "{ dtache-env ls\\ -la; } 2>&1 | tee %s"
-                                 (dtache-session-file session 'log t))))
+                                 (dtache--session-file session 'log t))))
             (expected-concat (format "%s -c %s -z %s -c %s"
                                      dtach-program
-                                     (dtache-session-file session 'socket t)
+                                     (dtache--session-file session 'socket t)
                                      dtache-shell-program
                                      (shell-quote-argument
                                       (format "{ dtache-env ls\\ -la; } 2>&1 | tee %s"
-                                              (dtache-session-file session 'log t))))))
+                                              (dtache--session-file session 'log t))))))
        (should (equal expected (dtache-dtach-command session)))
        (should (equal expected-concat (dtache-dtach-command session t))))
      (let* ((dtache-session-mode 'attach)
-            (expected `("-a" ,(dtache-session-file session 'socket t)))
+            (expected `("-a" ,(dtache--session-file session 'socket t)))
             (expected-concat (format "%s -a %s"
                                      dtach-program
-                                     (dtache-session-file session 'socket t))))
+                                     (dtache--session-file session 'socket t))))
        (should (equal expected (dtache-dtach-command session)))
        (should (equal expected-concat (dtache-dtach-command session t)))))))
 
@@ -114,15 +114,15 @@
   (cl-letf* (((symbol-function #'expand-file-name) (lambda (file directory) (concat directory file)))
              ((symbol-function #'file-remote-p) (lambda (_directory) nil))
              (session (dtache--session-create :id 's12345 :session-directory "/home/user/tmp/")))
-    (should (string= "/home/user/tmp/s12345.log" (dtache-session-file session 'log)))
-    (should (string= "/home/user/tmp/s12345.socket" (dtache-session-file session 'socket))))
+    (should (string= "/home/user/tmp/s12345.log" (dtache--session-file session 'log)))
+    (should (string= "/home/user/tmp/s12345.socket" (dtache--session-file session 'socket))))
 
   ;; Remote files
   (cl-letf* (((symbol-function #'expand-file-name) (lambda (file directory) (concat directory file)))
              ((symbol-function #'file-remote-p) (lambda (_directory) "/ssh:foo:"))
              (session (dtache--session-create :id 's12345 :session-directory "/home/user/tmp/")))
-    (should (string= "/ssh:foo:/home/user/tmp/s12345.log" (dtache-session-file session 'log)))
-    (should (string= "/ssh:foo:/home/user/tmp/s12345.socket" (dtache-session-file session 'socket)))))
+    (should (string= "/ssh:foo:/home/user/tmp/s12345.log" (dtache--session-file session 'log)))
+    (should (string= "/ssh:foo:/home/user/tmp/s12345.socket" (dtache--session-file session 'socket)))))
 
 (ert-deftest dtache-test-session-truncate-command ()
   (let ((dtache-max-command-length 7))
@@ -169,7 +169,7 @@
      ;; One inactive, one missing, one active
      (dtache-test--change-session-state session1 'deactivate)
      (dtache-test--change-session-state session2 'kill)
-     (dtache-cleanup-host-sessions host)
+     (dtache--cleanup-host-sessions host)
      (should (seq-set-equal-p
               (dtache--db-get-sessions)
               `(,session1 ,session3))))))

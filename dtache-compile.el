@@ -63,31 +63,6 @@ Optionally EDIT-COMMAND."
 
 ;;;;; Functions
 
-(defun dtache-compile-advice (compilation-start &rest args)
-  "Optionally create a `dtache' session before running COMPILATION-START with ARGS."
-  (if dtache-enabled
-      (pcase-let ((`(,command ,mode ,_ ,highlight-regexp) args)
-                  (buffer-name "*dtache-compilation*"))
-        (if (and (not (eq dtache-session-mode 'attach))
-                 (dtache-redirect-only-p command))
-            (dtache-start-session command t)
-          (cl-letf* ((name-function (lambda (_) buffer-name))
-                     (dtache--current-session (or dtache--current-session
-                                                  (dtache-create-session command))))
-            (apply compilation-start `(,(dtache-dtach-command dtache--current-session t)
-                                       ,(or mode 'dtache-compilation-mode)
-                                       ,name-function
-                                       ,highlight-regexp)))))
-    (apply compilation-start args)))
-
-(defun dtache-compile-maybe-start (_proc)
-  "Maybe run when compilation starts."
-  (when dtache-enabled
-    (setq dtache--buffer-session dtache--current-session)
-    (dtache-compile--replace-modesetter)
-    (add-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter 0 t)
-    (add-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter 0 t)))
-
 (defun dtache-compile-attach (session)
   "Attach to SESSION with `compile'."
   (when (dtache-valid-session session)
@@ -107,10 +82,35 @@ Optionally EDIT-COMMAND."
 (defun dtache-compile-setup ()
   "Setup `dtache-compile'."
   (dtache-setup)
-  (advice-add #'compilation-start :around #'dtache-compile-advice)
-  (add-hook 'compilation-start-hook #'dtache-compile-maybe-start))
+  (advice-add #'compilation-start :around #'dtache-compile--compilation-start)
+  (add-hook 'compilation-start-hook #'dtache-compile--start))
 
 ;;;;; Support functions
+
+(defun dtache-compile--compilation-start (compilation-start &rest args)
+  "Optionally create a `dtache' session before running COMPILATION-START with ARGS."
+  (if dtache-enabled
+      (pcase-let ((`(,command ,mode ,_ ,highlight-regexp) args)
+                  (buffer-name "*dtache-compilation*"))
+        (if (and (not (eq dtache-session-mode 'attach))
+                 (dtache-redirect-only-p command))
+            (dtache-start-session command t)
+          (cl-letf* ((name-function (lambda (_) buffer-name))
+                     (dtache--current-session (or dtache--current-session
+                                                  (dtache-create-session command))))
+            (apply compilation-start `(,(dtache-dtach-command dtache--current-session t)
+                                       ,(or mode 'dtache-compilation-mode)
+                                       ,name-function
+                                       ,highlight-regexp)))))
+    (apply compilation-start args)))
+
+(defun dtache-compile--start (_)
+  "Run in `compilation-start-hook' if dtache-enabled."
+  (when dtache-enabled
+    (setq dtache--buffer-session dtache--current-session)
+    (dtache-compile--replace-modesetter)
+    (add-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter 0 t)
+    (add-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter 0 t)))
 
 (defun dtache-compile--replace-modesetter ()
   "Replace the modsetter inserted by `compilation-start'."

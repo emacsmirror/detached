@@ -40,7 +40,7 @@
 (defun dtache-eshell-setup ()
   "Setup `dtache-eshell'."
   (dtache-setup)
-  (add-hook 'eshell-prepare-command-hook #'dtache-eshell-maybe-create-session)
+  (add-hook 'eshell-prepare-command-hook #'dtache-eshell--maybe-create-session)
   (add-hook 'eshell-mode-hook #'dtache-eshell-mode))
 
 (defun dtache-eshell-select-session ()
@@ -52,21 +52,6 @@
                           (string= (dtache--session-host it) current-host)))
             (seq-filter #'dtache--session-active-p))))
     (dtache-completing-read sessions)))
-
-(defun dtache-eshell-maybe-create-session ()
-  "Create a session if `dtache-eshell-command' value is t."
-  (when dtache-enabled
-    (let* ((dtache-session-mode 'create)
-           (dtache-session-action dtache-eshell-session-action)
-           (command (mapconcat #'identity
-                               `(,eshell-last-command-name
-                                 ,@eshell-last-arguments)
-                               " "))
-           (session (dtache-create-session command)))
-      (setq eshell-last-arguments (dtache-dtach-command session))
-      (setq dtache--buffer-session session)
-      (setq dtache-enabled nil)
-      (setq eshell-last-command-name "dtach"))))
 
 (defun dtache-eshell-get-dtach-process ()
   "Return `eshell' process if `dtache' is running."
@@ -111,6 +96,23 @@ If prefix-argument directly DETACH from the session."
           (setq dtache--buffer-session session)
           (call-interactively #'eshell-send-input))
       (dtache-open-session session))))
+
+;;;; Support functions
+
+(defun dtache-eshell--maybe-create-session ()
+  "Create a session if `dtache-eshell-command' value is t."
+  (when dtache-enabled
+    (let* ((dtache-session-mode 'create)
+           (dtache-session-action dtache-eshell-session-action)
+           (command (mapconcat #'identity
+                               `(,eshell-last-command-name
+                                 ,@eshell-last-arguments)
+                               " "))
+           (session (dtache-create-session command)))
+      (setq eshell-last-arguments (dtache-dtach-command session))
+      (setq dtache--buffer-session session)
+      (setq dtache-enabled nil)
+      (setq eshell-last-command-name "dtach"))))
 
 ;;;; Minor mode
 

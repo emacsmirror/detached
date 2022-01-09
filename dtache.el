@@ -242,13 +242,13 @@ Optionally SUPPRESS-OUTPUT."
   (when (dtache-valid-session session)
     (let ((buffer-name "*dtache-session-output*")
           (file
-           (dtache-session-file session 'log))
+           (dtache--session-file session 'log))
           (tramp-verbose 1))
       (when (file-exists-p file)
         (with-current-buffer (get-buffer-create buffer-name)
           (setq-local buffer-read-only nil)
           (erase-buffer)
-          (insert (dtache-session-output session))
+          (insert (dtache--session-output session))
           (setq-local default-directory
                       (dtache--session-working-directory session))
           (run-hooks 'dtache-compile-hooks)
@@ -280,7 +280,7 @@ Optionally SUPPRESS-OUTPUT."
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
     (with-temp-buffer
-      (insert (dtache-session-output session))
+      (insert (dtache--session-output session))
       (kill-new (buffer-string)))))
 
 ;;;###autoload
@@ -327,14 +327,14 @@ Optionally SUPPRESS-OUTPUT."
   (when (dtache-valid-session session)
     (let* ((buffer-name "*dtache-session-output*")
            (file-path
-            (dtache-session-file session 'log))
+            (dtache--session-file session 'log))
            (tramp-verbose 1))
       (if (file-exists-p file-path)
           (progn
             (with-current-buffer (get-buffer-create buffer-name)
               (setq-local buffer-read-only nil)
               (erase-buffer)
-              (insert (dtache-session-output session))
+              (insert (dtache--session-output session))
               (setq-local default-directory (dtache--session-working-directory session))
               (dtache-log-mode)
               (goto-char (point-max)))
@@ -349,7 +349,7 @@ Optionally SUPPRESS-OUTPUT."
   (when (dtache-valid-session session)
     (if (dtache--session-active-p session)
         (let* ((file-path
-                (dtache-session-file session 'log))
+                (dtache--session-file session 'log))
                (tramp-verbose 1))
           (when (file-exists-p file-path)
             (find-file-other-window file-path)
@@ -371,11 +371,11 @@ Optionally SUPPRESS-OUTPUT."
       (with-current-buffer (get-buffer-create buffer1)
         (erase-buffer)
         (insert (dtache--session-header session1))
-        (insert (dtache-session-output session1)))
+        (insert (dtache--session-output session1)))
       (with-current-buffer (get-buffer-create buffer2)
         (erase-buffer)
         (insert (dtache--session-header session2))
-        (insert (dtache-session-output session2)))
+        (insert (dtache--session-output session2)))
       (ediff-buffers buffer1 buffer2))))
 
 ;;;###autoload
@@ -428,13 +428,13 @@ nil before closing."
 
 (defun dtache-create-session (command)
   "Create a `dtache' session from COMMAND."
-  (dtache-create-session-directory)
+  (dtache--create-session-directory)
   (let ((session
          (dtache--session-create :id (intern (dtache--create-id command))
                                  :command command
                                  :origin dtache-session-origin
                                  :action dtache-session-action
-                                 :working-directory (dtache-get-working-directory)
+                                 :working-directory (dtache--get-working-directory)
                                  :redirect-only (dtache-redirect-only-p command)
                                  :creation-time (time-to-seconds (current-time))
                                  :status 'unknown
@@ -444,7 +444,7 @@ nil before closing."
                                  :metadata (dtache-metadata)
                                  :active t)))
     (dtache--db-insert-entry session)
-    (dtache-start-session-monitor session)
+    (dtache--start-session-monitor session)
     session))
 
 (defun dtache-start-session (command &optional suppress-output)
@@ -470,38 +470,6 @@ Optionally SUPPRESS-OUTPUT."
         (setq dtache-enabled nil)
         (funcall #'async-shell-command (dtache-dtach-command dtache--current-session t) buffer)
         (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session))))))
-
-(defun dtache-update-sessions ()
-  "Update `dtache' sessions.
-
-Sessions running on  current host or localhost are updated."
-  (let ((current-host (dtache--host)))
-    (seq-do (lambda (it)
-              (if (and (or (string= current-host (dtache--session-host it))
-                           (string= "localhost" (dtache--session-host it)))
-                       (or (dtache--session-active it)
-                           (dtache--session-deactivated-p it)))
-                  (dtache-update-session it)))
-            (dtache--db-get-sessions))))
-
-(defun dtache-session-file (session file &optional local)
-  "Return the full path to SESSION's FILE.
-
-Optionally make the path LOCAL to host."
-  (let* ((file-name
-          (concat
-           (symbol-name
-            (dtache--session-id session))
-           (pcase file
-             ('socket ".socket")
-             ('log ".log"))))
-         (remote (file-remote-p (dtache--session-working-directory session)))
-         (directory (concat
-                     remote
-                     (dtache--session-session-directory session))))
-    (if (and local remote)
-        (string-remove-prefix remote (expand-file-name file-name directory))
-      (expand-file-name file-name directory))))
 
 (defun dtache-session-candidates (sessions)
   "Return an alist of SESSIONS candidates."
@@ -529,16 +497,6 @@ Optionally make the path LOCAL to host."
                          0 ?\s)))
      "   ")))
 
-(defun dtache-update-session (session)
-  "Update SESSION."
-  (if (or (dtache--session-deactivated-p session)
-          (dtache--session-missing-p session))
-      (dtache--session-final-update session)
-    (setf (dtache--session-output-size session)
-          (file-attribute-size (file-attributes
-                                (dtache-session-file session 'log))))
-    (dtache--db-update-entry session)))
-
 ;;;###autoload
 (defun dtache-setup ()
   "Initialize `dtache'."
@@ -559,13 +517,13 @@ Optionally make the path LOCAL to host."
                 ;; Update local active sessions
                 (when (and (string= "localhost" (dtache--session-host session))
                            (dtache--session-active session))
-                  (dtache-update-session session))))
+                  (dtache--update-session session))))
             (dtache--db-get-sessions))
 
     ;; Start monitors
     (thread-last (dtache--db-get-sessions)
                  (seq-filter #'dtache--session-active)
-                 (seq-do #'dtache-start-session-monitor))
+                 (seq-do #'dtache--start-session-monitor))
 
     ;; Add `dtache-shell-mode'
     (add-hook 'shell-mode-hook #'dtache-shell-mode)))
@@ -579,39 +537,19 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
         t
       (let ((host (dtache--session-host session)))
         (message "Session does not exist. Initiate sesion cleanup on host %s" host)
-        (dtache-cleanup-host-sessions host)
+        (dtache--cleanup-host-sessions host)
         nil))))
-
-(defun dtache-cleanup-host-sessions (host)
-  "Run cleanuup on HOST sessions."
-  (thread-last (dtache--db-get-sessions)
-               (seq-filter (lambda (it) (string= host (dtache--session-host it))))
-               (seq-filter #'dtache--session-missing-p)
-               (seq-do #'dtache--db-remove-entry)))
 
 (defun dtache-session-exit-code-status (session)
   "Return status based on exit-code in SESSION."
   (if (null dtache-env)
       'unknown
     (with-temp-buffer
-      (insert-file-contents (dtache-session-file session 'log))
+      (insert-file-contents (dtache--session-file session 'log))
       (goto-char (point-max))
       (if (string-match "Dtache session finished" (thing-at-point 'line t))
           'success
         'failure))))
-
-(defun dtache-session-output (session)
-  "Return content of SESSION's output."
-  (let* ((filename (dtache-session-file session 'log))
-         (dtache-message (rx (regexp "\n?\nDtache session ") (or "finished" "exited"))))
-    (with-temp-buffer
-      (insert-file-contents filename)
-      (goto-char (point-min))
-      (let ((beginning (point))
-            (end (if (search-forward-regexp dtache-message nil t)
-                     (match-beginning 0)
-                   (point-max))))
-        (buffer-substring beginning end)))))
 
 (defun dtache-inactive-session-notification (session)
   "Send a notification when SESSION becomes inactive."
@@ -632,7 +570,7 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
 
 (defun dtache-get-sessions ()
   "Update and return sessions."
-  (dtache-update-sessions)
+  (dtache--update-sessions)
   (dtache--db-get-sessions))
 
 (defun dtache-shell-command-attach (session)
@@ -648,11 +586,6 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
           (funcall #'async-shell-command (dtache--session-command session) buffer)
           (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session)))))))
 
-(defun dtache-delete-sessions ()
-  "Delete all `dtache' sessions."
-  (seq-do #'dtache--db-remove-entry
-          (dtache-get-sessions)))
-
 (defun dtache-attach-session (session)
   "Attach to SESSION."
   (if (dtache--session-redirect-only session)
@@ -667,15 +600,12 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
       (funcall view-fun session)
     (dtache-view-dwim session)))
 
-;;;;; Other
+(defun dtache-delete-sessions ()
+  "Delete all `dtache' sessions."
+  (seq-do #'dtache--db-remove-entry
+          (dtache-get-sessions)))
 
-(defun dtache-start-session-monitor (session)
-  "Start to monitor SESSION activity."
-  (if (file-remote-p (dtache--session-working-directory session))
-      (dtache--session-timer-monitor session)
-    (if (eq system-type 'darwin)
-        (dtache--session-macos-monitor session)
-      (dtache--session-filenotify-monitor session))))
+;;;;; Other
 
 (cl-defgeneric dtache-dtach-command (entity &optional concat)
   "Return dtach command for ENTITY optionally CONCAT.")
@@ -694,7 +624,7 @@ Optionally CONCAT the command return command into a string."
    (let* ((dtache-session-mode (cond ((eq dtache-session-mode 'attach) 'attach)
                                     ((dtache--session-redirect-only session) 'new)
                                     (t dtache-session-mode)))
-          (socket (dtache-session-file session 'socket t)))
+          (socket (dtache--session-file session 'socket t)))
      (setq dtache--buffer-session session)
      (if (eq dtache-session-mode 'attach)
          (if concat
@@ -732,24 +662,6 @@ Optionally CONCAT the command return command into a string."
     (seq-doseq (annotator dtache-metadata-annotators-alist)
       (push `(,(car annotator) . ,(funcall (cdr annotator))) metadata))
     metadata))
-
-(defun dtache-create-session-directory ()
-  "Create session directory if it doesn't exist."
-  (let ((directory
-         (concat
-          (file-remote-p default-directory)
-          dtache-session-directory)))
-    (unless (file-exists-p directory)
-      (make-directory directory t))))
-
-(defun dtache-get-working-directory ()
-  "Return an abreviated working directory path."
-  (let* ((remote (file-remote-p default-directory))
-         (full-home (if remote (expand-file-name remote) (expand-file-name "~")))
-         (short-home (if remote (concat remote "~/") "~")))
-    (replace-regexp-in-string full-home
-                              short-home
-                              (expand-file-name default-directory))))
 
 (defun dtache-completing-read (sessions)
   "Select a session from SESSIONS through `completing-read'."
@@ -815,19 +727,19 @@ Optionally CONCAT the command return command into a string."
 (defun dtache--session-active-p (session)
   "Return t if SESSION is active."
   (file-exists-p
-   (dtache-session-file session 'socket)))
+   (dtache--session-file session 'socket)))
 
 (defun dtache--session-deactivated-p (session)
   "Return t if SESSION has been deactivated."
   (and
    (dtache--session-active session)
-   (not (file-exists-p (dtache-session-file session 'socket)))))
+   (not (file-exists-p (dtache--session-file session 'socket)))))
 
 (defun dtache--session-missing-p (session)
   "Return t if SESSION is missing."
   (not
    (file-exists-p
-    (dtache-session-file session 'log))))
+    (dtache--session-file session 'log))))
 
 (defun dtache--session-header (session)
   "Return header for SESSION."
@@ -862,7 +774,7 @@ Optionally CONCAT the command return command into a string."
 (defun dtache--session-filenotify-monitor (session)
   "Configure `filenotify' to monitor SESSION activity."
   (file-notify-add-watch
-   (dtache-session-file session 'socket)
+   (dtache--session-file session 'socket)
    '(change)
    (lambda (event)
      (pcase-let ((`(,_ ,action ,_) event))
@@ -893,6 +805,86 @@ Optionally CONCAT the command return command into a string."
 (defun dtache--decode-session (item)
   "Return the session assicated with ITEM."
   (cdr (assoc item dtache--session-candidates)))
+
+(defun dtache--update-sessions ()
+  "Update `dtache' sessions.
+
+Sessions running on  current host or localhost are updated."
+  (let ((current-host (dtache--host)))
+    (seq-do (lambda (it)
+              (if (and (or (string= current-host (dtache--session-host it))
+                           (string= "localhost" (dtache--session-host it)))
+                       (or (dtache--session-active it)
+                           (dtache--session-deactivated-p it)))
+                  (dtache--update-session it)))
+            (dtache--db-get-sessions))))
+
+(defun dtache--update-session (session)
+  "Update SESSION."
+  (if (or (dtache--session-deactivated-p session)
+          (dtache--session-missing-p session))
+      (dtache--session-final-update session)
+    (setf (dtache--session-output-size session)
+          (file-attribute-size (file-attributes
+                                (dtache--session-file session 'log))))
+    (dtache--db-update-entry session)))
+
+(defun dtache--session-file (session file &optional local)
+  "Return the full path to SESSION's FILE.
+
+Optionally make the path LOCAL to host."
+  (let* ((file-name
+          (concat
+           (symbol-name
+            (dtache--session-id session))
+           (pcase file
+             ('socket ".socket")
+             ('log ".log"))))
+         (remote (file-remote-p (dtache--session-working-directory session)))
+         (directory (concat
+                     remote
+                     (dtache--session-session-directory session))))
+    (if (and local remote)
+        (string-remove-prefix remote (expand-file-name file-name directory))
+      (expand-file-name file-name directory))))
+
+(defun dtache--cleanup-host-sessions (host)
+  "Run cleanuup on HOST sessions."
+  (thread-last (dtache--db-get-sessions)
+               (seq-filter (lambda (it) (string= host (dtache--session-host it))))
+               (seq-filter #'dtache--session-missing-p)
+               (seq-do #'dtache--db-remove-entry)))
+
+(defun dtache--session-output (session)
+  "Return content of SESSION's output."
+  (let* ((filename (dtache--session-file session 'log))
+         (dtache-message (rx (regexp "\n?\nDtache session ") (or "finished" "exited"))))
+    (with-temp-buffer
+      (insert-file-contents filename)
+      (goto-char (point-min))
+      (let ((beginning (point))
+            (end (if (search-forward-regexp dtache-message nil t)
+                     (match-beginning 0)
+                   (point-max))))
+        (buffer-substring beginning end)))))
+
+(defun dtache--create-session-directory ()
+  "Create session directory if it doesn't exist."
+  (let ((directory
+         (concat
+          (file-remote-p default-directory)
+          dtache-session-directory)))
+    (unless (file-exists-p directory)
+      (make-directory directory t))))
+
+(defun dtache--get-working-directory ()
+  "Return an abreviated working directory path."
+  (let* ((remote (file-remote-p default-directory))
+         (full-home (if remote (expand-file-name remote) (expand-file-name "~")))
+         (short-home (if remote (concat remote "~/") "~")))
+    (replace-regexp-in-string full-home
+                              short-home
+                              (expand-file-name default-directory))))
 
 ;;;;; Database
 
@@ -957,7 +949,7 @@ Optionally CONCAT the command return command into a string."
     (setf (dtache--session-output-size session)
           (file-attribute-size
            (file-attributes
-            (dtache-session-file session 'log))))
+            (dtache--session-file session 'log))))
 
     (setf (dtache--session-active session) nil)
     (setf (dtache--session-duration session)
@@ -992,7 +984,7 @@ Optionally CONCAT the command return command into a string."
 
 If SESSION is redirect-only fallback to a command that doesn't rely on tee.
 Otherwise use tee to log stdout and stderr individually."
-  (let* ((log (dtache-session-file session 'log t))
+  (let* ((log (dtache--session-file session 'log t))
          (redirect
           (if (dtache--session-redirect-only session)
               (format "&> %s" log)
@@ -1017,7 +1009,7 @@ the current time is used."
   (- (time-to-seconds
       (file-attribute-modification-time
        (file-attributes
-        (dtache-session-file session 'log))))
+        (dtache--session-file session 'log))))
      (dtache--session-creation-time session)))
 
 (defun dtache--create-id (command)
@@ -1036,6 +1028,14 @@ the current time is used."
 (defun dtache--dtach-detached-message-filter (str)
   "Remove `dtache--dtach-detached-message' in STR."
   (replace-regexp-in-string (format "\n?%s\n" dtache--dtach-detached-message) "" str))
+
+(defun dtache--start-session-monitor (session)
+  "Start to monitor SESSION activity."
+  (if (file-remote-p (dtache--session-working-directory session))
+      (dtache--session-timer-monitor session)
+    (if (eq system-type 'darwin)
+        (dtache--session-macos-monitor session)
+      (dtache--session-filenotify-monitor session))))
 
 ;;;;; UI
 
