@@ -55,7 +55,7 @@
 
 ;;;;; Customizable
 
-(defvar dtache-session-directory nil
+(defvar dtache-session-directory (expand-file-name "dtache" (temporary-file-directory))
   "The directory to store `dtache' sessions.")
 (defvar dtache-db-directory user-emacs-directory
   "The directory to store `dtache' database.")

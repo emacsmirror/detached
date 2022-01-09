@@ -60,10 +60,7 @@ A minimal configuration for =dtache=.
     :hook (after-init . dtache-initialize)
     :bind (([remap async-shell-command] . dtache-shell-command)
            :map dtache-shell-mode-map
-           ("C-c C-q" . dtache-detach-session))
-    :config
-    (setq dtache-db-directory user-emacs-directory)
-    (setq dtache-session-directory (expand-file-name "dtache" (temporary-file-directory))))
+           ("C-c C-q" . dtache-detach-session)))
 #+end_src
 
 * Commands
