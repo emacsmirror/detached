@@ -412,6 +412,18 @@ This command is only activated if `dtache--buffer-session' is set and
     (message "No dtache-session found in buffer.")))
 
 ;;;###autoload
+(defun dtache-delete-sessions (&optional all-hosts)
+  "Delete `dtache' sessions on current host, unless ALL-HOSTS."
+  (interactive "P")
+  (let* ((host (dtache--host))
+         (sessions (if all-hosts
+                       (dtache-get-sessions)
+                     (seq-filter (lambda (it)
+                                   (string= (dtache--session-host it) host))
+                                 (dtache-get-sessions)))))
+    (seq-do #'dtache--db-remove-entry sessions)))
+
+;;;###autoload
 (defun dtache-quit-tail-output ()
   "Quit `dtache' tail log.
 
@@ -599,11 +611,6 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
   (if-let ((view-fun (plist-get (dtache--session-action session) :view)))
       (funcall view-fun session)
     (dtache-view-dwim session)))
-
-(defun dtache-delete-sessions ()
-  "Delete all `dtache' sessions."
-  (seq-do #'dtache--db-remove-entry
-          (dtache-get-sessions)))
 
 ;;;;; Other
 
