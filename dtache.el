@@ -79,7 +79,7 @@
   "An alist of annotators for metadata.")
 (defvar dtache-timer-configuration '(:seconds 10 :repeat 60 :function run-with-timer)
   "A property list defining how often to run a timer.")
-(defvar dtache-shell-command-action '(:attach dtache-shell-command-attach :view dtache-view-dwim)
+(defvar dtache-shell-command-action '(:attach dtache-shell-command-attach :view dtache-view-dwim :run dtache-shell-command)
   "Actions for a session created with `dtache-shell-command'.")
 (defvar dtache-annotation-format
   `((:width 3 :function dtache--active-str :face dtache-active-face)
@@ -266,8 +266,11 @@ Optionally SUPPRESS-OUTPUT."
   (when (dtache-valid-session session)
     (let* ((default-directory
              (dtache--session-working-directory session))
-           (dtache-session-action (dtache--session-action session)))
-      (dtache-start-session (dtache--session-command session)))))
+           (dtache-session-action (dtache--session-action session))
+           (command (dtache--session-command session)))
+      (if-let ((run-fun (plist-get (dtache--session-action session) :run)))
+          (funcall run-fun command)
+          (dtache-start-session command)))))
 
 ;;;###autoload
 (defun dtache-copy-session-output (session)

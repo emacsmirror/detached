@@ -29,7 +29,7 @@
 
 ;;;; Variables
 
-(defvar dtache-post-compile-session-action '(:attach dtache-compile-attach :view dtache-post-compile-session))
+(defvar dtache-post-compile-session-action '(:attach dtache-compile-attach :view dtache-post-compile-session :run dtache-compile))
 
 ;;;; Commands
 

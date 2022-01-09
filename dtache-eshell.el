@@ -32,7 +32,7 @@
 
 ;;;; Variables
 
-(defvar dtache-eshell-session-action '(:attach dtache-shell-command-attach :view dtache-view-dwim))
+(defvar dtache-eshell-session-action '(:attach dtache-shell-command-attach :view dtache-view-dwim :run dtache-shell-command))
 
 ;;;; Functions
 
