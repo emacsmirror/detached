@@ -303,7 +303,7 @@ The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_n
    '((dtache-env . "~/bin/dtache-env")
      (dtache-shell-program . "/bin/bash")
      (dtache-shell-history-file . "~/.bash_history")
-     (dtache-session-directory . "~/tmp")
+     (dtache-log-directory . "~/tmp")
      (dtache-dtach-program . "/home/user/.local/bin/dtach")))
 
   (connection-local-set-profiles

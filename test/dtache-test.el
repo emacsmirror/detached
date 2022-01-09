@@ -32,7 +32,7 @@
   "Initialize a dtache database and evaluate BODY."
   `(let* ((temp-directory (make-temp-file "dtache" t))
           (dtache-db-directory (expand-file-name "dtache.db" temp-directory))
-          (dtache-session-directory (expand-file-name "sessions" temp-directory))
+          (dtache-log-directory (expand-file-name "sessions" temp-directory))
           (dtache--sessions)
           (dtache--sessions-initialized)
           (dtache--remote-session-timer))
@@ -113,14 +113,14 @@
   ;; Local files
   (cl-letf* (((symbol-function #'expand-file-name) (lambda (file directory) (concat directory file)))
              ((symbol-function #'file-remote-p) (lambda (_directory) nil))
-             (session (dtache--session-create :id 's12345 :session-directory "/home/user/tmp/")))
+             (session (dtache--session-create :id 's12345 :log-directory "/home/user/tmp/")))
     (should (string= "/home/user/tmp/s12345.log" (dtache--session-file session 'log)))
     (should (string= "/home/user/tmp/s12345.socket" (dtache--session-file session 'socket))))
 
   ;; Remote files
   (cl-letf* (((symbol-function #'expand-file-name) (lambda (file directory) (concat directory file)))
              ((symbol-function #'file-remote-p) (lambda (_directory) "/ssh:foo:"))
-             (session (dtache--session-create :id 's12345 :session-directory "/home/user/tmp/")))
+             (session (dtache--session-create :id 's12345 :log-directory "/home/user/tmp/")))
     (should (string= "/ssh:foo:/home/user/tmp/s12345.log" (dtache--session-file session 'log)))
     (should (string= "/ssh:foo:/home/user/tmp/s12345.socket" (dtache--session-file session 'socket)))))
 
@@ -202,11 +202,11 @@
      (should (equal copy (car (dtache--db-get-sessions)))))))
 
 (ert-deftest dtache-test-magic-command ()
-  (let ((normal-session (dtache--session-create :session-directory "/tmp/dtache/"
+  (let ((normal-session (dtache--session-create :log-directory "/tmp/dtache/"
                                                 :working-directory "/home/user/"
                                                 :command "ls -la"
                                                 :id 'foo123))
-        (redirect-session (dtache--session-create :session-directory "/tmp/dtache/"
+        (redirect-session (dtache--session-create :log-directory "/tmp/dtache/"
                                                 :working-directory "/home/user/"
                                                 :command "ls -la"
                                                 :redirect-only t
@@ -235,9 +235,9 @@
   (cl-letf* (((symbol-function #'process-file) (lambda (_program _infile _buffer _display &rest _args)
                                                  (insert "\"USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\nuser    6699  0.0  0.0   4752  2304 ?        Ss   13:06   0:00 dtach -n /tmp/foo.socket\nuser    6698  0.0  0.0   4752  2304 ?        Ss   13:07   0:00 dtach -c /tmp/bar.socket\n")))
 
-             (session1 (dtache--session-create :id 'foo :session-directory "/tmp/"))
-             (session2 (dtache--session-create :id 'bar :session-directory "/tmp/"))
-             (session3 (dtache--session-create :id 'baz :session-directory "/tmp/")))
+             (session1 (dtache--session-create :id 'foo :log-directory "/tmp/"))
+             (session2 (dtache--session-create :id 'bar :log-directory "/tmp/"))
+             (session3 (dtache--session-create :id 'baz :log-directory "/tmp/")))
     (should (string= "6699" (dtache--session-pid session1)))
     (should (string= "6698" (dtache--session-pid session2)))
     (should (not (dtache--session-pid session3)))))
