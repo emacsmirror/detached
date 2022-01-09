@@ -375,32 +375,37 @@ Optionally SUPPRESS-OUTPUT."
       (ediff-buffers buffer1 buffer2))))
 
 ;;;###autoload
-(defun dtache-detach-session ()
+(defun dtache-detach-dwim ()
   "Detach from current session.
 
 This command is only activated if `dtache--buffer-session' is set and
 `dtache--session-active-p' returns t."
   (interactive)
   (if (dtache-session-p dtache--buffer-session)
-      (if (dtache--session-active-p dtache--buffer-session)
-          (if-let ((process (and (eq major-mode 'eshell-mode)
-                                 (dtache-eshell-get-dtach-process))))
-              (progn
-                (setq dtache--buffer-session nil)
-                (process-send-string process dtache--dtach-detach-character))
-            (let ((proc (get-buffer-process (current-buffer)))
-                  (input dtache--dtach-detach-character))
-              (comint-simple-send proc input)
-              (setq dtache--buffer-session nil)
-              (when
-                  (cond ((string-match "\*Dtache Shell Command" (buffer-name)) t)
-                        ((string-match "\*dtache-compilation" (buffer-name)) t)
-                        (t nil))
-                (let ((kill-buffer-query-functions nil))
-                  (kill-buffer-and-window)
-                  (message "[detached]")))))
-        (setq dtache--buffer-session nil))
-    (message "No `dtache-session' found in buffer.")))
+      (if-let ((command-or-compile
+                (cond ((string-match "\*Dtache Shell Command" (buffer-name)) t)
+                      ((string-match "\*dtache-compilation" (buffer-name)) t)
+                      (t nil))))
+          ;; `dtache-shell-command' or `dtache-compile'
+          (let ((kill-buffer-query-functions nil))
+            (when-let ((process (get-buffer-process (current-buffer))))
+              (comint-simple-send process dtache--dtach-detach-character))
+            (setq dtache--buffer-session nil)
+            (kill-buffer-and-window)
+            (message "[detached]"))
+        (if (dtache--session-active-p dtache--buffer-session)
+            ;; `dtache-eshell'
+            (if-let ((process (and (eq major-mode 'eshell-mode)
+                                   (dtache-eshell-get-dtach-process))))
+                (progn
+                  (setq dtache--buffer-session nil)
+                  (process-send-string process dtache--dtach-detach-character))
+              ;; `dtache-shell'
+              (let ((process (get-buffer-process (current-buffer))))
+                (comint-simple-send process dtache--dtach-detach-character)
+                (setq dtache--buffer-session nil)))
+          (message "No active dtache-session found in buffer.")))
+    (message "No dtache-session found in buffer.")))
 
 ;;;###autoload
 (defun dtache-quit-tail-output ()
