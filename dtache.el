@@ -293,6 +293,7 @@ Optionally SUPPRESS-OUTPUT."
           (run-hooks 'dtache-compile-hooks)
           (dtache-log-mode)
           (compilation-minor-mode)
+          (setq dtache--buffer-session session)
           (setq-local font-lock-defaults '(compilation-mode-font-lock-keywords t))
           (font-lock-mode)
           (read-only-mode))
@@ -376,6 +377,7 @@ Optionally SUPPRESS-OUTPUT."
               (insert (dtache--session-output session))
               (setq-local default-directory (dtache--session-working-directory session))
               (dtache-log-mode)
+              (setq dtache--buffer-session session)
               (goto-char (point-max)))
             (pop-to-buffer buffer-name))
         (message "Dtache can't find file: %s" file-path)))))
@@ -392,6 +394,7 @@ Optionally SUPPRESS-OUTPUT."
                (tramp-verbose 1))
           (when (file-exists-p file-path)
             (find-file-other-window file-path)
+            (setq dtache--buffer-session session)
             (dtache-tail-mode)
             (goto-char (point-max))))
       (dtache-open-output session))))
@@ -422,12 +425,14 @@ Optionally SUPPRESS-OUTPUT."
   "Detach from current session.
 
 This command is only activated if `dtache--buffer-session' is set and
-`dtache--determine-session-state' returns t."
+`dtache--determine-session-state' returns active. For modes such as
+compilation or shell-command the command will also kill the window."
   (interactive)
   (if (dtache-session-p dtache--buffer-session)
       (if-let ((command-or-compile
                 (cond ((string-match "\*Dtache Shell Command" (buffer-name)) t)
                       ((string-match "\*dtache-compilation" (buffer-name)) t)
+                      ((eq major-mode 'dtache-tail-mode) t)
                       (t nil))))
           ;; `dtache-shell-command' or `dtache-compile'
           (let ((kill-buffer-query-functions nil))
@@ -461,17 +466,6 @@ This command is only activated if `dtache--buffer-session' is set and
                                    (string= (dtache--session-host it) host))
                                  (dtache-get-sessions)))))
     (seq-do #'dtache--db-remove-entry sessions)))
-
-;;;###autoload
-(defun dtache-quit-tail-output ()
-  "Quit `dtache' tail log.
-
-The log can have been updated, but that is not done by the user but
-rather the tail mode.  To avoid a promtp `buffer-modified-p' is set to
-nil before closing."
-  (interactive)
-  (set-buffer-modified-p nil)
-  (kill-buffer-and-window))
 
 ;;;; Functions
 
@@ -1161,7 +1155,6 @@ the current time is used."
 
 (defvar dtache-log-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "q") #'kill-buffer-and-window)
     map)
   "Keymap for `dtache-log-mode'.")
 
@@ -1172,7 +1165,6 @@ the current time is used."
 
 (defvar dtache-tail-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "q") #'dtache-quit-tail-output)
     map)
   "Keymap for `dtache-tail-mode'.")
 
