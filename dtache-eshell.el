@@ -33,7 +33,7 @@
 ;;;; Variables
 
 (defcustom dtache-eshell-session-action
-  '(:attach dtache-shell-command-attach
+  '(:attach dtache-attach
             :view dtache-view-dwim
             :run dtache-shell-command)
   "Actions for a session created with `dtache-eshell'."

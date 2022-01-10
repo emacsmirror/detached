@@ -109,7 +109,7 @@
   :group 'dtache)
 
 (defcustom dtache-shell-command-action
-  '(:attach dtache-shell-command-attach
+  '(:attach dtache-attach
             :view dtache-view-dwim
             :run dtache-shell-command)
   "Actions for a session created with `dtache-shell-command'."
@@ -269,8 +269,8 @@ Optionally SUPPRESS-OUTPUT."
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
     (if (dtache--session-active-p session)
-        (dtache-attach-session session)
-      (dtache-view-session session))))
+        (dtache--attach-session session)
+      (dtache--view-session session))))
 
 ;;;###autoload
 (defun dtache-post-compile-session (session)
@@ -623,32 +623,18 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
   (dtache--update-sessions)
   (dtache--db-get-sessions))
 
-(defun dtache-shell-command-attach (session)
+(defun dtache-attach (session)
   "Attach to `dtache' SESSION."
   (when (dtache-valid-session session)
     (let* ((dtache--current-session session)
            (dtache-session-mode 'attach)
            (inhibit-message t))
       (if (dtache--session-redirect-only session)
-          (dtache-attach-session session)
+          (dtache--attach-session session)
         (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
                    (buffer "*Dtache Shell Command*"))
           (funcall #'async-shell-command (dtache--session-command session) buffer)
           (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session)))))))
-
-(defun dtache-attach-session (session)
-  "Attach to SESSION."
-  (if (dtache--session-redirect-only session)
-      (dtache-tail-output session)
-    (if-let ((attach-fun (plist-get (dtache--session-action session) :attach)))
-        (funcall attach-fun session)
-      (dtache-tail-output session))))
-
-(defun dtache-view-session (session)
-  "View SESSION."
-  (if-let ((view-fun (plist-get (dtache--session-action session) :view)))
-      (funcall view-fun session)
-    (dtache-view-dwim session)))
 
 ;;;;; Other
 
@@ -930,6 +916,20 @@ Optionally make the path LOCAL to host."
     (replace-regexp-in-string full-home
                               short-home
                               (expand-file-name default-directory))))
+
+(defun dtache--attach-session (session)
+  "Attach to SESSION."
+  (if (dtache--session-redirect-only session)
+      (dtache-tail-output session)
+    (if-let ((attach-fun (plist-get (dtache--session-action session) :attach)))
+        (funcall attach-fun session)
+      (dtache-tail-output session))))
+
+(defun dtache--view-session (session)
+  "View SESSION."
+  (if-let ((view-fun (plist-get (dtache--session-action session) :view)))
+      (funcall view-fun session)
+    (dtache-view-dwim session)))
 
 ;;;;; Database
 
