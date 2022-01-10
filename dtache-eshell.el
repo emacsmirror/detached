@@ -32,7 +32,13 @@
 
 ;;;; Variables
 
-(defvar dtache-eshell-session-action '(:attach dtache-shell-command-attach :view dtache-view-dwim :run dtache-shell-command))
+(defcustom dtache-eshell-session-action
+  '(:attach dtache-shell-command-attach
+            :view dtache-view-dwim
+            :run dtache-shell-command)
+  "Actions for a session created with `dtache-eshell'."
+  :group 'dtache
+  :type 'plist)
 
 ;;;; Functions
 

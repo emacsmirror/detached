@@ -29,10 +29,18 @@
 
 ;;;; Variables
 
-(defvar dtache-shell-history-file nil
-  "File to store history.")
-(defvar dtache-shell-session-action '(:attach dtache-shell-command-attach :view dtache-view-dwim :run dtache-shell-command)
-  "Actions for a session created with `dtache-shell'.")
+(defcustom dtache-shell-session-action
+  '(:attach dtache-shell-command-attach
+            :view dtache-view-dwim
+            :run dtache-shell-command)
+  "Actions for a session created with `dtache-shell'."
+  :group 'dtache
+  :type 'plist)
+
+(defcustom dtache-shell-history-file nil
+  "File to store history."
+  :type 'string
+  :group 'dtache)
 
 ;;;; Functions
 

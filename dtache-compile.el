@@ -29,7 +29,13 @@
 
 ;;;; Variables
 
-(defvar dtache-post-compile-session-action '(:attach dtache-compile-attach :view dtache-post-compile-session :run dtache-compile))
+(defcustom dtache-compile-session-action
+  '(:attach dtache-compile-attach
+            :view dtache-post-compile-session
+            :run dtache-compile)
+  "Actions for a session created with `dtache-compile'."
+  :group 'dtache
+  :type 'plist)
 
 ;;;; Commands
 
@@ -45,7 +51,7 @@ Optionally enable COMINT if prefix-argument is provided."
         command))
     (consp current-prefix-arg)))
   (let* ((dtache-enabled t)
-         (dtache-session-action dtache-post-compile-session-action)
+         (dtache-session-action dtache-compile-session-action)
          (dtache-session-origin 'compile)
          (dtache-session-mode 'create))
     (compile command comint)))
@@ -56,7 +62,7 @@ Optionally enable COMINT if prefix-argument is provided."
 Optionally EDIT-COMMAND."
   (interactive "P")
   (let* ((dtache-enabled t)
-         (dtache-session-action dtache-post-compile-session-action)
+         (dtache-session-action dtache-compile-session-action)
          (dtache-session-origin 'compile)
          (dtache-session-mode 'create))
     (recompile edit-command)))
