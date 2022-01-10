@@ -69,7 +69,7 @@ See `consult-multi' for a description of the source values."
        (mapcar #'car
                (seq-filter
                 (lambda (x)
-                  (dtache--session-active (cdr x)))
+                  (eq 'active (dtache--session-state (cdr x))))
                 (dtache-session-candidates (dtache-get-sessions))))))
   "Active `dtache' sessions as a source for `consult'.")
 
@@ -82,9 +82,9 @@ See `consult-multi' for a description of the source values."
     :items
     ,(lambda ()
        (mapcar #'car
-               (seq-remove
+               (seq-filter
                 (lambda (x)
-                  (dtache--session-active (cdr x)))
+                  (eq 'inactive (dtache--session-state (cdr x))))
                 (dtache-session-candidates (dtache-get-sessions))))))
   "Inactive `dtache' sessions as a source for `consult'.")
 

@@ -67,7 +67,7 @@ This has also resulted in the deprecation of =dtache-list-sessions=, users are i
 
 #+begin_src elisp
   (defvar dtache-annotation-format
-    `((:width 3 :function dtache--active-str :face dtache-active-face)
+    `((:width 3 :function dtache--state-str :face dtache-state-face)
       (:width 3 :function dtache--status-str :face dtache-failure-face)
       (:width 10 :function dtache--session-host :face dtache-host-face)
       (:width 40 :function dtache--working-dir-str :face dtache-working-dir-face)
@@ -104,7 +104,7 @@ If you are an =embark= user the way to integrate =dtache= with =embark= is to ad
 
 #+begin_src elisp :lexical t :results none
   (setq dtache-annotation-format
-    `((:width 3 :function dtache--active-str :face dtache-active-face)
+    `((:width 3 :function dtache--state-str :face dtache-state-face)
       (:width 3 :function dtache--status-str :face dtache-failure-face)
       (:width 10 :function dtache--session-host :face dtache-host-face)
       (:width 30 :function dtache--working-dir-str :face dtache-working-dir-face)

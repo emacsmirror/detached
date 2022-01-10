@@ -58,7 +58,7 @@
           (thread-last (dtache-get-sessions)
             (seq-filter (lambda (it)
                           (string= (dtache--session-host it) current-host)))
-            (seq-filter #'dtache--session-active-p))))
+            (seq-filter (lambda (it) (eq 'active (dtache--determine-session-state it)))))))
     (dtache-completing-read sessions)))
 
 ;;;; Commands
@@ -82,7 +82,7 @@ cluttering the comint-history with dtach commands."
   (interactive
    (list (dtache-shell-select-session)))
   (when (dtache-valid-session session)
-    (if (and (dtache--session-active-p session)
+    (if (and (eq 'active (dtache--determine-session-state session))
              (not (dtache--session-redirect-only session)))
         (cl-letf ((dtache--current-session session)
                   (comint-input-sender #'dtache-shell--attach-input-sender)

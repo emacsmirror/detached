@@ -56,7 +56,7 @@
           (thread-last (dtache-get-sessions)
             (seq-filter (lambda (it)
                           (string= (dtache--session-host it) current-host)))
-            (seq-filter #'dtache--session-active-p))))
+            (seq-filter #'dtache--determine-session-state))))
     (dtache-completing-read sessions)))
 
 (defun dtache-eshell-get-dtach-process ()
@@ -85,7 +85,7 @@ If prefix-argument directly DETACH from the session."
   (interactive
    (list (dtache-eshell-select-session)))
   (when (dtache-valid-session session)
-    (if (and (dtache--session-active-p session)
+    (if (and (eq 'active (dtache--determine-session-state session))
              (not (dtache--session-redirect-only session)))
         (cl-letf* ((dtache-session-mode 'attach)
                    (input

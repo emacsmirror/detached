@@ -212,7 +212,7 @@ The user have the possibility to integrate =dtache= with the package [[https://g
 By default =dtache= uses the echo area to notify the user when a session has finished. An alternative is to utilize the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.
 
 #+begin_src elisp :lexical t :results none
-  (defun my/dtache-inactive-session-notification (session)
+  (defun my/dtache-state-transition-notification (session)
     "Send an `alert' notification when SESSION becomes inactive."
     (let ((status (dtache--session-status session))
           (title
@@ -229,7 +229,7 @@ By default =dtache= uses the echo area to notify the user when a session has fin
                    ('success 'dtache-success)
                    ('failure 'dtache-failure)))))
 
-  (setq dtache-notification-function #'my/dtache-inactive-session-notification)
+  (setq dtache-notification-function #'my/dtache-state-transition-notification)
 #+end_src
 
 * Customization
@@ -239,7 +239,7 @@ The user can customize the appearance of annotations in =dtache-open-session= by
 
 #+begin_src elisp :results none
   (defvar dtache-annotation-format
-    `((:width 3 :function dtache--active-str :face dtache-active-face)
+    `((:width 3 :function dtache--state-str :face dtache-state-face)
       (:width 3 :function dtache--status-str :face dtache-failure-face)
       (:width 10 :function dtache--session-host :face dtache-host-face)
       (:width 40 :function dtache--working-dir-str :face dtache-working-dir-face)

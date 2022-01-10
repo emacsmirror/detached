@@ -80,7 +80,7 @@ Optionally EDIT-COMMAND."
 (defun dtache-compile-open (session)
   "Open SESSION with `dtache-compile'."
   (when (dtache-valid-session session)
-    (if (dtache--session-active session)
+    (if (eq 'active (dtache--session-state session))
         (dtache-compile-attach session)
       (dtache-post-compile-session session))))
 

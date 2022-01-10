@@ -86,7 +86,7 @@
   :group 'dtache)
 
 (defcustom dtache-annotation-format
-  '((:width 3 :function dtache--active-str :face dtache-active-face)
+  '((:width 3 :function dtache--state-str :face dtache-state-face)
     (:width 3 :function dtache--status-str :face dtache-failure-face)
     (:width 10 :function dtache--session-host :face dtache-host-face)
     (:width 40 :function dtache--working-dir-str :face dtache-working-dir-face)
@@ -121,8 +121,9 @@
   :type '(repeat (regexp :format "%v"))
   :group 'dtache)
 
-(defcustom dtache-notification-function #'dtache-inactive-session-notification
-  "Variable to specify notification function when a session becomes inactive."
+(defcustom dtache-notification-function #'dtache-state-transition-notification
+  "Variable to set which function to use to issue a notification when
+a session transitions from active to inactive."
   :type 'function
   :group 'dtache)
 
@@ -173,9 +174,9 @@ Valid values are: create, new and attach")
   '((t :inherit error))
   "Face used to highlight failure in `dtache'.")
 
-(defface dtache-active-face
+(defface dtache-state-face
   '((t :inherit success))
-  "Face used to highlight active in `dtache'.")
+  "Face used to highlight state in `dtache'.")
 
 (defface dtache-duration-face
   '((t :inherit font-lock-builtin-face))
@@ -239,7 +240,7 @@ Valid values are: create, new and attach")
   (status nil)
   (duration nil)
   (output-size nil)
-  (active nil))
+  (state nil))
 
 ;;;; Commands
 
@@ -268,7 +269,7 @@ Optionally SUPPRESS-OUTPUT."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
-    (if (dtache--session-active-p session)
+    (if (eq 'active (dtache--determine-session-state session))
         (dtache--attach-session session)
       (dtache--view-session session))))
 
@@ -343,7 +344,7 @@ Optionally SUPPRESS-OUTPUT."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
-    (if (dtache--session-active-p session)
+    (if (eq 'active (dtache--determine-session-state session))
         (message "Kill session first before removing it.")
       (dtache--db-remove-entry session))))
 
@@ -385,7 +386,7 @@ Optionally SUPPRESS-OUTPUT."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
-    (if (dtache--session-active-p session)
+    (if (eq 'active (dtache--determine-session-state session))
         (let* ((file-path
                 (dtache--session-file session 'log))
                (tramp-verbose 1))
@@ -421,7 +422,7 @@ Optionally SUPPRESS-OUTPUT."
   "Detach from current session.
 
 This command is only activated if `dtache--buffer-session' is set and
-`dtache--session-active-p' returns t."
+`dtache--determine-session-state' returns t."
   (interactive)
   (if (dtache-session-p dtache--buffer-session)
       (if-let ((command-or-compile
@@ -435,7 +436,7 @@ This command is only activated if `dtache--buffer-session' is set and
               (message "[detached]"))
             (setq dtache--buffer-session nil)
             (kill-buffer-and-window))
-        (if (dtache--session-active-p dtache--buffer-session)
+        (if (eq 'active (dtache--determine-session-state dtache--buffer-session))
             ;; `dtache-eshell'
             (if-let ((process (and (eq major-mode 'eshell-mode)
                                    (dtache-eshell-get-dtach-process))))
@@ -492,7 +493,7 @@ nil before closing."
                                  :log-directory (file-name-as-directory dtache-log-directory)
                                  :host (dtache--host)
                                  :metadata (dtache-metadata)
-                                 :active t)))
+                                 :state 'active)))
     (dtache--db-insert-entry session)
     (dtache--start-session-monitor session)
     session))
@@ -566,13 +567,13 @@ Optionally SUPPRESS-OUTPUT."
 
                 ;; Update local active sessions
                 (when (and (string= "localhost" (dtache--session-host session))
-                           (dtache--session-active session))
+                           (eq 'active (dtache--session-state session)))
                   (dtache--update-session session))))
             (dtache--db-get-sessions))
 
     ;; Start monitors
     (thread-last (dtache--db-get-sessions)
-                 (seq-filter #'dtache--session-active)
+                 (seq-filter (lambda (it) (eq 'active (dtache--session-state it))))
                  (seq-do #'dtache--start-session-monitor))
 
     ;; Add `dtache-shell-mode'
@@ -601,8 +602,8 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
           'success
         'failure))))
 
-(defun dtache-inactive-session-notification (session)
-  "Send a notification when SESSION becomes inactive."
+(defun dtache-state-transition-notification (session)
+  "Send a notification when SESSION transitions from active to inactive."
   (let ((status (pcase (dtache--session-status session)
                   ('success "Dtache finished")
                   ('failure "Dtache failed")) ))
@@ -755,16 +756,18 @@ Optionally CONCAT the command return command into a string."
        "..."
        (substring command (- (length command) (/ dtache-max-command-length 2)) (length command))))))
 
-(defun dtache--session-active-p (session)
+(defun dtache--determine-session-state (session)
   "Return t if SESSION is active."
-  (file-exists-p
-   (dtache--session-file session 'socket)))
+  (if (file-exists-p
+       (dtache--session-file session 'socket))
+      'active
+    'inactive))
 
-(defun dtache--session-deactivated-p (session)
-  "Return t if SESSION has been deactivated."
+(defun dtache--state-transition-p (session)
+  "Return t if SESSION has transitioned from active to inactive."
   (and
-   (dtache--session-active session)
-   (not (file-exists-p (dtache--session-file session 'socket)))))
+   (eq 'active (dtache--session-state session))
+   (eq 'inactive (dtache--determine-session-state session))))
 
 (defun dtache--session-missing-p (session)
   "Return t if SESSION is missing."
@@ -793,8 +796,8 @@ Optionally CONCAT the command return command into a string."
    (let* ((timer)
           (callback
            (lambda ()
-             (when (dtache--session-deactivated-p session)
-               (dtache--session-final-update session)
+             (when (dtache--state-transition-p session)
+               (dtache--session-state-transition-update session)
                (cancel-timer timer)))))
      (setq timer
            (funcall (plist-get dtache-timer-configuration :function)
@@ -810,7 +813,7 @@ Optionally CONCAT the command return command into a string."
    (lambda (event)
      (pcase-let ((`(,_ ,action ,_) event))
        (when (eq action 'deleted)
-         (dtache--session-final-update session))))))
+         (dtache--session-state-transition-update session))))))
 
 (defun dtache--session-deduplicate (sessions)
   "Make car of SESSIONS unique by adding an identifier to it."
@@ -845,16 +848,16 @@ Sessions running on  current host or localhost are updated."
     (seq-do (lambda (it)
               (if (and (or (string= current-host (dtache--session-host it))
                            (string= "localhost" (dtache--session-host it)))
-                       (or (dtache--session-active it)
-                           (dtache--session-deactivated-p it)))
+                       (or (eq 'active (dtache--session-state it))
+                           (dtache--state-transition-p it)))
                   (dtache--update-session it)))
             (dtache--db-get-sessions))))
 
 (defun dtache--update-session (session)
   "Update SESSION."
-  (if (or (dtache--session-deactivated-p session)
+  (if (or (dtache--state-transition-p session)
           (dtache--session-missing-p session))
-      (dtache--session-final-update session)
+      (dtache--session-state-transition-update session)
     (setf (dtache--session-output-size session)
           (file-attribute-size (file-attributes
                                 (dtache--session-file session 'log))))
@@ -984,8 +987,8 @@ Optionally make the path LOCAL to host."
     ('attach "-a")
     (_ "-n")))
 
-(defun dtache--session-final-update (session)
-  "Make a final update to SESSION."
+(defun dtache--session-state-transition-update (session)
+  "Update SESSION due to state transition."
   (if (dtache--session-missing-p session)
       ;; Remove missing session
       (dtache--db-remove-entry session)
@@ -996,7 +999,7 @@ Optionally make the path LOCAL to host."
            (file-attributes
             (dtache--session-file session 'log))))
 
-    (setf (dtache--session-active session) nil)
+    (setf (dtache--session-state session) 'inactive)
     (setf (dtache--session-duration session)
           (- (time-to-seconds) (dtache--session-creation-time session)))
 
@@ -1097,7 +1100,7 @@ the current time is used."
 (defun dtache--duration-str (session)
   "Return SESSION's duration time."
   (let* ((time
-          (round (if (dtache--session-active session)
+          (round (if (eq 'active (dtache--session-state session))
                      (- (time-to-seconds) (dtache--session-creation-time session))
                    (dtache--session-duration session))))
          (hours (/ time 3600))
@@ -1125,9 +1128,9 @@ the current time is used."
     ('success " ")
     ('unknown " ")))
 
-(defun dtache--active-str (session)
-  "Return string if SESSION is active."
-  (if (dtache--session-active session)
+(defun dtache--state-str (session)
+  "Return string based on SESSION state."
+  (if (eq 'active (dtache--session-state session))
       "*"
     " "))
 

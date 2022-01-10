@@ -146,9 +146,9 @@
 (ert-deftest dtache-test-session-active-p ()
   (dtache-test--with-temp-database
    (let ((session (dtache-test--create-session :command "foo" :host "localhost")))
-     (should (dtache--session-active-p session))
+     (should (eq 'active (dtache--determine-session-state session)))
      (dtache-test--change-session-state session 'deactivate)
-     (should (not (dtache--session-active-p session))))))
+     (should (eq 'inactive (dtache--determine-session-state session))))))
 
 (ert-deftest dtache-test-session-dead-p ()
   (dtache-test--with-temp-database
@@ -196,7 +196,7 @@
           (id (dtache--session-id session))
           (copy))
      (setq copy (copy-dtache-session session))
-     (setf (dtache--session-active copy) nil)
+     (setf (dtache--session-state copy) nil)
      (should (not (equal copy (dtache--db-get-session id))))
      (dtache--db-update-entry copy t)
      (should (equal copy (car (dtache--db-get-sessions)))))))
@@ -264,9 +264,9 @@
   (should (string= " " (dtache--status-str (dtache--session-create :status 'success))))
   (should (string= " " (dtache--status-str (dtache--session-create :status 'unknown)))))
 
-(ert-deftest dtache-test-active-str ()
-  (should (string= "*" (dtache--active-str (dtache--session-create :active t))))
-  (should (string= " " (dtache--active-str (dtache--session-create :active nil)))))
+(ert-deftest dtache-test-state-str ()
+  (should (string= "*" (dtache--state-str (dtache--session-create :state 'active))))
+  (should (string= " " (dtache--state-str (dtache--session-create :state 'inactive)))))
 
 (ert-deftest dtache-test-working-dir-str ()
   (should
