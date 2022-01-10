@@ -418,7 +418,7 @@ Optionally SUPPRESS-OUTPUT."
       (ediff-buffers buffer1 buffer2))))
 
 ;;;###autoload
-(defun dtache-detach ()
+(defun dtache-detach-dwim ()
   "Detach from current session.
 
 This command is only activated if `dtache--buffer-session' is set and
