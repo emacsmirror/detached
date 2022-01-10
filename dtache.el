@@ -1,4 +1,4 @@
-;;; dtache.el --- Dispatch and interact with dtache sessions -*- lexical-binding: t -*-
+;;; dtache.el --- Run and interact with detached shell commands -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2020-2022 Niklas Eklund
 
@@ -25,19 +25,17 @@
 
 ;;; Commentary:
 
-;; Dtache allows a program to be seamlessly executed in an environment
-;; that is isolated from Emacs.  This package provides functionality
-;; for the user to launch detached commands with
-;; `dtache-shell-command', which is inspired by `async-shell-command'.
-;; Another function `dtache-start-session' is supposed to be used by
-;; other functions or packages.  This is also useful if the user wants
-;; to advice packages to use it in favor of for example `compile'.
+;; The dtache package allows users to run shell commands detached from
+;; Emacs.  These commands are launched in sessions, using the program
+;; dtach[1].  These sessions can be easily created through the command
+;; `dtache-shell-command', or any of the commands provided by the
+;; `dtache-shell', `dtache-eshell' and `dtache-compile' extensions.
 
-;; To manage and interact with the sessions the the package provides
-;; the command `dtache-open-session'.
+;; When a session is created, dtache makes sure that Emacs is attached
+;; to it the same time, which makes it a seamless experience for the
+;; users.  The `dtache' package internaly creates a `dtache-session'
+;; for all commands.
 
-;; The package requires the program dtach[1] to be installed.
-;;
 ;; [1] https://github.com/crigler/dtach
 
 ;;; Code:
