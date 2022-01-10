@@ -124,11 +124,13 @@ cluttering the comint-history with dtach commands."
 (defun dtache-shell--save-history ()
   "Save `shell' history."
   (with-connection-local-variables
-   (let ((comint-input-ring-file-name
-          (concat
-           (file-remote-p default-directory)
-           dtache-shell-history-file)))
-     (comint-write-input-ring))))
+   (unless (string-prefix-p "\*Dtache Shell Command" (buffer-name))
+           (let* ((inhibit-message t)
+                  (comint-input-ring-file-name
+                   (concat
+                    (file-remote-p default-directory)
+                    dtache-shell-history-file)))
+             (comint-write-input-ring)))))
 
 (defun dtache-shell-override-history (orig-fun &rest args)
   "Override history to read `dtache-shell-history-file' in ORIG-FUN with ARGS.
