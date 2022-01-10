@@ -430,6 +430,7 @@ compilation or shell-command the command will also kill the window."
       (if-let ((command-or-compile
                 (cond ((string-match "\*Dtache Shell Command" (buffer-name)) t)
                       ((string-match "\*dtache-compilation" (buffer-name)) t)
+                      ((eq major-mode 'dtache-log-mode) t)
                       ((eq major-mode 'dtache-tail-mode) t)
                       (t nil))))
           ;; `dtache-shell-command' or `dtache-compile'
