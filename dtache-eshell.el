@@ -1,4 +1,4 @@
-;;; dtache-eshell.el --- Dtache integration in eshell -*- lexical-binding: t -*-
+;;; dtache-eshell.el --- Dtache integration for eshell -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2021-2022 Niklas Eklund
 
@@ -19,7 +19,7 @@
 
 ;;; Commentary:
 
-;; This package provides integration of `dtache' in `eshell'.
+;; This is a `dtache' extension which provides integration for `eshell'.
 
 ;;; Code:
 

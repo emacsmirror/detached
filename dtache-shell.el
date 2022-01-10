@@ -1,4 +1,4 @@
-;;; dtache-shell.el --- Dtache integration in shell -*- lexical-binding: t -*-
+;;; dtache-shell.el --- Dtache integration for shell -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2020-2022 Niklas Eklund
 
@@ -19,7 +19,7 @@
 
 ;;; Commentary:
 
-;; This package provides integration of `dtache' in `shell'.
+;; This is a `dtache' extension which provides integration for `shell'.
 
 ;;; Code:
 

@@ -1,4 +1,4 @@
-;;; dtache-compile.el --- Dtache integration with compile -*- lexical-binding: t -*-
+;;; dtache-compile.el --- Dtache integration for compile -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2022 Niklas Eklund
 ;; This file is not part of GNU Emacs.
@@ -18,7 +18,7 @@
 
 ;;; Commentary:
 
-;; This package integrates `dtache' with `compile'.
+;; This is a `dtache' extension which provides integration for `compile'.
 
 ;;; Code:
 
