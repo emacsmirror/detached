@@ -124,7 +124,7 @@ cluttering the comint-history with dtach commands."
 (defun dtache-shell--save-history ()
   "Save `shell' history."
   (with-connection-local-variables
-   (unless (string-prefix-p "\*Dtache Shell Command" (buffer-name))
+   (unless (string-prefix-p dtache--shell-command-buffer (buffer-name))
            (let* ((inhibit-message t)
                   (comint-input-ring-file-name
                    (concat

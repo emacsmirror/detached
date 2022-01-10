@@ -214,6 +214,8 @@ Valid values are: create, new and attach")
 (defvar dtache--session-candidates nil
   "An alist of session candidates.")
 
+(defconst dtache--shell-command-buffer "*Dtache Shell Command*"
+  "Name of the `dtache-shell-command' buffer.")
 (defconst dtache--dtach-eof-message "\\[EOF - dtach terminating\\]"
   "Message printed when `dtach' terminates.")
 (defconst dtache--dtach-detached-message "\\[detached\\]\^M"
@@ -428,7 +430,7 @@ compilation or shell-command the command will also kill the window."
   (interactive)
   (if (dtache-session-p dtache--buffer-session)
       (if-let ((command-or-compile
-                (cond ((string-match "\*Dtache Shell Command" (buffer-name)) t)
+                (cond ((string-match dtache--shell-command-buffer (buffer-name)) t)
                       ((string-match "\*dtache-compilation" (buffer-name)) t)
                       ((eq major-mode 'dtache-log-mode) t)
                       ((eq major-mode 'dtache-tail-mode) t)
@@ -510,7 +512,7 @@ Optionally SUPPRESS-OUTPUT."
                       `("dtache" nil ,(dtache-dtach-command dtache--current-session t))))
       (cl-letf* ((dtache-session-mode 'create)
                   ((symbol-function #'set-process-sentinel) #'ignore)
-                 (buffer "*Dtache Shell Command*"))
+                  (buffer (generate-new-buffer-name dtache--shell-command-buffer)))
         (setq dtache-enabled nil)
         (funcall #'async-shell-command (dtache-dtach-command dtache--current-session t) buffer)
         (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session))))))
@@ -626,7 +628,7 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
       (if (dtache--session-redirect-only session)
           (dtache--attach-session session)
         (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
-                   (buffer "*Dtache Shell Command*"))
+                   (buffer dtache--shell-command-buffer))
           (funcall #'async-shell-command (dtache--session-command session) buffer)
           (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session)))))))
 
