@@ -239,7 +239,7 @@ Valid values are: create, new and attach")
   (action nil :read-only t)
   (status nil)
   (duration nil)
-  (output-size nil)
+  (log-size nil)
   (state nil))
 
 ;;;; Commands
@@ -484,7 +484,7 @@ compilation or shell-command the command will also kill the window."
                                  :redirect-only (dtache-redirect-only-p command)
                                  :creation-time (time-to-seconds (current-time))
                                  :status 'unknown
-                                 :output-size 0
+                                 :log-size 0
                                  :log-directory (file-name-as-directory dtache-log-directory)
                                  :host (dtache--host)
                                  :metadata (dtache-metadata)
@@ -853,7 +853,7 @@ Sessions running on  current host or localhost are updated."
   (if (or (dtache--state-transition-p session)
           (dtache--session-missing-p session))
       (dtache--session-state-transition-update session)
-    (setf (dtache--session-output-size session)
+    (setf (dtache--session-log-size session)
           (file-attribute-size (file-attributes
                                 (dtache--session-file session 'log))))
     (dtache--db-update-entry session)))
@@ -989,7 +989,7 @@ Optionally make the path LOCAL to host."
       (dtache--db-remove-entry session)
 
     ;; Update session
-    (setf (dtache--session-output-size session)
+    (setf (dtache--session-log-size session)
           (file-attribute-size
            (file-attributes
             (dtache--session-file session 'log))))
@@ -1114,7 +1114,7 @@ the current time is used."
 (defun dtache--size-str (session)
   "Return the size of SESSION's output."
   (file-size-human-readable
-   (dtache--session-output-size session)))
+   (dtache--session-log-size session)))
 
 (defun dtache--status-str (session)
   "Return string if SESSION has failed."
