@@ -792,6 +792,8 @@ Optionally CONCAT the command return command into a string."
           (callback
            (lambda ()
              (when (dtache--state-transition-p session)
+               (setf (dtache--session-duration session)
+                     (dtache--determine-duration session t))
                (dtache--session-state-transition-update session)
                (cancel-timer timer)))))
      (setq timer
@@ -808,6 +810,8 @@ Optionally CONCAT the command return command into a string."
    (lambda (event)
      (pcase-let ((`(,_ ,action ,_) event))
        (when (eq action 'deleted)
+         (setf (dtache--session-duration session)
+               (dtache--determine-duration session))
          (dtache--session-state-transition-update session))))))
 
 (defun dtache--session-deduplicate (sessions)
@@ -852,7 +856,10 @@ Sessions running on  current host or localhost are updated."
   "Update SESSION."
   (if (or (dtache--state-transition-p session)
           (dtache--session-missing-p session))
-      (dtache--session-state-transition-update session)
+      (progn
+        (setf (dtache--session-duration session)
+              (dtache--determine-duration session t))
+        (dtache--session-state-transition-update session))
     (setf (dtache--session-log-size session)
           (file-attribute-size (file-attributes
                                 (dtache--session-file session 'log))))
@@ -995,8 +1002,6 @@ Optionally make the path LOCAL to host."
             (dtache--session-file session 'log))))
 
     (setf (dtache--session-state session) 'inactive)
-    (setf (dtache--session-duration session)
-          (- (time-to-seconds) (dtache--session-creation-time session)))
 
     ;; Update status
     (let ((status (or (plist-get (dtache--session-action session) :status)
@@ -1044,16 +1049,18 @@ Otherwise use tee to log stdout and stderr individually."
    (file-remote-p default-directory 'host)
    "localhost"))
 
-(defun dtache--duration (session)
+(defun dtache--determine-duration (session &optional approximate)
   "Return the time duration of the SESSION.
 
 Modification time is not reliable whilst a session is active.  Instead
 the current time is used."
-  (- (time-to-seconds
-      (file-attribute-modification-time
-       (file-attributes
-        (dtache--session-file session 'log))))
-     (dtache--session-creation-time session)))
+  (if (not approximate)
+      (- (time-to-seconds) (dtache--session-creation-time session))
+    (- (time-to-seconds
+        (file-attribute-modification-time
+         (file-attributes
+          (dtache--session-file session 'log))))
+       (dtache--session-creation-time session))))
 
 (defun dtache--create-id (command)
   "Return a hash identifier for COMMAND."
