@@ -1103,7 +1103,7 @@ the current time is used."
   "Return SESSION's duration time."
   (let* ((time
           (round (if (eq 'active (dtache--session-state session))
-                     (- (time-to-seconds) (dtache--session-creation-time session))
+                     (dtache--determine-duration session)
                    (dtache--session-duration session))))
          (hours (/ time 3600))
          (minutes (/ (mod time 3600) 60))
