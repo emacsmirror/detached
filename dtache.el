@@ -954,7 +954,10 @@ Optionally make the path LOCAL to host."
   (dtache--db-update-sessions))
 
 (defun dtache--db-remove-entry (session)
-  "Remove SESSION from `dtache--sessions' and update database."
+  "Remove SESSION from `dtache--sessions', delete log and update database."
+  (let ((log (dtache--session-file session 'log)))
+    (when (file-exists-p log)
+      (delete-file log)))
   (setq dtache--sessions
         (assq-delete-all (dtache--session-id session) dtache--sessions ))
   (dtache--db-update-sessions))
