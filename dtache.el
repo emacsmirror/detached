@@ -628,8 +628,9 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
       (if (dtache--session-redirect-only session)
           (dtache--attach-session session)
         (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
-                   (buffer dtache--shell-command-buffer))
-          (funcall #'async-shell-command (dtache--session-command session) buffer)
+                   (buffer dtache--shell-command-buffer)
+                   (dtach-command (dtache-dtach-command session t)))
+          (funcall #'async-shell-command dtach-command buffer)
           (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session)))))))
 
 ;;;;; Other
