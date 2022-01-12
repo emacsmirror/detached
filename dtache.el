@@ -944,8 +944,7 @@ Optionally make the path LOCAL to host."
 
 (defun dtache--db-initialize ()
   "Return all sessions stored in database."
-  (let ((db (expand-file-name "dtache.db" dtache-db-directory))
-        (session-version))
+  (let ((db (expand-file-name "dtache.db" dtache-db-directory)))
     (when (file-exists-p db)
       (with-temp-buffer
         (insert-file-contents db)
