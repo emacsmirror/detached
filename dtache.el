@@ -79,7 +79,7 @@
   :group 'dtache)
 
 (defcustom dtache-env nil
-  "The name of the `dtache' program."
+  "The name of, or path to, the `dtache' environment script."
   :type 'string
   :group 'dtache)
 
