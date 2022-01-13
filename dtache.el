@@ -780,11 +780,12 @@ Optionally CONCAT the command return command into a string."
    #'identity
    `(,(format "Command: %s" (dtache--session-command session))
      ,(format "Working directory: %s" (dtache--working-dir-str session))
-     ,(format "Status: %s" (dtache--session-status session))
-     ,(format "Created at: %s" (dtache--creation-str session))
+     ,(format "Host: %s" (dtache--session-host session))
      ,(format "Id: %s" (symbol-name (dtache--session-id session)))
+     ,(format "Status: %s" (dtache--session-status session))
      ,(format "Metadata: %s" (dtache--metadata-str session))
-     ,(format "Duration: %s" (dtache--duration-str session))
+     ,(format "Created at: %s" (dtache--creation-str session))
+     ,(format "Duration: %s\n" (dtache--duration-str session))
      "")
    "\n"))
 
