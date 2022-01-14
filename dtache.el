@@ -143,8 +143,9 @@ Valid values are: create, new and attach")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst dtache-session-version 1
-  "The version of `dtache-session'.")
+(defconst dtache-session-version "0.2.1"
+  "The version of `dtache-session'.
+This version is encoded as [package-version].[revision].")
 
 (defvar dtache-action-map
   (let ((map (make-sparse-keymap)))
@@ -954,17 +955,16 @@ Optionally make the path LOCAL to host."
         (insert-file-contents db)
         (cl-assert (eq (point) (point-min)))
         (goto-char (point-min))
-        (when (= (dtache--db-session-version) dtache-session-version)
+        (when (string= (dtache--db-session-version) dtache-session-version)
           (setq dtache--sessions
                 (read (current-buffer))))))))
 
 (defun dtache--db-session-version ()
   "Return `dtache-session-version' from database."
   (let ((header (thing-at-point 'line))
-        (regexp (rx "Dtache Session Version: " (group (one-or-more digit)))))
+        (regexp (rx "Dtache Session Version: " (group (one-or-more (or digit punct))))))
     (string-match regexp header)
-    (string-to-number
-     (match-string 1 header))))
+    (match-string 1 header)))
 
 (defun dtache--db-insert-entry (session)
   "Insert SESSION into `dtache--sessions' and update database."
@@ -998,7 +998,7 @@ Optionally make the path LOCAL to host."
   "Write `dtache--sessions' to database."
   (let ((db (expand-file-name "dtache.db" dtache-db-directory)))
     (with-temp-file db
-      (insert (format ";; Dtache Session Version: %d\n\n" dtache-session-version))
+      (insert (format ";; Dtache Session Version: %s\n\n" dtache-session-version))
       (prin1 dtache--sessions (current-buffer)))))
 
 ;;;;; Other
