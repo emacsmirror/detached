@@ -53,13 +53,13 @@
 
 ;;;;; Customizable
 
-(defcustom dtache-log-directory (expand-file-name "dtache" (temporary-file-directory))
-  "The directory to store `dtache' sessions."
+(defcustom dtache-session-directory (expand-file-name "dtache" (temporary-file-directory))
+  "The directory to store sessions."
   :type 'string
   :group 'dtache)
 
 (defcustom dtache-db-directory user-emacs-directory
-  "The directory to store `dtache' database."
+  "The directory to store the `dtache' database."
   :type 'string
   :group 'dtache)
 
@@ -143,7 +143,7 @@ Valid values are: create, new and attach")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst dtache-session-version "0.2.1"
+(defconst dtache-session-version "0.2.2"
   "The version of `dtache-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -236,7 +236,7 @@ This version is encoded as [package-version].[revision].")
   (origin nil :read-only t)
   (working-directory nil :read-only t)
   (creation-time nil :read-only t)
-  (log-directory nil :read-only t)
+  (directory nil :read-only t)
   (metadata nil :read-only t)
   (host nil :read-only t)
   (redirect-only nil :read-only t)
@@ -481,7 +481,7 @@ compilation or shell-command the command will also kill the window."
 
 (defun dtache-create-session (command)
   "Create a `dtache' session from COMMAND."
-  (dtache--create-log-directory)
+  (dtache--create-session-directory)
   (let ((session
          (dtache--session-create :id (intern (dtache--create-id command))
                                  :command command
@@ -492,7 +492,7 @@ compilation or shell-command the command will also kill the window."
                                  :creation-time (time-to-seconds (current-time))
                                  :status 'unknown
                                  :log-size 0
-                                 :log-directory (file-name-as-directory dtache-log-directory)
+                                 :directory (file-name-as-directory dtache-session-directory)
                                  :host (dtache--host)
                                  :metadata (dtache-metadata)
                                  :state 'active)))
@@ -726,7 +726,7 @@ Optionally CONCAT the command return command into a string."
   "Return SESSION's pid."
   (let* ((socket
           (concat
-           (dtache--session-log-directory session)
+           (dtache--session-directory session)
            (symbol-name (dtache--session-id session))
            ".socket"))
          (regexp (rx-to-string `(and "dtach " (or "-n " "-c ") ,socket)))
@@ -888,7 +888,7 @@ Optionally make the path LOCAL to host."
          (remote (file-remote-p (dtache--session-working-directory session)))
          (directory (concat
                      remote
-                     (dtache--session-log-directory session))))
+                     (dtache--session-directory session))))
     (if (and local remote)
         (string-remove-prefix remote (expand-file-name file-name directory))
       (expand-file-name file-name directory))))
@@ -913,12 +913,12 @@ Optionally make the path LOCAL to host."
                    (point-max))))
         (buffer-substring beginning end)))))
 
-(defun dtache--create-log-directory ()
+(defun dtache--create-session-directory ()
   "Create session directory if it doesn't exist."
   (let ((directory
          (concat
           (file-remote-p default-directory)
-          dtache-log-directory)))
+          dtache-session-directory)))
     (unless (file-exists-p directory)
       (make-directory directory t))))
 
