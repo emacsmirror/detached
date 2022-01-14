@@ -303,18 +303,21 @@ Optionally SUPPRESS-OUTPUT."
         (pop-to-buffer buffer-name)))))
 
 ;;;###autoload
-(defun dtache-rerun-session (session)
+(defun dtache-rerun-session (session &optional suppress-output)
   "Rerun SESSION."
   (interactive
-   (list (dtache-completing-read (dtache-get-sessions))))
+   (list (dtache-completing-read (dtache-get-sessions))
+         current-prefix-arg))
   (when (dtache-valid-session session)
     (let* ((default-directory
              (dtache--session-working-directory session))
            (dtache-session-action (dtache--session-action session))
            (command (dtache--session-command session)))
-      (if-let ((run-fun (plist-get (dtache--session-action session) :run)))
-          (funcall run-fun command)
-          (dtache-start-session command)))))
+      (if suppress-output
+          (dtache-start-session command suppress-output)
+        (if-let ((run-fun (plist-get (dtache--session-action session) :run)))
+            (funcall run-fun command)
+          (dtache-start-session command))))))
 
 ;;;###autoload
 (defun dtache-copy-session-output (session)
