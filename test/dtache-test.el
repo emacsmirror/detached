@@ -211,7 +211,7 @@
      (dtache--db-update-entry copy t)
      (should (equal copy (car (dtache--db-get-sessions)))))))
 
-(ert-deftest dtache-test-magic-command ()
+(ert-deftest dtache-test-dtache-command ()
   (let ((attachable-session (dtache--session-create :directory "/tmp/dtache/"
                                                 :working-directory "/home/user/"
                                                 :command "ls -la"
@@ -225,17 +225,17 @@
     ;; With dtache-env
     (let ((dtache-env "dtache-env"))
       (should (string= "{ dtache-env ls\\ -la; } 2>&1 | tee /tmp/dtache/foo123.log"
-                       (dtache--magic-command attachable-session)))
+                       (dtache--dtache-command attachable-session)))
       (should (string= "{ dtache-env ls\\ -la; } &> /tmp/dtache/foo123.log"
-                       (dtache--magic-command nonattachable-session))))
+                       (dtache--dtache-command nonattachable-session))))
 
     ;; Without dtache-env
     (let ((dtache-env nil)
           (dtache-shell-program "bash"))
       (should (string= "{ bash -c ls\\ -la; } 2>&1 | tee /tmp/dtache/foo123.log"
-                       (dtache--magic-command attachable-session)))
+                       (dtache--dtache-command attachable-session)))
       (should (string= "{ bash -c ls\\ -la; } &> /tmp/dtache/foo123.log"
-                       (dtache--magic-command nonattachable-session))))))
+                       (dtache--dtache-command nonattachable-session))))))
 
 (ert-deftest dtache-test-attachable-command-p ()
   (let ((dtache-nonattachable-commands '("ls")))

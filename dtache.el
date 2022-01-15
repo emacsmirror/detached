@@ -676,11 +676,11 @@ Optionally CONCAT the command return command into a string."
                         ,dtach-arg
                         ,socket "-z"
                         ,dtache-shell-program "-c"
-                        ,(shell-quote-argument (dtache--magic-command session)))
+                        ,(shell-quote-argument (dtache--dtache-command session)))
                       " ")
          `(,dtach-arg ,socket "-z"
            ,dtache-shell-program "-c"
-           ,(dtache--magic-command session)))))))
+           ,(dtache--dtache-command session)))))))
 
 (defun dtache-attachable-command-p (command)
   "Return t if COMMAND is attachable."
@@ -1050,8 +1050,8 @@ Optionally make the path LOCAL to host."
     (seq-do (lambda (pid) (dtache--kill-processes pid)) child-processes)
     (apply #'process-file `("kill" nil nil nil ,pid))))
 
-(defun dtache--magic-command (session)
-  "Return the magic dtache command for SESSION.
+(defun dtache--dtache-command (session)
+  "Return the dtache command for SESSION.
 
 If SESSION is nonattachable fallback to a command that doesn't rely on tee."
   (let* ((log (dtache--session-file session 'log t))
