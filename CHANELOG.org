@@ -4,6 +4,7 @@
 
 * Development
 
+- =dtache= now uses =filenotify= for both local and remote sessions. If run on =macOS= timers are used both for local as well as remote sessions.
 - Add version for =dtache-session= objects. This makes dtache not break whenever non-backwards compatible changes are made to the dtache-session object.
 - The commands for launching sessions are now renamed to resemble the non dtache commands. The commands are =dtache-shell-command=, =dtache-shell-send-input=, =dtache-eshell-send-input=, =dtache-compile=.
 - Add action value to a session. This value is set to dtache-session-action which is a property list optionally specifying attach, view and run properties. These properties are then used in dwim commands to improve their functionality.

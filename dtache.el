@@ -576,6 +576,9 @@ Optionally SUPPRESS-OUTPUT."
     ;; Start monitors
     (thread-last (dtache--db-get-sessions)
                  (seq-filter (lambda (it) (eq 'active (dtache--session-state it))))
+                 (seq-remove (lambda (it) (when (dtache--session-missing-p it)
+                                       (dtache--db-remove-entry it)
+                                       t)))
                  (seq-do #'dtache--start-session-monitor))
 
     ;; Add `dtache-shell-mode'
@@ -1103,10 +1106,12 @@ the current time is used."
 
 (defun dtache--start-session-monitor (session)
   "Start to monitor SESSION activity."
-  (if (file-remote-p (dtache--session-working-directory session))
-      (dtache--session-timer-monitor session)
+  (let ((default-directory (dtache--session-working-directory session)))
     (if (eq system-type 'darwin)
-        (dtache--session-macos-monitor session)
+        ;; macOS requires a timer based solution
+        (if (file-remote-p default-directory)
+            (dtache--session-timer-monitor session)
+          (dtache--session-macos-monitor session))
       (dtache--session-filenotify-monitor session))))
 
 ;;;;; UI
