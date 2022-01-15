@@ -174,6 +174,16 @@
               (dtache--db-get-sessions)
               `(,session1 ,session3))))))
 
+(ert-deftest dtache-test-dtach-arg ()
+  (let ((dtache-session-mode 'create))
+    (should (string= "-n" (dtache--dtach-arg))))
+  (let ((dtache-session-mode 'create-and-attach))
+    (should (string= "-c" (dtache--dtach-arg))))
+  (let ((dtache-session-mode 'attach))
+    (should (string= "-a" (dtache--dtach-arg))))
+  (let ((dtache-session-mode nil))
+    (should-error (dtache--dtach-arg))))
+
 ;;;;; Database
 
 (ert-deftest dtache-test-db-insert-session ()

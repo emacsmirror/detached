@@ -1009,7 +1009,7 @@ Optionally make the path LOCAL to host."
     ('create "-n")
     ('create-and-attach "-c")
     ('attach "-a")
-    (_ "-n")))
+    (_ (error "`dtache-session-mode' has an unknown value."))))
 
 (defun dtache--session-state-transition-update (session)
   "Update SESSION due to state transition."

@@ -108,12 +108,14 @@ If prefix-argument directly DETACH from the session."
 (defun dtache-eshell--maybe-create-session ()
   "Create a session if `dtache-eshell-command' value is t."
   (when dtache-enabled
-    (let* ((dtache-session-mode 'create-and-attach)
-           (dtache-session-action dtache-eshell-session-action)
+    (let* ((dtache-session-action dtache-eshell-session-action)
            (command (mapconcat #'identity
                                `(,eshell-last-command-name
                                  ,@eshell-last-arguments)
                                " "))
+           (dtache-session-mode (if (dtache-attachable-command-p command)
+                                   dtache-session-mode
+                                 'create))
            (session (dtache-create-session command)))
       (setq eshell-last-arguments (dtache-dtach-command session))
       (setq dtache--buffer-session session)

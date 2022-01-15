@@ -106,7 +106,7 @@ cluttering the comint-history with dtach commands."
   (with-connection-local-variables
    (let* ((command (substring-no-properties string))
           (dtache-session-mode (if (dtache-attachable-command-p command)
-                                   'create-and-attach
+                                   dtache-session-mode
                                  'create))
           (dtach-command (dtache-dtach-command command t)))
      (comint-simple-send proc dtach-command))))
