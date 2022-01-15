@@ -312,12 +312,12 @@ The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_n
 
 * Versions
 
-Information about the changes to the package can be found in the =CHANGELOG.org=.
+Information about larger changes that has been made between versions can be found in the [[./CHANGELOG.org]]
 
 * Contributions
 
-For the time being I try to keep the possibility open to submit the package to [[https://elpa.gnu.org/][ELPA]], which means that if you want to contribute you should have gone through the copyright assignment procedure.
+I have signed the papers for a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Copyright-Assignment.html][copyright assignment]] in order to contribute the package to [[https://elpa.gnu.org/][ELPA]]. This means that other contributors needs to have their copyright assigned as well.
 
 * Credits
 
-I got inspired by =Ambrevar's= pursuits on [[https://ambrevar.xyz/emacs-eshell/][using eshell as his main shell]], and his [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]] got me into the idea of using =dtach= as a base for detachable shell commands.
+I got inspired when reading about =Ambrevar's= pursuits on [[https://ambrevar.xyz/emacs-eshell/][using eshell as his main shell]]. I discovered his [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]] which got me into the idea of using =dtach= as a base for detached shell commands.
