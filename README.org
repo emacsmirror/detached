@@ -233,6 +233,10 @@ By default =dtache= uses the echo area to notify the user when a session has fin
 #+end_src
 
 * Customization
+** TODO Customizable variables
+
+Add a table of all customizable variables, with explenations.
+
 ** Completion annotations
 
 The user can customize the appearance of annotations in =dtache-open-session= by modifying the =dtache-annotation-format=. The default annotation format is the following.
@@ -250,13 +254,9 @@ The user can customize the appearance of annotations in =dtache-open-session= by
     "The format of the annotations.")
 #+end_src
 
-If the user wants to remove specific annotations or decrease/increase the widths, do that by changing the values for this variable.
+** Status deduction
 
-** Automatic status labeling
-
-The =dtache-env= script, found in this repository, can be used to execute shell commands in a controlled environment. This environment makes sure that the exit status is present in the session's output. This allows =dtache= to parse it and automatically label a session with either =success= or =failure=.
-
-Add the following to the configuration in order to take advantage of this feature.
+The users are encouraged to define the =dtache-env= variable. It should point to the =dtache-env= script, which is provided in the repository. This script allows sessions to communicate the status of a session when it transitions to inactive. When configured properly =dtache= will be able to set the status of a session to either =success= or =failure=.
 
 #+begin_src elisp :lexical t :results none
   (setq dtache-env "/path/to/repo/dtache-env")
@@ -264,7 +264,7 @@ Add the following to the configuration in order to take advantage of this featur
 
 ** Metadata annotators
 
-The user can configure any number of annotators to run upon creation of a session. Here is an example of an annotator which captures the branch name if the session is started in a git repository.
+The user can configure any number of annotators to run upon creation of a session. Here is an example of an annotator which captures the git branch name, if the session is started in a git repository.
 
 #+begin_src elisp :lexical t :results none
   (defun my/dtache--session-git-branch ()
@@ -277,25 +277,27 @@ The user can configure any number of annotators to run upon creation of a sessio
             (string-trim (buffer-string)))))))
 #+end_src
 
-The user only needs to add this function to the list of annotators.
+Next add the annotation function to the =dtache-metadata-annotators-alist= together with a symbol describing the property.
 
 #+begin_src elisp :lexical t :results none
   (setq dtache-metadata-annotators-alist '((branch . my/dtache--session-git-branch))
 #+end_src
 
-** Redirect only
+** TODO Redirect only
 
 Some programs doesn't play well with =tee=, which =dtache= relies upon to redirect the output both to standard out as well as to file. If you encounter a situation where output from a session is only visible once it has become inactive, the command you launched should instead be using =redirect only=. To list a command to run with redirect only can be done by adding a regexp to =dtache-redirect-only-regexps=.
 
 #+begin_src elisp :lexical t :results none
-  (setq dtache-redirect-only-regexps '("^ls"))
+  (setq dtache-nonattachable-commands '("^ls"))
 #+end_src
 
 Here a command beginning with =ls= would from now on be using redirect only.
+
+This should be renamed =not attachable= or similar.
 * Tips & Tricks
 ** Remote support
 
-The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Connection-Local-Variables.html][Connection Local Variables]] which allows you to change the variables used by =dtache= when running on a remote host. This useful when the user needs to alter dtache settings when running on a remote host.
+The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Connection-Local-Variables.html][Connection Local Variables]] which allows the user to customize the variables used by =dtache= when running on a remote host. This example shows how the following variables are customized for all remote hosts.
 
 #+begin_src elisp :lexical t :results none
   (connection-local-set-profile-variables
@@ -312,7 +314,7 @@ The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_n
 
 * Versions
 
-Information about larger changes that has been made between versions can be found in the [[./CHANGELOG.org]]
+Information about larger changes that has been made between versions can be found in the =CHANGELOG.org=
 
 * Contributions
 

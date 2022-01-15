@@ -114,8 +114,8 @@
   :group 'dtache
   :type 'plist)
 
-(defcustom dtache-redirect-only-regexps nil
-  "Regexps for commands that should be run with redirect only."
+(defcustom dtache-nonattachable-commands nil
+  "A list of commands which `dtache' should consider nonattachable."
   :type '(repeat (regexp :format "%v"))
   :group 'dtache)
 
@@ -143,7 +143,7 @@ Valid values are: create, new and attach")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst dtache-session-version "0.2.2"
+(defconst dtache-session-version "0.2.3"
   "The version of `dtache-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -239,7 +239,7 @@ This version is encoded as [package-version].[revision].")
   (directory nil :read-only t)
   (metadata nil :read-only t)
   (host nil :read-only t)
-  (redirect-only nil :read-only t)
+  (attachable nil :read-only t)
   (action nil :read-only t)
   (status nil)
   (duration nil)
@@ -488,7 +488,7 @@ compilation or shell-command the command will also kill the window."
                                  :origin dtache-session-origin
                                  :action dtache-session-action
                                  :working-directory (dtache--get-working-directory)
-                                 :redirect-only (dtache-redirect-only-p command)
+                                 :attachable (dtache-attachable-command-p command)
                                  :creation-time (time-to-seconds (current-time))
                                  :status 'unknown
                                  :log-size 0
@@ -512,7 +512,7 @@ Optionally SUPPRESS-OUTPUT."
     (if-let ((run-in-background
               (and (or suppress-output
                        (eq dtache-session-mode 'new)
-                       (dtache--session-redirect-only dtache--current-session))))
+                       (not (dtache--session-attachable dtache--current-session)))))
              (dtache-session-mode 'new))
         (progn (setq dtache-enabled nil)
                (apply #'start-file-process-shell-command
@@ -632,7 +632,7 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
     (let* ((dtache--current-session session)
            (dtache-session-mode 'attach)
            (inhibit-message t))
-      (if (dtache--session-redirect-only session)
+      (if (dtache--session-attachable session)
           (dtache--attach-session session)
         (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
                    (buffer dtache--shell-command-buffer)
@@ -657,7 +657,7 @@ Optionally CONCAT the command return command into a string."
 Optionally CONCAT the command return command into a string."
   (with-connection-local-variables
    (let* ((dtache-session-mode (cond ((eq dtache-session-mode 'attach) 'attach)
-                                    ((dtache--session-redirect-only session) 'new)
+                                     ((not (dtache--session-attachable session)) 'new)
                                     (t dtache-session-mode)))
           (socket (dtache--session-file session 'socket t)))
      (setq dtache--buffer-session session)
@@ -681,15 +681,15 @@ Optionally CONCAT the command return command into a string."
            ,dtache-shell-program "-c"
            ,(dtache--magic-command session)))))))
 
-(defun dtache-redirect-only-p (command)
-  "Return t if COMMAND should run in degreaded mode."
-  (if (thread-last dtache-redirect-only-regexps
+(defun dtache-attachable-command-p (command)
+  "Return t if COMMAND is attachable."
+  (if (thread-last dtache-nonattachable-commands
         (seq-filter (lambda (regexp)
                       (string-match-p regexp command)))
         (length)
         (= 0))
-      nil
-    t))
+      t
+    nil))
 
 (defun dtache-metadata ()
   "Return a property list with metadata."
@@ -933,7 +933,7 @@ Optionally make the path LOCAL to host."
 
 (defun dtache--attach-session (session)
   "Attach to SESSION."
-  (if (dtache--session-redirect-only session)
+  (if (not (dtache--session-attachable session))
       (dtache-tail-output session)
     (if-let ((attach-fun (plist-get (dtache--session-action session) :attach)))
         (funcall attach-fun session)
@@ -1052,13 +1052,12 @@ Optionally make the path LOCAL to host."
 (defun dtache--magic-command (session)
   "Return the magic dtache command for SESSION.
 
-If SESSION is redirect-only fallback to a command that doesn't rely on tee.
-Otherwise use tee to log stdout and stderr individually."
+If SESSION is nonattachable fallback to a command that doesn't rely on tee."
   (let* ((log (dtache--session-file session 'log t))
          (redirect
-          (if (dtache--session-redirect-only session)
-              (format "&> %s" log)
-            (format "2>&1 | tee %s" log)))
+          (if (dtache--session-attachable session)
+              (format "2>&1 | tee %s" log)
+             (format "&> %s" log)))
          (env (if dtache-env dtache-env (format "%s -c" dtache-shell-program)))
          (command
           (shell-quote-argument

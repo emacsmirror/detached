@@ -83,7 +83,7 @@ cluttering the comint-history with dtach commands."
    (list (dtache-shell-select-session)))
   (when (dtache-valid-session session)
     (if (and (eq 'active (dtache--determine-session-state session))
-             (not (dtache--session-redirect-only session)))
+             (dtache--session-attachable session))
         (cl-letf ((dtache--current-session session)
                   (comint-input-sender #'dtache-shell--attach-input-sender)
                   ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
@@ -105,9 +105,9 @@ cluttering the comint-history with dtach commands."
   "Create a dtache session based on STRING and send to PROC."
   (with-connection-local-variables
    (let* ((command (substring-no-properties string))
-          (dtache-session-mode (if (dtache-redirect-only-p command)
-                                   'new
-                                 'create))
+          (dtache-session-mode (if (dtache-attachable-command-p command)
+                                   'create
+                                 'new))
           (dtach-command (dtache-dtach-command command t)))
      (comint-simple-send proc dtach-command))))
 

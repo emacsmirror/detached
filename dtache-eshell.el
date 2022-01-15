@@ -86,7 +86,7 @@ If prefix-argument directly DETACH from the session."
    (list (dtache-eshell-select-session)))
   (when (dtache-valid-session session)
     (if (and (eq 'active (dtache--determine-session-state session))
-             (not (dtache--session-redirect-only session)))
+             (dtache--session-attachable session))
         (cl-letf* ((dtache-session-mode 'attach)
                    (input
                     (dtache-dtach-command session t))

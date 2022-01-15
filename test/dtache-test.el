@@ -202,34 +202,35 @@
      (should (equal copy (car (dtache--db-get-sessions)))))))
 
 (ert-deftest dtache-test-magic-command ()
-  (let ((normal-session (dtache--session-create :directory "/tmp/dtache/"
+  (let ((attachable-session (dtache--session-create :directory "/tmp/dtache/"
                                                 :working-directory "/home/user/"
                                                 :command "ls -la"
+                                                :attachable t
                                                 :id 'foo123))
-        (redirect-session (dtache--session-create :directory "/tmp/dtache/"
+        (nonattachable-session (dtache--session-create :directory "/tmp/dtache/"
                                                 :working-directory "/home/user/"
                                                 :command "ls -la"
-                                                :redirect-only t
+                                                :attachable nil
                                                 :id 'foo123)))
     ;; With dtache-env
     (let ((dtache-env "dtache-env"))
       (should (string= "{ dtache-env ls\\ -la; } 2>&1 | tee /tmp/dtache/foo123.log"
-                       (dtache--magic-command normal-session)))
+                       (dtache--magic-command attachable-session)))
       (should (string= "{ dtache-env ls\\ -la; } &> /tmp/dtache/foo123.log"
-                       (dtache--magic-command redirect-session))))
+                       (dtache--magic-command nonattachable-session))))
 
     ;; Without dtache-env
     (let ((dtache-env nil)
           (dtache-shell-program "bash"))
       (should (string= "{ bash -c ls\\ -la; } 2>&1 | tee /tmp/dtache/foo123.log"
-                       (dtache--magic-command normal-session)))
+                       (dtache--magic-command attachable-session)))
       (should (string= "{ bash -c ls\\ -la; } &> /tmp/dtache/foo123.log"
-                       (dtache--magic-command redirect-session))))))
+                       (dtache--magic-command nonattachable-session))))))
 
-(ert-deftest dtache-test-redirect-only-p ()
-  (let ((dtache-redirect-only-regexps '("ls")))
-    (should (not (dtache-redirect-only-p "cd")))
-    (should (dtache-redirect-only-p "ls -la"))))
+(ert-deftest dtache-test-attachable-command-p ()
+  (let ((dtache-nonattachable-commands '("ls")))
+    (should (dtache-attachable-command-p "cd"))
+    (should (not (dtache-attachable-command-p "ls -la")))))
 
 (ert-deftest dtache-test-session-pid ()
   (cl-letf* (((symbol-function #'process-file) (lambda (_program _infile _buffer _display &rest _args)

@@ -99,7 +99,7 @@ Optionally EDIT-COMMAND."
       (pcase-let ((`(,command ,mode ,_ ,highlight-regexp) args)
                   (buffer-name "*dtache-compilation*"))
         (if (and (not (eq dtache-session-mode 'attach))
-                 (dtache-redirect-only-p command))
+                 (not (dtache-attachable-command-p command)))
             (dtache-start-session command t)
           (cl-letf* ((name-function (lambda (_) buffer-name))
                      (dtache--current-session (or dtache--current-session
