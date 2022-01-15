@@ -92,6 +92,7 @@ The actions are controlled by the customizable variables named =dtache-.*-sessio
 | Command (Keybinding)              | Description                                 |
 |-----------------------------------+---------------------------------------------|
 | dtache-open-output (o)            | Open a session's output                     |
+| dtache-attach (a)                 | Attach to a session                         |
 | dtache-tail-output  (t)           | Tail the output of an active session        |
 | dtache-diff-session (=)           | Diff a session with another session         |
 | dtache-post-compile-session (c)   | Open the session output in compilation mode |

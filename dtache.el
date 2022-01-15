@@ -149,6 +149,7 @@ This version is encoded as [package-version].[revision].")
 
 (defvar dtache-action-map
   (let ((map (make-sparse-keymap)))
+    (define-key map "a" #'dtache-attach)
     (define-key map "c" #'dtache-post-compile-session)
     (define-key map "d" #'dtache-delete-session)
     (define-key map "i" #'dtache-insert-session-command)
@@ -319,6 +320,23 @@ Optionally SUPPRESS-OUTPUT."
         (if-let ((run-fun (plist-get (dtache--session-action session) :run)))
             (funcall run-fun command)
           (dtache-start-session command))))))
+
+;;;###autoload
+(defun dtache-attach (session)
+  "Attach to SESSION."
+  (interactive
+   (list (dtache-completing-read (dtache-get-sessions))))
+  (when (dtache-valid-session session)
+    (let* ((dtache--current-session session)
+           (dtache-session-mode 'attach)
+           (inhibit-message t))
+      (if (not (dtache--session-attachable session))
+          (dtache-tail-output session)
+        (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
+                   (buffer dtache--shell-command-buffer)
+                   (dtach-command (dtache-dtach-command session t)))
+          (funcall #'async-shell-command dtach-command buffer)
+          (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session)))))))
 
 ;;;###autoload
 (defun dtache-copy-session-output (session)
@@ -628,20 +646,6 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
   "Update and return sessions."
   (dtache--update-sessions)
   (dtache--db-get-sessions))
-
-(defun dtache-attach (session)
-  "Attach to `dtache' SESSION."
-  (when (dtache-valid-session session)
-    (let* ((dtache--current-session session)
-           (dtache-session-mode 'attach)
-           (inhibit-message t))
-      (if (not (dtache--session-attachable session))
-          (dtache-tail-output session)
-        (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
-                   (buffer dtache--shell-command-buffer)
-                   (dtach-command (dtache-dtach-command session t)))
-          (funcall #'async-shell-command dtach-command buffer)
-          (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session)))))))
 
 ;;;;; Other
 
