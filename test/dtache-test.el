@@ -73,7 +73,7 @@
               ((symbol-function #'dtache-create-session)
                (lambda (_)
                  session)))
-     (let* ((dtache-session-mode 'create)
+     (let* ((dtache-session-mode 'create-and-attach)
             (expected `("-c" ,(dtache--session-file session 'socket t)
                         "-z" ,dtache-shell-program
                         "-c"

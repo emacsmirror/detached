@@ -69,7 +69,7 @@
   (interactive "P")
   (let* ((dtache-session-origin 'shell)
          (dtache-session-action dtache-shell-session-action)
-         (dtache-session-mode (if detach 'new 'create))
+         (dtache-session-mode (if detach 'create 'create-and-attach))
          (comint-input-sender #'dtache-shell--create-input-sender))
     (comint-send-input)))
 
@@ -106,8 +106,8 @@ cluttering the comint-history with dtach commands."
   (with-connection-local-variables
    (let* ((command (substring-no-properties string))
           (dtache-session-mode (if (dtache-attachable-command-p command)
-                                   'create
-                                 'new))
+                                   'create-and-attach
+                                 'create))
           (dtach-command (dtache-dtach-command command t)))
      (comint-simple-send proc dtach-command))))
 

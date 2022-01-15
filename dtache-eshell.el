@@ -74,7 +74,7 @@
 If prefix-argument directly DETACH from the session."
   (interactive "P")
   (let* ((dtache-session-origin 'eshell)
-         (dtache-session-mode (if detach 'new 'create))
+         (dtache-session-mode (if detach 'create 'create-and-attach))
          (dtache-enabled t)
          (dtache--current-session nil))
     (call-interactively #'eshell-send-input)))
@@ -108,7 +108,7 @@ If prefix-argument directly DETACH from the session."
 (defun dtache-eshell--maybe-create-session ()
   "Create a session if `dtache-eshell-command' value is t."
   (when dtache-enabled
-    (let* ((dtache-session-mode 'create)
+    (let* ((dtache-session-mode 'create-and-attach)
            (dtache-session-action dtache-eshell-session-action)
            (command (mapconcat #'identity
                                `(,eshell-last-command-name

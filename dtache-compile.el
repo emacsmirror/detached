@@ -53,7 +53,7 @@ Optionally enable COMINT if prefix-argument is provided."
   (let* ((dtache-enabled t)
          (dtache-session-action dtache-compile-session-action)
          (dtache-session-origin 'compile)
-         (dtache-session-mode 'create))
+         (dtache-session-mode 'create-and-attach))
     (compile command comint)))
 
 ;;;###autoload
@@ -64,7 +64,7 @@ Optionally EDIT-COMMAND."
   (let* ((dtache-enabled t)
          (dtache-session-action dtache-compile-session-action)
          (dtache-session-origin 'compile)
-         (dtache-session-mode 'create))
+         (dtache-session-mode 'create-and-attach))
     (recompile edit-command)))
 
 ;;;;; Functions

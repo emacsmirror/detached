@@ -511,13 +511,13 @@ Optionally SUPPRESS-OUTPUT."
              (dtache-create-session command))))
     (if-let ((run-in-background
               (and (or suppress-output
-                       (eq dtache-session-mode 'new)
+                       (eq dtache-session-mode 'create)
                        (not (dtache--session-attachable dtache--current-session)))))
-             (dtache-session-mode 'new))
+             (dtache-session-mode 'create))
         (progn (setq dtache-enabled nil)
                (apply #'start-file-process-shell-command
                       `("dtache" nil ,(dtache-dtach-command dtache--current-session t))))
-      (cl-letf* ((dtache-session-mode 'create)
+      (cl-letf* ((dtache-session-mode 'create-and-attach)
                   ((symbol-function #'set-process-sentinel) #'ignore)
                   (buffer (generate-new-buffer-name dtache--shell-command-buffer)))
         (setq dtache-enabled nil)
@@ -657,7 +657,7 @@ Optionally CONCAT the command return command into a string."
 Optionally CONCAT the command return command into a string."
   (with-connection-local-variables
    (let* ((dtache-session-mode (cond ((eq dtache-session-mode 'attach) 'attach)
-                                     ((not (dtache--session-attachable session)) 'new)
+                                     ((not (dtache--session-attachable session)) 'create)
                                     (t dtache-session-mode)))
           (socket (dtache--session-file session 'socket t)))
      (setq dtache--buffer-session session)
@@ -1006,8 +1006,8 @@ Optionally make the path LOCAL to host."
 (defun dtache--dtach-arg ()
   "Return dtach argument based on `dtache-session-mode'."
   (pcase dtache-session-mode
-    ('new "-n")
-    ('create "-c")
+    ('create "-n")
+    ('create-and-attach "-c")
     ('attach "-a")
     (_ "-n")))
 
