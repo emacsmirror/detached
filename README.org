@@ -68,13 +68,13 @@ A minimal configuration for =dtache=.
 
 There are tree different ways to create a dtache session.
 
-| Function                       | Description                   |
-|--------------------------------+-------------------------------|
-| =dtache-shell-command=         | Called from M-x               |
+| Function                   | Description                   |
+|----------------------------+-------------------------------|
+| =dtache-shell-command=     | Called from M-x               |
 | =dtache-shell-send-input=  | Called from inside M-x shell  |
 | =dtache-eshell-send-input= | Called from inside eshell     |
-| =dtache-compile=               | Called from M-x               |
-| =dtache-start-session=         | Called from within a function |
+| =dtache-compile=           | Called from M-x               |
+| =dtache-start-session=     | Called from within a function |
 
 The =dtache-shell-command= is for the Emacs users that are accustomed to running shell commands from =M-x shell-command= or =M-x async-shell-command=. The =dtache-start-session= is supposed to be called from custom user functions, or for other packages to integrate towards. The user can also choose to override built in functions with it, for example =compile=. Lastly there is the =dtache-shell-create-session= command which is supposed to be bound to a key. It is a command that the user can choose to invoke whilst in a =M-x shell= buffer.
 
@@ -96,7 +96,7 @@ To interact with a session =dtache= provides the command =dtache-open-session=. 
 | dtache-open-output (o)            | Open a session's output                     |
 | dtache-tail-output  (t)           | Tail the output of an active session        |
 | dtache-diff-session (=)           | Diff a session with another session         |
-| dtache-post-compile-session (c)        | Open the session output in compilation mode |
+| dtache-post-compile-session (c)   | Open the session output in compilation mode |
 | dtache-rerun-session (r)          | Rerun a session                             |
 | dtache-insert-session-command (i) | Insert the session's command at point       |
 | dtache-copy-session-command (w)   | Copy the session's shell command            |
