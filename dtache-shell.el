@@ -105,9 +105,6 @@ cluttering the comint-history with dtach commands."
   "Create a dtache session based on STRING and send to PROC."
   (with-connection-local-variables
    (let* ((command (substring-no-properties string))
-          (dtache-session-mode (if (dtache-attachable-command-p command)
-                                   dtache-session-mode
-                                 'create))
           (dtach-command (dtache-dtach-command command t)))
      (comint-simple-send proc dtach-command))))
 

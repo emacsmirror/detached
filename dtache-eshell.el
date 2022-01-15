@@ -113,9 +113,6 @@ If prefix-argument directly DETACH from the session."
                                `(,eshell-last-command-name
                                  ,@eshell-last-arguments)
                                " "))
-           (dtache-session-mode (if (dtache-attachable-command-p command)
-                                   dtache-session-mode
-                                 'create))
            (session (dtache-create-session command)))
       (setq eshell-last-arguments (dtache-dtach-command session))
       (setq dtache--buffer-session session)
