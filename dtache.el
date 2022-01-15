@@ -659,25 +659,26 @@ Optionally CONCAT the command return command into a string."
    (let* ((dtache-session-mode (cond ((eq dtache-session-mode 'attach) 'attach)
                                      ((not (dtache--session-attachable session)) 'create)
                                     (t dtache-session-mode)))
-          (socket (dtache--session-file session 'socket t)))
+          (socket (dtache--session-file session 'socket t))
+          (dtach-arg (dtache--dtach-arg)))
      (setq dtache--buffer-session session)
      (if (eq dtache-session-mode 'attach)
          (if concat
              (mapconcat 'identity
                         `(,dtache-dtach-program
-                          ,(dtache--dtach-arg)
+                          ,dtach-arg
                           ,socket)
                         " ")
-           `(,(dtache--dtach-arg) ,socket))
+           `(,dtach-arg ,socket))
        (if concat
            (mapconcat 'identity
                       `(,dtache-dtach-program
-                        ,(dtache--dtach-arg)
+                        ,dtach-arg
                         ,socket "-z"
                         ,dtache-shell-program "-c"
                         ,(shell-quote-argument (dtache--magic-command session)))
                       " ")
-         `(,(dtache--dtach-arg) ,socket "-z"
+         `(,dtach-arg ,socket "-z"
            ,dtache-shell-program "-c"
            ,(dtache--magic-command session)))))))
 
