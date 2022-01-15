@@ -7,11 +7,9 @@
   :description: Why Dtache?
   :end:
 
-=Dtache=, or =Detach Emacs=, is a package to run shell commands completely detached from Emacs. With shell commands, we refer to commands that otherwise would be run in a terminal. The detachable nature of the package means that commands started with it can outlive Emacs, which also works on remote hosts, essentially offering a lightweight alternative to [[https://github.com/tmux/tmux][Tmux]] or [[https://www.gnu.org/software/screen/][GNU Screen]]. The user can effectively use =dtache= as a go to command for running =build= or =test= commands, which works well with =dtache's= automatic status labeling functionality.
+=Dtache=, or =Detach Emacs=, is a package to run shell commands completely detached from Emacs. With shell commands, we refer to commands that otherwise would be run in a terminal. This is made possible through the program [[https://github.com/crigler/dtach][dtach]], which =dtache= derives its name from. The package enables a seamless integration where commands are run using decoupled =dtach= processes, which =dtache= makes sure behind the scenes, that Emacs can attach to. The commands are therefore detached as soon as they are started. This makes it possible for commands to outlive Emacs, which also works on remote hosts, essentially offering a lightweight alternative to [[https://github.com/tmux/tmux][Tmux]] or [[https://www.gnu.org/software/screen/][GNU Screen]].
 
-The core concept of =dtache= is its object =dtache-session=. This object encapsulate information about a session, such as the =command= which is run in the session, the =working directory= from which the session is started, the =host= on which the session runs, where the =output= of the session is stored, where the =socket= to the underlying =dtach= process resides etc. The program [[https://github.com/crigler/dtach][dtach]] is what makes this package possible, it takes care of running the commands and =dtache= instructs what and how it should run it.
-
-The following videos features demonstrations about the package:
+The following videos about =dtache=. They are currently a bit outdated but the core concept is still true.
 - [[https://www.youtube.com/watch?v=if1W58SrClk][Dtache - An Emacs package that provides detachable shell commands]]
 - [[https://www.youtube.com/watch?v=De5oXdnY5hY][Dtache - Version 0.2]]
 
@@ -21,23 +19,23 @@ The way =dtache= is designed with its =dtache-session= objects opens up the poss
 
 *** Output
 
-The user always have access to the session's output. The user never needs to fear that the output history of the terminal is not enough to capture all of its output. Also its pretty handy to be able to go back in time and see the output from a session you ran earlier today. Also having access to the output as well as the other information from the session makes it possible to enable =compilation-minor-mode= in order to use Emacs built in capabilities of navigating between errors in the output. This is something =dtache= will do automatically if it detects that you are opening the output of a session with status =failure=.
+The user always have access to the session's output. The user never needs to fear that the output history of the terminal is not enough to capture all of its output. Also its pretty handy to be able to go back in time and see the output from a session you ran earlier today. Also having access to the output as well as the other information from the session makes it possible to enable =compilation-minor-mode= in order to use Emacs built in capabilities to perform a post compilation. This enables navigation between errors in the output as well as proper syntax highlighting. This is something =dtache= will do automatically if it detects that you are opening the output of a session with status =failure=.
 
 *** Notifications
 
-Start a session and then focus on something else. =Dtache= will notify you when the session has become inactive. For local sessions this is made possible through the built in =filenotify=.
+Start a session and then focus on something else. =Dtache= will notify you when the session has become inactive.
 
 *** Metadata
 
-The session will include useful metadata such as when the session was started, for how long it has been running (if it is active), how long it ran (if it is inactive).
+The session always contain metadata, such as when the session was started, for how long it has been running (if it is active), how long it ran (if it is inactive).
 
 *** Annotations
 
-Want to capture annotations about a session, if you run it within a specific project maybe you want to annotate the session with the current =git= branch, or any other custom annotation.
+Arbitrarily metadata can be captured when a session is started through the =dtache-metadata-annotators-alist=
 
 *** Remote
 
-Proper support for running session on a remote host. With remote sessions the notifications are triggered using timers, which periodically check for updates on the remote sockets. This means the notification will not be instant for remote sessions.
+Proper support for running session on a remote host.
 
 *** Actions
 
@@ -45,7 +43,7 @@ The package provides commands that can act on a session. There is the functional
 
 *** Persistency
 
-The sessions are made persistent by writing the objects to file. This makes it possible for Emacs to resume the knowledge of prior sessions when the program is restarted.
+The sessions are made persistent by writing the =dtache-session= objects to file. This makes it possible for Emacs to resume the knowledge of prior sessions when Emacs is restarted.
 
 * Configuration
 
@@ -76,18 +74,18 @@ There are tree different ways to create a dtache session.
 | =dtache-compile=           | Called from M-x               |
 | =dtache-start-session=     | Called from within a function |
 
-The =dtache-shell-command= is for the Emacs users that are accustomed to running shell commands from =M-x shell-command= or =M-x async-shell-command=. The =dtache-start-session= is supposed to be called from custom user functions, or for other packages to integrate towards. The user can also choose to override built in functions with it, for example =compile=. Lastly there is the =dtache-shell-create-session= command which is supposed to be bound to a key. It is a command that the user can choose to invoke whilst in a =M-x shell= buffer.
+The =dtache-shell-command= is for the Emacs users that are accustomed to running shell commands from =M-x shell-command= or =M-x async-shell-command=. The =dtache-shell-send-input= is for those that want to run a command through =dtache= when inside a =shell= buffer. The =dtache-eshell-send-input= is the equivalent for =eshell=. The =dtache-compile= is supposed to be used as a replacement for =compile=. Last there is the =dtache-start-session= function, which users can utilize in their own custom commands.
 
-To detach from a =dtache= session you should use the univeral =dtache-detach-dwim=.
+To detach from a =dtache= session you should use the univeral =dtache-detach-dwim= command.
 
 ** Interacting with a session
 
-To interact with a session =dtache= provides the command =dtache-open-session=. This provides a convenient completion interface, enriched with annotations to provide useful information about the sessions. The =dtache-open-session= command is implemented as a do what I mean command. This results in =dtache= performing different actions depending on the state of a session.
+To interact with a session =dtache= provides the command =dtache-open-session=. This provides a convenient completion interface, enriched with annotations to provide useful information about the sessions. The =dtache-open-session= command is implemented as a do what I mean command. This results in =dtache= performing different actions depending on the state of a session. The actions can be configured based on the =origin= of the session. The user can have one set of configurations for sessions started in =shell= which is different from those started in =compile=.
 
-- If the session has a =custom open function=, call that function
-- If the session is =active=, tail its output
-- If the session is inactive and has status =failure=, compile the output
-- If the session is inactive and has status =success=, open the output
+The actions are controlled by the customizable variables named =dtache-.*-session-action=. They come preconfigured but if you don't like the behavior of =dtache-open-session= these variables allows for tweaking the experience.
+
+- If the session is =active=, call the sessions =attach= function
+- If the session is =inactive= call the sessions =view= function, which by default performs a post-compile on the session if its status is =failure= otherwise the sessions raw output is opened.
 
   The package also provides additional commands to interact with a session.
 
@@ -110,7 +108,7 @@ These commands are available through the =dtache-action-map=. The user can bind 
   (global-set-key (kbd "C-c d") dtache-action-map)
 #+end_src
 
-Then upon invocation the user can choose an action, keybindings listed in the table above, and then choose a session to perform the action upon.
+Then upon invocation the user can choose an action, keybindings listed in the table above, and then choose a session to perform the action upon. See further down in the document how to integrate these bindings with =embark=.
 
 * Extensions
 ** Dtache-shell
@@ -129,11 +127,11 @@ A =use-package= configuration of the =dtache-shell= extension, which provides th
 
 A minor mode named =dtache-shell-mode= is provided, and will be enabled in =shell=. The commands that are implemented are:
 
-| Command               | Description           |
-|-----------------------+-----------------------|
-| dtache-shell-create   | Create a session      |
-| dtache-shell-attach   | Attach to a session   |
-| dtache-detach-dwim | Detach from a session |
+| Command                 | Description                  |
+|-------------------------+------------------------------|
+| dtache-shell-send-input | Run command with dtache      |
+| dtache-shell-attach     | Attach to a dtache session   |
+| dtache-detach-dwim      | Detach from a dtache session |
 
 ** Dtache-eshell
 
@@ -150,11 +148,11 @@ A =use-package= configuration of the =dtache-eshell= extension, which provides t
 
 A minor mode named =dtache-eshell-mode= is provided, and will be enabled in =eshell=. The commands that are implemented are:
 
-| Command                      | Description           |
-|------------------------------+-----------------------|
-| dtache-eshell-send-input | Create a session      |
-| dtache-eshell-attach         | Attach to a session   |
-| dtache-detach-dwim        | Detach from a session |
+| Command                  | Description                  |
+|--------------------------+------------------------------|
+| dtache-eshell-send-input | Run command with dtache      |
+| dtache-eshell-attach     | Attach to a dtache session   |
+| dtache-detach-dwim       | Detach from a dtache session |
 
 In this [[https://niklaseklund.gitlab.io/blog/posts/dtache_eshell/][blog post]] there are examples and more information about the extension.
 
@@ -258,7 +256,7 @@ Apart from those variables there is also the different =action= variables, which
 | dtache-shell-command-session-action | Actions for sessions launched with =dtache-shell-command=     |
 | dtache-eshell-session-action        | Actions for sessions launched with =dtache-eshell-send-input= |
 | dtache-shell-session-action         | Actions for sessions launched with =dtache-shell-send-input=  |
-| dtache-compile--session-action      | Actions for sessions launched with =dtache-compile=           |
+| dtache-compile-session-action       | Actions for sessions launched with =dtache-compile=           |
 
 ** Completion annotations
 
