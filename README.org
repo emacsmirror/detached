@@ -233,13 +233,36 @@ By default =dtache= uses the echo area to notify the user when a session has fin
 #+end_src
 
 * Customization
-** TODO Customizable variables
+** Customizable variables
 
-Add a table of all customizable variables, with explenations.
+The package provides the following customizable variables.
+
+| Name                          | Description                                                  |
+|-------------------------------+--------------------------------------------------------------|
+| dtache-session-directory      | A host specific directory to store sessions in               |
+| dtache-db-directory           | A localhost specific directory to store the database         |
+| dtache-dtach-program          | Name or path to the =dtach= program                          |
+| dtache-shell-program          | Name or path to the =shell= that =dtache= should use         |
+| dtache-timer-configuration    | Configuration of the timer that runs on remote hosts         |
+| dtache-env                    | Name or path to the =dtache-env= script                      |
+| dtache-annotation-format      | A list of annotations that should be present in completion   |
+| dtache-max-command-length     | How many characters should be used when displaying a command |
+| dtache-tail-interval          | How often =dtache= should refresh the output when tailing    |
+| dtache-nonattachable-commands | A list of commands that should be considered nonattachable   |
+| dtache-notification-function  | Specifies which function to issue notifications with         |
+
+Apart from those variables there is also the different =action= variables, which can be configured differently depending on the origin of the session.
+
+| Name                                | Description                                                   |
+|-------------------------------------+---------------------------------------------------------------|
+| dtache-shell-command-session-action | Actions for sessions launched with =dtache-shell-command=     |
+| dtache-eshell-session-action        | Actions for sessions launched with =dtache-eshell-send-input= |
+| dtache-shell-session-action         | Actions for sessions launched with =dtache-shell-send-input=  |
+| dtache-compile--session-action      | Actions for sessions launched with =dtache-compile=           |
 
 ** Completion annotations
 
-The user can customize the appearance of annotations in =dtache-open-session= by modifying the =dtache-annotation-format=. The default annotation format is the following.
+Users can customize the appearance of annotations in =dtache-open-session= by modifying the =dtache-annotation-format=. The default annotation format is the following.
 
 #+begin_src elisp :results none
   (defvar dtache-annotation-format
@@ -256,7 +279,7 @@ The user can customize the appearance of annotations in =dtache-open-session= by
 
 ** Status deduction
 
-The users are encouraged to define the =dtache-env= variable. It should point to the =dtache-env= script, which is provided in the repository. This script allows sessions to communicate the status of a session when it transitions to inactive. When configured properly =dtache= will be able to set the status of a session to either =success= or =failure=.
+Users are encouraged to define the =dtache-env= variable. It should point to the =dtache-env= script, which is provided in the repository. This script allows sessions to communicate the status of a session when it transitions to inactive. When configured properly =dtache= will be able to set the status of a session to either =success= or =failure=.
 
 #+begin_src elisp :lexical t :results none
   (setq dtache-env "/path/to/repo/dtache-env")
@@ -283,18 +306,18 @@ Next add the annotation function to the =dtache-metadata-annotators-alist= toget
   (setq dtache-metadata-annotators-alist '((branch . my/dtache--session-git-branch))
 #+end_src
 
-** TODO Redirect only
+** Nonattachable commands
 
-Some programs doesn't play well with =tee=, which =dtache= relies upon to redirect the output both to standard out as well as to file. If you encounter a situation where output from a session is only visible once it has become inactive, the command you launched should instead be using =redirect only=. To list a command to run with redirect only can be done by adding a regexp to =dtache-redirect-only-regexps=.
+To be able to both attach to a dtach session as well as logging its output =dtache= relies on the usage of =tee=. However it is possible that the user tries to run a command which involves a program that doesn't integrate well with tee. In those situations the output could be delayed until the session ends, which is not preferable.
+
+For these situations =dtache= provides the =dtache-nonattachable-commands= variable. This is a list of regular expressions. Any command that matches any of the strings will be getting the property =attachable= set to false.
 
 #+begin_src elisp :lexical t :results none
   (setq dtache-nonattachable-commands '("^ls"))
 #+end_src
 
-Here a command beginning with =ls= would from now on be using redirect only.
+Here a command beginning with =ls= would from now on be considered nonattachable.
 
-This should be renamed =not attachable= or similar.
-* Tips & Tricks
 ** Remote support
 
 The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Connection-Local-Variables.html][Connection Local Variables]] which allows the user to customize the variables used by =dtache= when running on a remote host. This example shows how the following variables are customized for all remote hosts.
