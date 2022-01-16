@@ -123,7 +123,7 @@ If prefix-argument directly DETACH from the session."
 
 ;;;###autoload
 (define-minor-mode dtache-eshell-mode
-  "Integrate `dtache' in eshell-mode."
+  "Integrate `dtache' in `eshell-mode'."
   :lighter "dtache-eshell"
   :keymap (let ((map (make-sparse-keymap)))
             map)

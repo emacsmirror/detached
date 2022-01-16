@@ -120,8 +120,7 @@
   :group 'dtache)
 
 (defcustom dtache-notification-function #'dtache-state-transition-notification
-  "Variable to set which function to use to issue a notification when
-a session transitions from active to inactive."
+  "Variable to set which function to use to issue a notification."
   :type 'function
   :group 'dtache)
 
@@ -306,7 +305,7 @@ Optionally SUPPRESS-OUTPUT."
 
 ;;;###autoload
 (defun dtache-rerun-session (session &optional suppress-output)
-  "Rerun SESSION."
+  "Rerun SESSION, optionally SUPPRESS-OUTPUT."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))
          current-prefix-arg))
@@ -453,8 +452,8 @@ Optionally SUPPRESS-OUTPUT."
   "Detach from current session.
 
 This command is only activated if `dtache--buffer-session' is set and
-`dtache--determine-session-state' returns active. For modes such as
-compilation or shell-command the command will also kill the window."
+`dtache--determine-session-state' returns active.  For modes such as
+compilation or `shell-command' the command will also kill the window."
   (interactive)
   (if (dtache-session-p dtache--buffer-session)
       (if-let ((command-or-compile
@@ -807,7 +806,7 @@ Optionally CONCAT the command return command into a string."
 
 (defun dtache--session-timer-monitor (session)
   "Configure a timer to monitor SESSION activity.
- The timer object is configured according to `dtache-timer-configuration'."
+The timer object is configured according to `dtache-timer-configuration'."
   (with-connection-local-variables
    (let* ((timer)
           (callback
@@ -1021,7 +1020,7 @@ Optionally make the path LOCAL to host."
     ('create "-n")
     ('create-and-attach "-c")
     ('attach "-a")
-    (_ (error "`dtache-session-mode' has an unknown value."))))
+    (_ (error "`dtache-session-mode' has an unknown value"))))
 
 (defun dtache--session-state-transition-update (session)
   "Update SESSION due to state transition."
@@ -1085,8 +1084,8 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
 (defun dtache--determine-duration (session &optional approximate)
   "Return the time duration of the SESSION.
 
-Modification time is not reliable whilst a session is active.  Instead
-the current time is used."
+If APPROXIMATE, use latest modification time to deduce the duration.
+Otherwise the current time is used."
   (if (not approximate)
       (- (time-to-seconds) (dtache--session-creation-time session))
     (- (time-to-seconds
@@ -1182,7 +1181,7 @@ the current time is used."
 
 ;;;###autoload
 (define-minor-mode dtache-shell-mode
-  "Integrate `dtache' in shell-mode."
+  "Integrate `dtache' in `shell-mode'."
   :lighter "dtache-shell"
   :keymap (let ((map (make-sparse-keymap)))
             map)

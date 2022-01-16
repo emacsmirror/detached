@@ -111,7 +111,7 @@ Optionally EDIT-COMMAND."
     (apply compilation-start args)))
 
 (defun dtache-compile--start (_)
-  "Run in `compilation-start-hook' if dtache-enabled."
+  "Run in `compilation-start-hook' if `dtache-enabled'."
   (when dtache-enabled
     (setq dtache--buffer-session dtache--current-session)
     (dtache-compile--replace-modesetter)
