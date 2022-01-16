@@ -1114,11 +1114,10 @@ the current time is used."
 (defun dtache--start-session-monitor (session)
   "Start to monitor SESSION activity."
   (let ((default-directory (dtache--session-working-directory session)))
-    (if (eq system-type 'darwin)
+    (if (and (not(file-remote-p default-directory))
+             (eq system-type 'darwin))
         ;; macOS requires a timer based solution
-        (if (file-remote-p default-directory)
-            (dtache--session-timer-monitor session)
-          (dtache--session-macos-monitor session))
+        (dtache--session-macos-monitor session)
       (dtache--session-filenotify-monitor session))))
 
 ;;;;; UI

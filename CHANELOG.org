@@ -4,6 +4,8 @@
 
 * Development
 
+- =dtache= now uses =filenotify= for notifications except on local macOS hosts.
+
 * Version 0.3 (2022-01-15)
 
 - =dtache= now uses =filenotify= for both local and remote sessions. If run on =macOS= timers are used both for local as well as remote sessions.
