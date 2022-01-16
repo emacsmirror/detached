@@ -502,24 +502,25 @@ compilation or shell-command the command will also kill the window."
 
 (defun dtache-create-session (command)
   "Create a `dtache' session from COMMAND."
-  (dtache--create-session-directory)
-  (let ((session
-         (dtache--session-create :id (intern (dtache--create-id command))
-                                 :command command
-                                 :origin dtache-session-origin
-                                 :action dtache-session-action
-                                 :working-directory (dtache--get-working-directory)
-                                 :attachable (dtache-attachable-command-p command)
-                                 :creation-time (time-to-seconds (current-time))
-                                 :status 'unknown
-                                 :log-size 0
-                                 :directory (file-name-as-directory dtache-session-directory)
-                                 :host (dtache--host)
-                                 :metadata (dtache-metadata)
-                                 :state 'active)))
-    (dtache--db-insert-entry session)
-    (dtache--start-session-monitor session)
-    session))
+  (with-connection-local-variables
+   (dtache--create-session-directory)
+   (let ((session
+          (dtache--session-create :id (intern (dtache--create-id command))
+                                  :command command
+                                  :origin dtache-session-origin
+                                  :action dtache-session-action
+                                  :working-directory (dtache--get-working-directory)
+                                  :attachable (dtache-attachable-command-p command)
+                                  :creation-time (time-to-seconds (current-time))
+                                  :status 'unknown
+                                  :log-size 0
+                                  :directory (file-name-as-directory dtache-session-directory)
+                                  :host (dtache--host)
+                                  :metadata (dtache-metadata)
+                                  :state 'active)))
+     (dtache--db-insert-entry session)
+     (dtache--start-session-monitor session)
+     session)))
 
 (defun dtache-start-session (command &optional suppress-output)
   "Start a `dtache' session running COMMAND.
