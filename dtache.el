@@ -540,8 +540,8 @@ Optionally SUPPRESS-OUTPUT."
                (apply #'start-file-process-shell-command
                       `("dtache" nil ,(dtache-dtach-command dtache--current-session t))))
       (cl-letf* ((dtache-session-mode 'create-and-attach)
-                  ((symbol-function #'set-process-sentinel) #'ignore)
-                  (buffer (generate-new-buffer-name dtache--shell-command-buffer)))
+                 ((symbol-function #'set-process-sentinel) #'ignore)
+                 (buffer (generate-new-buffer-name dtache--shell-command-buffer)))
         (setq dtache-enabled nil)
         (funcall #'async-shell-command (dtache-dtach-command dtache--current-session t) buffer)
         (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session))))))
@@ -599,8 +599,8 @@ Optionally SUPPRESS-OUTPUT."
     (thread-last (dtache--db-get-sessions)
                  (seq-filter (lambda (it) (eq 'active (dtache--session-state it))))
                  (seq-remove (lambda (it) (when (dtache--session-missing-p it)
-                                       (dtache--db-remove-entry it)
-                                       t)))
+                                            (dtache--db-remove-entry it)
+                                            t)))
                  (seq-do #'dtache--start-session-monitor))
 
     ;; Add `dtache-shell-mode'
@@ -669,7 +669,7 @@ Optionally CONCAT the command return command into a string."
   (with-connection-local-variables
    (let* ((dtache-session-mode (cond ((eq dtache-session-mode 'attach) 'attach)
                                      ((not (dtache--session-attachable session)) 'create)
-                                    (t dtache-session-mode)))
+                                     (t dtache-session-mode)))
           (socket (dtache--session-file session 'socket t))
           (dtach-arg (dtache--dtach-arg)))
      (setq dtache--buffer-session session)
@@ -690,16 +690,16 @@ Optionally CONCAT the command return command into a string."
                         ,(shell-quote-argument (dtache--dtache-command session)))
                       " ")
          `(,dtach-arg ,socket "-z"
-           ,dtache-shell-program "-c"
-           ,(dtache--dtache-command session)))))))
+                      ,dtache-shell-program "-c"
+                      ,(dtache--dtache-command session)))))))
 
 (defun dtache-attachable-command-p (command)
   "Return t if COMMAND is attachable."
   (if (thread-last dtache-nonattachable-commands
-        (seq-filter (lambda (regexp)
-                      (string-match-p regexp command)))
-        (length)
-        (= 0))
+                   (seq-filter (lambda (regexp)
+                                 (string-match-p regexp command)))
+                   (length)
+                   (= 0))
       t
     nil))
 
@@ -1069,7 +1069,7 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
          (redirect
           (if (dtache--session-attachable session)
               (format "2>&1 | tee %s" log)
-             (format "&> %s" log)))
+            (format "&> %s" log)))
          (env (if dtache-env dtache-env (format "%s -c" dtache-shell-program)))
          (command
           (shell-quote-argument
@@ -1176,7 +1176,7 @@ the current time is used."
          (dtache--session-working-directory session)))
     (if-let ((remote (file-remote-p working-directory)))
         (string-remove-prefix remote working-directory)
-        working-directory)))
+      working-directory)))
 
 ;;;; Minor modes
 

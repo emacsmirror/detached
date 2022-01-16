@@ -54,9 +54,9 @@
   (let* ((current-host (dtache--host))
          (sessions
           (thread-last (dtache-get-sessions)
-            (seq-filter (lambda (it)
-                          (string= (dtache--session-host it) current-host)))
-            (seq-filter #'dtache--determine-session-state))))
+                       (seq-filter (lambda (it)
+                                     (string= (dtache--session-host it) current-host)))
+                       (seq-filter #'dtache--determine-session-state))))
     (dtache-completing-read sessions)))
 
 (defun dtache-eshell-get-dtach-process ()

@@ -56,9 +56,9 @@
   (let* ((current-host (dtache--host))
          (sessions
           (thread-last (dtache-get-sessions)
-            (seq-filter (lambda (it)
-                          (string= (dtache--session-host it) current-host)))
-            (seq-filter (lambda (it) (eq 'active (dtache--determine-session-state it)))))))
+                       (seq-filter (lambda (it)
+                                     (string= (dtache--session-host it) current-host)))
+                       (seq-filter (lambda (it) (eq 'active (dtache--determine-session-state it)))))))
     (dtache-completing-read sessions)))
 
 ;;;; Commands
@@ -122,12 +122,12 @@ cluttering the comint-history with dtach commands."
   "Save `shell' history."
   (with-connection-local-variables
    (unless (string-prefix-p dtache--shell-command-buffer (buffer-name))
-           (let* ((inhibit-message t)
-                  (comint-input-ring-file-name
-                   (concat
-                    (file-remote-p default-directory)
-                    dtache-shell-history-file)))
-             (comint-write-input-ring)))))
+     (let* ((inhibit-message t)
+            (comint-input-ring-file-name
+             (concat
+              (file-remote-p default-directory)
+              dtache-shell-history-file)))
+       (comint-write-input-ring)))))
 
 (defun dtache-shell-override-history (orig-fun &rest args)
   "Override history to read `dtache-shell-history-file' in ORIG-FUN with ARGS.
