@@ -43,6 +43,7 @@
 ;;;; Requirements
 
 (require 'autorevert)
+(require 'notifications)
 (require 'filenotify)
 (require 'simple)
 (require 'tramp)
@@ -119,7 +120,7 @@
   :type '(repeat (regexp :format "%v"))
   :group 'dtache)
 
-(defcustom dtache-notification-function #'dtache-state-transition-notification
+(defcustom dtache-notification-function #'dtache-state-transition-notifications-message
   "Variable to set which function to use to issue a notification."
   :type 'function
   :group 'dtache)
@@ -628,12 +629,27 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
           'success
         'failure))))
 
-(defun dtache-state-transition-notification (session)
-  "Send a notification when SESSION transitions from active to inactive."
+(defun dtache-state-transitionion-echo-message (session)
+  "Issue a notification when SESSION transitions from active to inactive.
+This function uses the echo area."
   (let ((status (pcase (dtache--session-status session)
                   ('success "Dtache finished")
-                  ('failure "Dtache failed")) ))
+                  ('failure "Dtache failed")
+                  ('unknown "Dtache finished")) ))
     (message "%s: %s" status (dtache--session-command session))))
+
+(defun dtache-state-transition-notifications-message (session)
+  "Issue a notification when SESSION transitions from active to inactive.
+This function uses the `notifications' library."
+  (let ((status (dtache--session-status session)))
+    (notifications-notify
+     :title (pcase status
+              ('success "Dtache finished!")
+              ('failure "Dtache failed!"))
+     :body (dtache--session-command session)
+     :urgency (pcase status
+                ('success 'normal)
+                ('failure 'critical)))))
 
 (defun dtache-view-dwim (session)
   "View SESSION in a do what I mean fashion."

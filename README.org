@@ -208,7 +208,7 @@ The user have the possibility to integrate =dtache= with the package [[https://g
 
 *** Alert
 
-By default =dtache= uses the echo area to notify the user when a session has finished. An alternative is to utilize the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.
+By default =dtache= uses the built in =notifications= library to issue a notification. This solution uses =dbus= but if that doesn't work for the user there is the possibility to set the =dtache-notification-function= to =dtache-state-transitionion-echo-message= to use the echo area instead. If that doesn't suffice there is the possibility to use the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.
 
 #+begin_src elisp :lexical t :results none
   (defun my/dtache-state-transition-notification (session)

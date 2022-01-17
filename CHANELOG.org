@@ -4,6 +4,7 @@
 
 * Development
 
+- =dtache= now uses =notifications= library to issue notifications by default.
 - =dtache= now uses =filenotify= for notifications except on local macOS hosts.
 
 * Version 0.3 (2022-01-15)
