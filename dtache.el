@@ -337,6 +337,7 @@ Optionally SUPPRESS-OUTPUT."
             (dtache-tail-output session)
           (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
                      (buffer dtache--shell-command-buffer)
+                     (default-directory (dtache--session-working-directory session))
                      (dtach-command (dtache-dtach-command session t)))
             (funcall #'async-shell-command dtach-command buffer)
             (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session))))))))
