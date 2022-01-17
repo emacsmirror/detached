@@ -66,7 +66,7 @@
 
 (ert-deftest dtache-test-dtach-command ()
   (dtache-test--with-temp-database
-   (cl-letf* ((dtach-program "dtach")
+   (cl-letf* ((dtache-dtach-program "dtach")
               (dtache-env "dtache-env")
               (dtache-shell-program "bash")
               (session (dtache-create-session "ls -la"))
@@ -80,7 +80,7 @@
                         ,(format "{ dtache-env ls\\ -la; } 2>&1 | tee %s"
                                  (dtache--session-file session 'log t))))
             (expected-concat (format "%s -c %s -z %s -c %s"
-                                     dtach-program
+                                     dtache-dtach-program
                                      (dtache--session-file session 'socket t)
                                      dtache-shell-program
                                      (shell-quote-argument
@@ -91,7 +91,7 @@
      (let* ((dtache-session-mode 'attach)
             (expected `("-a" ,(dtache--session-file session 'socket t)))
             (expected-concat (format "%s -a %s"
-                                     dtach-program
+                                     dtache-dtach-program
                                      (dtache--session-file session 'socket t))))
        (should (equal expected (dtache-dtach-command session)))
        (should (equal expected-concat (dtache-dtach-command session t)))))))
