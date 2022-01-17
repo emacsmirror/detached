@@ -691,14 +691,14 @@ Optionally CONCAT the command return command into a string."
      (setq dtache--buffer-session session)
      (if (eq dtache-session-mode 'attach)
          (if concat
-             (mapconcat 'identity
+             (mapconcat #'identity
                         `(,dtache-dtach-program
                           ,dtach-arg
                           ,socket)
                         " ")
            `(,dtach-arg ,socket))
        (if concat
-           (mapconcat 'identity
+           (mapconcat #'identity
                       `(,dtache-dtach-program
                         ,dtach-arg
                         ,socket "-z"
@@ -981,8 +981,7 @@ Optionally make the path LOCAL to host."
     (when (file-exists-p db)
       (with-temp-buffer
         (insert-file-contents db)
-        (cl-assert (eq (point) (point-min)))
-        (goto-char (point-min))
+        (cl-assert (bobp))
         (when (string= (dtache--db-session-version) dtache-session-version)
           (setq dtache--sessions
                 (read (current-buffer))))))))
@@ -1199,7 +1198,7 @@ Otherwise the current time is used."
 ;;;###autoload
 (define-minor-mode dtache-shell-mode
   "Integrate `dtache' in `shell-mode'."
-  :lighter "dtache-shell"
+  :lighter " dtache-shell"
   :keymap (let ((map (make-sparse-keymap)))
             map)
   (if dtache-shell-mode
