@@ -890,16 +890,18 @@ Sessions running on  current host or localhost are updated."
 
 (defun dtache--update-session (session)
   "Update SESSION."
-  (if (or (dtache--state-transition-p session)
-          (dtache--session-missing-p session))
-      (progn
-        (setf (dtache--session-time session)
-              (dtache--update-session-time session t))
-        (dtache--session-state-transition-update session))
-    (setf (dtache--session-log-size session)
-          (file-attribute-size (file-attributes
-                                (dtache--session-file session 'log))))
-    (dtache--db-update-entry session)))
+  (cond ((dtache--session-missing-p session)
+         (dtache--db-remove-entry session))
+        ((dtache--state-transition-p session)
+         (progn
+           (setf (dtache--session-time session)
+                 (dtache--update-session-time session t))
+           (dtache--session-state-transition-update session)))
+        (t (progn
+             (setf (dtache--session-log-size session)
+                   (file-attribute-size (file-attributes
+                                         (dtache--session-file session 'log))))
+             (dtache--db-update-entry session)))))
 
 (defun dtache--session-file (session file &optional local)
   "Return the full path to SESSION's FILE.
