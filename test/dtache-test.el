@@ -256,15 +256,16 @@
 ;;;;; String representations
 
 (ert-deftest dtache-test-duration-str ()
-  (should (string= "1s" (dtache--duration-str (dtache--session-create :duration 1))))
-  (should (string= "1m 1s" (dtache--duration-str (dtache--session-create :duration 61))))
-  (should (string= "1h 1m 1s" (dtache--duration-str (dtache--session-create :duration 3661)))))
+  (should (string= "1s" (dtache--duration-str (dtache--session-create :time '(:duration 1)))))
+  (should (string= "1m 1s" (dtache--duration-str (dtache--session-create :time '(:duration 61)))))
+  (should (string= "1h 1m 1s" (dtache--duration-str (dtache--session-create :time '(:duration 3661))))))
 
 (ert-deftest dtache-test-creation-str ()
   ;; Make sure to set the TIMEZONE before executing the test to avoid
   ;; differences between machines
-  (cl-letf (((getenv "TZ") "UTC0"))
-    (should (string= "May 08 08:49" (dtache--creation-str (dtache--session-create :creation-time 1620463748.7636228))))))
+  (cl-letf* (((getenv "TZ") "UTC0")
+             (session (dtache--session-create :time `(:start 1620463748.7636228))))
+    (should (string= "May 08 08:49" (dtache--creation-str session)))))
 
 (ert-deftest dtache-test-size-str ()
   (should (string= "100" (dtache--size-str (dtache--session-create :log-size 100))))

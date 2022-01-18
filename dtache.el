@@ -143,7 +143,7 @@ Valid values are: create, new and attach")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst dtache-session-version "0.3.0"
+(defconst dtache-session-version "0.3.1"
   "The version of `dtache-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -236,14 +236,13 @@ This version is encoded as [package-version].[revision].")
   (command nil :read-only t)
   (origin nil :read-only t)
   (working-directory nil :read-only t)
-  (creation-time nil :read-only t)
   (directory nil :read-only t)
   (metadata nil :read-only t)
   (host nil :read-only t)
   (attachable nil :read-only t)
   (action nil :read-only t)
+  (time nil)
   (status nil)
-  (duration nil)
   (log-size nil)
   (state nil))
 
@@ -512,7 +511,7 @@ compilation or `shell-command' the command will also kill the window."
                                   :action dtache-session-action
                                   :working-directory (dtache--get-working-directory)
                                   :attachable (dtache-attachable-command-p command)
-                                  :creation-time (time-to-seconds (current-time))
+                                  :time `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0)
                                   :status 'unknown
                                   :log-size 0
                                   :directory (file-name-as-directory dtache-session-directory)
@@ -829,8 +828,7 @@ The timer object is configured according to `dtache-timer-configuration'."
           (callback
            (lambda ()
              (when (dtache--state-transition-p session)
-               (setf (dtache--session-duration session)
-                     (dtache--determine-duration session t))
+               (dtache--update-session-time session t)
                (dtache--session-state-transition-update session)
                (cancel-timer timer)))))
      (setq timer
@@ -847,8 +845,7 @@ The timer object is configured according to `dtache-timer-configuration'."
    (lambda (event)
      (pcase-let ((`(,_ ,action ,_) event))
        (when (eq action 'deleted)
-         (setf (dtache--session-duration session)
-               (dtache--determine-duration session))
+         (dtache--update-session-time session)
          (dtache--session-state-transition-update session))))))
 
 (defun dtache--session-deduplicate (sessions)
@@ -894,8 +891,7 @@ Sessions running on  current host or localhost are updated."
   (if (or (dtache--state-transition-p session)
           (dtache--session-missing-p session))
       (progn
-        (setf (dtache--session-duration session)
-              (dtache--determine-duration session t))
+        (dtache--update-session-time session t)
         (dtache--session-state-transition-update session))
     (setf (dtache--session-log-size session)
           (file-attribute-size (file-attributes
@@ -1097,18 +1093,21 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
    (file-remote-p default-directory 'host)
    "localhost"))
 
-(defun dtache--determine-duration (session &optional approximate)
-  "Return the time duration of the SESSION.
+(defun dtache--update-session-time (session &optional approximate)
+  "Update SESSION's time property.
 
-If APPROXIMATE, use latest modification time to deduce the duration.
-Otherwise the current time is used."
-  (if (not approximate)
-      (- (time-to-seconds) (dtache--session-creation-time session))
-    (- (time-to-seconds
-        (file-attribute-modification-time
-         (file-attributes
-          (dtache--session-file session 'log))))
-       (dtache--session-creation-time session))))
+If APPROXIMATE, use latest modification time of SESSION's
+log to deduce the end time."
+  (let ((time (dtache--session-time session)))
+    (if approximate
+        (plist-put time :end
+                   (time-to-seconds
+                    (file-attribute-modification-time
+                     (file-attributes
+                      (dtache--session-file session 'log)))))
+      (plist-put time :end (time-to-seconds)))
+    (plist-put time :duration (- (plist-get time :end) (plist-get time :start)))
+    (setf (dtache--session-time session) time)))
 
 (defun dtache--create-id (command)
   "Return a hash identifier for COMMAND."
@@ -1150,10 +1149,11 @@ Otherwise the current time is used."
 
 (defun dtache--duration-str (session)
   "Return SESSION's duration time."
+  (when (eq 'active (dtache--session-state session))
+    (dtache--update-session-time session))
   (let* ((time
-          (round (if (eq 'active (dtache--session-state session))
-                     (dtache--determine-duration session)
-                   (dtache--session-duration session))))
+          (round
+           (plist-get (dtache--session-time session) :duration)))
          (hours (/ time 3600))
          (minutes (/ (mod time 3600) 60))
          (seconds (mod time 60)))
@@ -1165,7 +1165,8 @@ Otherwise the current time is used."
   "Return SESSION's creation time."
   (format-time-string
    "%b %d %H:%M"
-   (dtache--session-creation-time session)))
+   (plist-get
+    (dtache--session-time session) :start)))
 
 (defun dtache--size-str (session)
   "Return the size of SESSION's output."
