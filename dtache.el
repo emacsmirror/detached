@@ -828,7 +828,8 @@ The timer object is configured according to `dtache-timer-configuration'."
           (callback
            (lambda ()
              (when (dtache--state-transition-p session)
-               (dtache--update-session-time session t)
+               (setf (dtache--session-time session)
+                     (dtache--update-session-time session t))
                (dtache--session-state-transition-update session)
                (cancel-timer timer)))))
      (setq timer
@@ -845,7 +846,8 @@ The timer object is configured according to `dtache-timer-configuration'."
    (lambda (event)
      (pcase-let ((`(,_ ,action ,_) event))
        (when (eq action 'deleted)
-         (dtache--update-session-time session)
+         (setf (dtache--session-time session)
+               (dtache--update-session-time session))
          (dtache--session-state-transition-update session))))))
 
 (defun dtache--session-deduplicate (sessions)
@@ -891,7 +893,8 @@ Sessions running on  current host or localhost are updated."
   (if (or (dtache--state-transition-p session)
           (dtache--session-missing-p session))
       (progn
-        (dtache--update-session-time session t)
+        (setf (dtache--session-time session)
+              (dtache--update-session-time session t))
         (dtache--session-state-transition-update session))
     (setf (dtache--session-log-size session)
           (file-attribute-size (file-attributes
@@ -1107,7 +1110,7 @@ log to deduce the end time."
                       (dtache--session-file session 'log)))))
       (plist-put time :end (time-to-seconds)))
     (plist-put time :duration (- (plist-get time :end) (plist-get time :start)))
-    (setf (dtache--session-time session) time)))
+    time))
 
 (defun dtache--create-id (command)
   "Return a hash identifier for COMMAND."
@@ -1149,11 +1152,11 @@ log to deduce the end time."
 
 (defun dtache--duration-str (session)
   "Return SESSION's duration time."
-  (when (eq 'active (dtache--session-state session))
-    (dtache--update-session-time session))
-  (let* ((time
-          (round
-           (plist-get (dtache--session-time session) :duration)))
+  (let* ((duration (if (eq 'active (dtache--session-state session))
+                       (- (time-to-seconds) (plist-get (dtache--session-time session) :start))
+                     (plist-get
+                      (dtache--session-time session) :duration)))
+         (time (round duration))
          (hours (/ time 3600))
          (minutes (/ (mod time 3600) 60))
          (seconds (mod time 60)))
