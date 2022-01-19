@@ -380,7 +380,8 @@ Optionally SUPPRESS-OUTPUT."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
-    (let* ((pid (dtache--session-pid session)))
+    (let* ((default-directory (dtache--session-directory session))
+           (pid (dtache--session-pid session)))
       (when pid
         (dtache--kill-processes pid)))))
 
@@ -751,29 +752,17 @@ Optionally CONCAT the command return command into a string."
 (defun dtache--session-pid (session)
   "Return SESSION's pid."
   (let* ((socket
-          (concat
-           (dtache--session-directory session)
-           (symbol-name (dtache--session-id session))
-           ".socket"))
-         (regexp (rx-to-string `(and "dtach " (or "-n " "-c ") ,socket)))
-         (ps-args '("aux" "-w")))
-    (with-temp-buffer
-      (apply #'process-file `("ps" nil t nil ,@ps-args))
-      (goto-char (point-min))
-      (when (search-forward-regexp regexp nil t)
-        (elt (split-string (thing-at-point 'line) " " t) 1)))))
-
-(defun dtache--session-child-pids (pid)
-  "Return a list of pids for all child processes including PID."
-  (let ((pids `(,pid))
-        (child-processes
-         (split-string
-          (shell-command-to-string (format "pgrep -P %s" pid))
-          "\n" t)))
-    (seq-do (lambda (pid)
-              (push (dtache--session-child-pids pid) pids))
-            child-processes)
-    pids))
+          (expand-file-name
+           (concat (symbol-name (dtache--session-id session)) ".socket")
+           (or
+            (file-remote-p default-directory 'localname)
+            default-directory))))
+    (car
+     (split-string
+      (with-temp-buffer
+        (apply #'process-file `("pgrep" nil t nil "-f" ,(shell-quote-argument (format "dtach -. %s" socket))))
+        (buffer-string))
+      "\n" t))))
 
 (defun dtache--session-truncate-command (session)
   "Return a truncated string representation of SESSION's command."
@@ -1033,7 +1022,9 @@ Optionally make the path LOCAL to host."
   "Kill PID and all of its children."
   (let ((child-processes
          (split-string
-          (shell-command-to-string (format "pgrep -P %s" pid))
+          (with-temp-buffer
+            (apply #'process-file `("pgrep" nil t nil "-P" ,pid))
+            (buffer-string))
           "\n" t)))
     (seq-do (lambda (pid) (dtache--kill-processes pid)) child-processes)
     (apply #'process-file `("kill" nil nil nil ,pid))))
