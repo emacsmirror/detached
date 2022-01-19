@@ -112,15 +112,15 @@
 (ert-deftest dtache-test-session-file ()
   ;; Local files
   (cl-letf* (((symbol-function #'expand-file-name) (lambda (file directory) (concat directory file)))
-             ((symbol-function #'file-remote-p) (lambda (_directory) nil))
+             ((symbol-function #'file-remote-p) (lambda (_directory _localname) "/home/user/tmp"))
              (session (dtache--session-create :id 's12345 :directory "/home/user/tmp/")))
     (should (string= "/home/user/tmp/s12345.log" (dtache--session-file session 'log)))
     (should (string= "/home/user/tmp/s12345.socket" (dtache--session-file session 'socket))))
 
   ;; Remote files
   (cl-letf* (((symbol-function #'expand-file-name) (lambda (file directory) (concat directory file)))
-             ((symbol-function #'file-remote-p) (lambda (_directory) "/ssh:foo:"))
-             (session (dtache--session-create :id 's12345 :directory "/home/user/tmp/")))
+             ((symbol-function #'file-remote-p) (lambda (_directory _localname) "/ssh:foo:/home/user/tmp/"))
+             (session (dtache--session-create :id 's12345 :directory "/ssh:foo:/home/user/tmp/")))
     (should (string= "/ssh:foo:/home/user/tmp/s12345.log" (dtache--session-file session 'log)))
     (should (string= "/ssh:foo:/home/user/tmp/s12345.socket" (dtache--session-file session 'socket)))))
 

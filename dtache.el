@@ -74,11 +74,6 @@
   :type 'string
   :group 'dtache)
 
-(defcustom dtache-timer-configuration '(:seconds 10 :repeat 60 :function run-with-timer)
-  "A property list defining how often to run a timer."
-  :type 'plist
-  :group 'dtache)
-
 (defcustom dtache-env nil
   "The name of, or path to, the `dtache' environment script."
   :type 'string
@@ -211,6 +206,8 @@ This version is encoded as [package-version].[revision].")
   "Sessions are initialized.")
 (defvar dtache--sessions nil
   "A list of sessions.")
+(defvar dtache--watched-session-directories nil
+  "An alist where values are a (directory . descriptor).")
 (defvar dtache--buffer-session nil
   "The `dtache-session' session in current buffer.")
 (defvar dtache--current-session nil
@@ -514,12 +511,12 @@ compilation or `shell-command' the command will also kill the window."
                                   :time `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0)
                                   :status 'unknown
                                   :log-size 0
-                                  :directory (file-name-as-directory dtache-session-directory)
+                                  :directory (concat (file-remote-p default-directory) dtache-session-directory)
                                   :host (dtache--host)
                                   :metadata (dtache-metadata)
                                   :state 'active)))
      (dtache--db-insert-entry session)
-     (dtache--start-session-monitor session)
+     (dtache--watch-session-directory (dtache--session-directory session))
      session)))
 
 (defun dtache-start-session (command &optional suppress-output)
@@ -595,13 +592,15 @@ Optionally SUPPRESS-OUTPUT."
                   (dtache--update-session session))))
             (dtache--db-get-sessions))
 
-    ;; Start monitors
+    ;; Watch session directories
     (thread-last (dtache--db-get-sessions)
                  (seq-filter (lambda (it) (eq 'active (dtache--session-state it))))
                  (seq-remove (lambda (it) (when (dtache--session-missing-p it)
                                             (dtache--db-remove-entry it)
                                             t)))
-                 (seq-do #'dtache--start-session-monitor))
+                 (seq-map #'dtache--session-directory)
+                 (seq-uniq)
+                 (seq-do #'dtache--watch-session-directory))
 
     ;; Add `dtache-shell-mode'
     (add-hook 'shell-mode-hook #'dtache-shell-mode)))
@@ -820,36 +819,6 @@ Optionally CONCAT the command return command into a string."
      "")
    "\n"))
 
-(defun dtache--session-timer-monitor (session)
-  "Configure a timer to monitor SESSION activity.
-The timer object is configured according to `dtache-timer-configuration'."
-  (with-connection-local-variables
-   (let* ((timer)
-          (callback
-           (lambda ()
-             (when (dtache--state-transition-p session)
-               (setf (dtache--session-time session)
-                     (dtache--update-session-time session t))
-               (dtache--session-state-transition-update session)
-               (cancel-timer timer)))))
-     (setq timer
-           (funcall (plist-get dtache-timer-configuration :function)
-                    (plist-get dtache-timer-configuration :seconds)
-                    (plist-get dtache-timer-configuration :repeat)
-                    callback)))))
-
-(defun dtache--session-filenotify-monitor (session)
-  "Configure `filenotify' to monitor SESSION activity."
-  (file-notify-add-watch
-   (dtache--session-file session 'socket)
-   '(change)
-   (lambda (event)
-     (pcase-let ((`(,_ ,action ,_) event))
-       (when (eq action 'deleted)
-         (setf (dtache--session-time session)
-               (dtache--update-session-time session))
-         (dtache--session-state-transition-update session))))))
-
 (defun dtache--session-deduplicate (sessions)
   "Make car of SESSIONS unique by adding an identifier to it."
   (let* ((ht (make-hash-table :test #'equal :size (length sessions)))
@@ -864,12 +833,6 @@ The timer object is configured according to `dtache-timer-configuration'."
         (puthash (car session) 0 ht)
         (setcar session (format "%s%s" (car session) (make-string identifier-width ?\s)))))
     (seq-reverse reverse-sessions)))
-
-(defun dtache--session-macos-monitor (session)
-  "Configure a timer to monitor SESSION activity on macOS."
-  (let ((dtache-timer-configuration
-         '(:seconds 0.5 :repeat 0.5 :function run-with-idle-timer)))
-    (dtache--session-timer-monitor session)))
 
 (defun dtache--decode-session (item)
   "Return the session assicated with ITEM."
@@ -914,13 +877,11 @@ Optionally make the path LOCAL to host."
            (pcase file
              ('socket ".socket")
              ('log ".log"))))
-         (remote (file-remote-p (dtache--session-working-directory session)))
-         (directory (concat
-                     remote
-                     (dtache--session-directory session))))
-    (if (and local remote)
-        (string-remove-prefix remote (expand-file-name file-name directory))
-      (expand-file-name file-name directory))))
+         (remote-local-path (file-remote-p (expand-file-name file-name (dtache--session-directory session)) 'localname))
+         (full-path (expand-file-name file-name (dtache--session-directory session))))
+    (if (and local remote-local-path)
+        remote-local-path
+      full-path)))
 
 (defun dtache--cleanup-host-sessions (host)
   "Run cleanuup on HOST sessions."
@@ -1131,14 +1092,46 @@ log to deduce the end time."
   "Remove `dtache--dtach-detached-message' in STR."
   (replace-regexp-in-string (format "\n?%s\n" dtache--dtach-detached-message) "" str))
 
-(defun dtache--start-session-monitor (session)
-  "Start to monitor SESSION activity."
-  (let ((default-directory (dtache--session-working-directory session)))
-    (if (and (not(file-remote-p default-directory))
-             (eq system-type 'darwin))
-        ;; macOS requires a timer based solution
-        (dtache--session-macos-monitor session)
-      (dtache--session-filenotify-monitor session))))
+(defun dtache--watch-session-directory (session-directory)
+  "Watch for events in SESSION-DIRECTORY."
+  (unless (alist-get session-directory dtache--watched-session-directories
+                     nil nil #'string=)
+    (push
+     `(,session-directory . ,(file-notify-add-watch
+                              session-directory
+                              '(change)
+                              #'dtache--session-directory-event))
+     dtache--watched-session-directories)))
+
+(defun dtache--session-directory-event (event)
+  "Act on an EVENT in a directory in `dtache--watched-session-directories'.
+
+If event is caused by the deletion of a socket, locate the related
+session and trigger a state transition."
+  (pcase-let* ((`(,_ ,action ,file) event))
+    (when (and (eq action 'deleted)
+               (string= "socket" (file-name-extension file)))
+      (let* ((id (intern (file-name-base file)))
+             (session (dtache--db-get-session id))
+             (session-directory (dtache--session-directory session)))
+
+        ;; Update session
+        (setf (dtache--session-time session)
+              (dtache--update-session-time session))
+        (dtache--session-state-transition-update session)
+
+        ;; Remove session directory from `dtache--watch-session-directory'
+        ;; if there is no active session associated with the directory
+        (unless
+            (thread-last (dtache--db-get-sessions)
+                         (seq-filter (lambda (it) (eq 'active (dtache--session-state it))))
+                         (seq-map #'dtache--session-directory)
+                         (seq-uniq)
+                         (seq-filter (lambda (it) (string= it session-directory))))
+          (file-notify-rm-watch
+           (alist-get session-directory dtache--watched-session-directories))
+          (setq dtache--watched-session-directories
+                (assoc-delete-all session-directory dtache--watched-session-directories)))))))
 
 ;;;;; UI
 
