@@ -45,9 +45,16 @@ The package provides commands that can act on a session. There is the functional
 
 The sessions are made persistent by writing the =dtache-session= objects to file. This makes it possible for Emacs to resume the knowledge of prior sessions when Emacs is restarted.
 
+
+* Installation
+
+There exists a [[https://guix.gnu.org/en/packages/emacs-dtache-0.3-0.9e0acd5/][guix package]] of =dtache= which users of the [[https://guix.gnu.org/][GNU Guix package manager]] can install.
+
+For the time being =dtache= is not available in any of the Emacs repositories and must therefore be installed from souce.
+
 * Configuration
 
-For the time being =dtache= is not available in any of the Emacs repositories. Therefore =dtache= must be installed from source. The prerequisite for =dtache= is that the user has the program =dtach= installed.
+The prerequisite for =dtache= is that the user has the program =dtach= installed.
 
 ** Use-package example
 
