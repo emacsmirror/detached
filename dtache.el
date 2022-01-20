@@ -853,12 +853,7 @@ Sessions running on  current host or localhost are updated."
          (progn
            (setf (dtache--session-time session)
                  (dtache--update-session-time session t))
-           (dtache--session-state-transition-update session)))
-        (t (progn
-             (setf (dtache--session-size session)
-                   (file-attribute-size (file-attributes
-                                         (dtache--session-file session 'log))))
-             (dtache--db-update-entry session)))))
+           (dtache--session-state-transition-update session)))))
 
 (defun dtache--session-file (session file &optional local)
   "Return the full path to SESSION's FILE.
@@ -1164,8 +1159,10 @@ session and trigger a state transition."
 
 (defun dtache--size-str (session)
   "Return the size of SESSION's output."
-  (file-size-human-readable
-   (dtache--session-size session)))
+  (if (eq 'active (dtache--session-state session))
+      ""
+      (file-size-human-readable
+       (dtache--session-size session))))
 
 (defun dtache--status-str (session)
   "Return string if SESSION has failed."
