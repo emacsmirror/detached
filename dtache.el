@@ -1,8 +1,9 @@
 ;;; dtache.el --- Run and interact with detached shell commands -*- lexical-binding: t -*-
 
-;; Copyright (C) 2020-2022 Niklas Eklund
+;; Copyright (C) 2020-2022  Free Software Foundation, Inc.
 
 ;; Author: Niklas Eklund <niklas.eklund@posteo.net>
+;; Maintainer: Niklas Eklund <niklas.eklund@posteo.net>
 ;; URL: https://www.gitlab.com/niklaseklund/dtache.git
 ;; Version: 0.3
 ;; Package-Requires: ((emacs "27.1"))

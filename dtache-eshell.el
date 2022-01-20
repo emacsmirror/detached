@@ -1,6 +1,6 @@
 ;;; dtache-eshell.el --- Dtache integration for eshell -*- lexical-binding: t -*-
 
-;; Copyright (C) 2021-2022 Niklas Eklund
+;; Copyright (C) 2021-2022  Free Software Foundation, Inc.
 
 ;; This file is not part of GNU Emacs.
 

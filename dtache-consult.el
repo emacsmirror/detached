@@ -1,6 +1,6 @@
 ;;; dtache-consult.el --- Dtache interface using Consult multi sources -*- lexical-binding: t -*-
 
-;; Copyright (C) 2021-2022 Niklas Eklund
+;; Copyright (C) 2021-2022  Free Software Foundation, Inc.
 
 ;; This file is not part of GNU Emacs.
 

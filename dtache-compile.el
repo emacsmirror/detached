@@ -1,6 +1,7 @@
 ;;; dtache-compile.el --- Dtache integration for compile -*- lexical-binding: t -*-
 
-;; Copyright (C) 2022 Niklas Eklund
+;; Copyright (C) 2022  Free Software Foundation, Inc.
+
 ;; This file is not part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -45,7 +46,7 @@
 Optionally enable COMINT if prefix-argument is provided."
   (interactive
    (list
-    (let ((command (eval compile-command)))
+    (let ((command (eval compile-command t)))
       (if (or compilation-read-command current-prefix-arg)
           (compilation-read-command command)
         command))
