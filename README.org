@@ -221,19 +221,14 @@ By default =dtache= uses the built in =notifications= library to issue a notific
   (defun my/dtache-state-transition-notification (session)
     "Send an `alert' notification when SESSION becomes inactive."
     (let ((status (dtache--session-status session))
-          (title
-           (pcase (dtache--session-status session)
-             ('success "Dtache finished!")
-             ('failure "Dtache failed!"))))
+          (host (plist-get (dtache--session-host session) :name)))
       (alert (dtache--session-command session)
-             :title title
-             :severity (pcase status
-                         ('success 'moderate)
-                         ('failure 'high))
-             :category 'compile
-             :id (pcase status
-                   ('success 'dtache-success)
-                   ('failure 'dtache-failure)))))
+       :title (pcase status
+                ('success (format "Dtache finished [%s]" host))
+                ('failure (format "Dtache failed [%s]" host)))
+       :severity (pcase status
+                  ('success 'moderate)
+                  ('failure 'high)))))
 
   (setq dtache-notification-function #'my/dtache-state-transition-notification)
 #+end_src

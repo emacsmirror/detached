@@ -640,17 +640,18 @@ This function uses the echo area."
   (let ((status (pcase (dtache--session-status session)
                   ('success "Dtache finished")
                   ('failure "Dtache failed")
-                  ('unknown "Dtache finished")) ))
-    (message "%s: %s" status (dtache--session-command session))))
+                  ('unknown "Dtache finished"))))
+    (message "%s [%s]: %s" status (plist-get (dtache--session-host session) :name) (dtache--session-command session))))
 
 (defun dtache-state-transition-notifications-message (session)
   "Issue a notification when SESSION transitions from active to inactive.
 This function uses the `notifications' library."
-  (let ((status (dtache--session-status session)))
+  (let ((status (dtache--session-status session))
+        (host (plist-get (dtache--session-host session) :name)))
     (notifications-notify
      :title (pcase status
-              ('success "Dtache finished!")
-              ('failure "Dtache failed!"))
+              ('success (format "Dtache finished [%s]" host))
+              ('failure (format "Dtache failed [%s]" host)))
      :body (dtache--session-command session)
      :urgency (pcase status
                 ('success 'normal)
