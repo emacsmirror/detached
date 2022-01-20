@@ -260,8 +260,8 @@
     (should (string= "May 08 08:49" (dtache--creation-str session)))))
 
 (ert-deftest dtache-test-size-str ()
-  (should (string= "100" (dtache--size-str (dtache--session-create :log-size 100))))
-  (should (string= "1k" (dtache--size-str (dtache--session-create :log-size 1024)))))
+  (should (string= "100" (dtache--size-str (dtache--session-create :size 100))))
+  (should (string= "1k" (dtache--size-str (dtache--session-create :size 1024)))))
 
 (ert-deftest dtache-test-status-str ()
   (should (string= "!" (dtache--status-str (dtache--session-create :status 'failure))))

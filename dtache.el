@@ -139,7 +139,7 @@ Valid values are: create, new and attach")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst dtache-session-version "0.3.2"
+(defconst dtache-session-version "0.3.3"
   "The version of `dtache-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -241,7 +241,7 @@ This version is encoded as [package-version].[revision].")
   (action nil :read-only t)
   (time nil)
   (status nil)
-  (log-size nil)
+  (size nil)
   (state nil))
 
 ;;;; Commands
@@ -514,7 +514,7 @@ compilation or `shell-command' the command will also kill the window."
                                   :attachable (dtache-attachable-command-p command)
                                   :time `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0)
                                   :status 'unknown
-                                  :log-size 0
+                                  :size 0
                                   :directory (concat (file-remote-p default-directory) dtache-session-directory)
                                   :host (dtache--host)
                                   :metadata (dtache-metadata)
@@ -855,7 +855,7 @@ Sessions running on  current host or localhost are updated."
                  (dtache--update-session-time session t))
            (dtache--session-state-transition-update session)))
         (t (progn
-             (setf (dtache--session-log-size session)
+             (setf (dtache--session-size session)
                    (file-attribute-size (file-attributes
                                          (dtache--session-file session 'log))))
              (dtache--db-update-entry session)))))
@@ -1001,7 +1001,7 @@ Optionally make the path LOCAL to host."
       (dtache--db-remove-entry session)
 
     ;; Update session
-    (setf (dtache--session-log-size session)
+    (setf (dtache--session-size session)
           (file-attribute-size
            (file-attributes
             (dtache--session-file session 'log))))
@@ -1165,7 +1165,7 @@ session and trigger a state transition."
 (defun dtache--size-str (session)
   "Return the size of SESSION's output."
   (file-size-human-readable
-   (dtache--session-log-size session)))
+   (dtache--session-size session)))
 
 (defun dtache--status-str (session)
   "Return string if SESSION has failed."
