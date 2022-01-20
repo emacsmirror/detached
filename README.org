@@ -218,7 +218,7 @@ The user have the possibility to integrate =dtache= with the package [[https://g
 By default =dtache= uses the built in =notifications= library to issue a notification. This solution uses =dbus= but if that doesn't work for the user there is the possibility to set the =dtache-notification-function= to =dtache-state-transitionion-echo-message= to use the echo area instead. If that doesn't suffice there is the possibility to use the [[https://github.com/jwiegley/alert][alert]] package to get a system notification instead.
 
 #+begin_src elisp :lexical t :results none
-  (defun my/dtache-state-transition-notification (session)
+  (defun my/dtache-state-transition-alert-notification (session)
     "Send an `alert' notification when SESSION becomes inactive."
     (let ((status (dtache--session-status session))
           (host (plist-get (dtache--session-host session) :name)))
@@ -230,7 +230,7 @@ By default =dtache= uses the built in =notifications= library to issue a notific
                   ('success 'moderate)
                   ('failure 'high)))))
 
-  (setq dtache-notification-function #'my/dtache-state-transition-notification)
+  (setq dtache-notification-function #'my/dtache-state-transition-alert-notification)
 #+end_src
 
 * Customization

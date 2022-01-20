@@ -518,7 +518,7 @@ compilation or `shell-command' the command will also kill the window."
                                   :directory (concat (file-remote-p default-directory) dtache-session-directory)
                                   :host (dtache--host)
                                   :metadata (dtache-metadata)
-                                  :state 'active)))
+                                  :state 'unknown)))
      (dtache--db-insert-entry session)
      (dtache--watch-session-directory (dtache--session-directory session))
      session)))
@@ -583,32 +583,34 @@ Optionally SUPPRESS-OUTPUT."
   (unless dtache--sessions-initialized
     (unless (file-exists-p dtache-db-directory)
       (make-directory dtache-db-directory t))
-
-    ;; Update database
     (dtache--db-initialize)
-    (seq-do (lambda (session)
-              ;; Remove missing local sessions
-              (if (and (eq 'local (plist-get (dtache--session-host session) :type))
-                       (dtache--session-missing-p session))
-                  (dtache--db-remove-entry session)
 
-                ;; Update local active sessions
-                (when (and (eq 'local (plist-get (dtache--session-host session) :type))
-                           (eq 'active (dtache--session-state session)))
-                  (dtache--update-session session))))
-            (dtache--db-get-sessions))
+    ;; Remove missing local sessions
+    (thread-last (dtache--db-get-sessions)
+                 (seq-filter (lambda (it) (eq 'local (plist-get (dtache--session-host it) :type))))
+                 (seq-filter #'dtache--session-missing-p)
+                 (seq-do #'dtache--db-remove-entry))
 
-    ;; Watch session directories
+    ;; Validate sessions with unknown state
+    (dtache--validate-unknown-sessions)
+
+    ;; Update transitioned sessions
     (thread-last (dtache--db-get-sessions)
                  (seq-filter (lambda (it) (eq 'active (dtache--session-state it))))
                  (seq-remove (lambda (it) (when (dtache--session-missing-p it)
-                                            (dtache--db-remove-entry it)
-                                            t)))
+                                       (dtache--db-remove-entry it)
+                                       t)))
+                 (seq-filter #'dtache--state-transition-p)
+                 (seq-do #'dtache--session-state-transition-update))
+
+    ;; Watch session directories with active sessions
+    (thread-last (dtache--db-get-sessions)
+                 (seq-filter (lambda (it) (eq 'active (dtache--session-state it))))
                  (seq-map #'dtache--session-directory)
                  (seq-uniq)
                  (seq-do #'dtache--watch-session-directory))
 
-    ;; Add `dtache-shell-mode'
+    ;; Add hooks
     (add-hook 'shell-mode-hook #'dtache-shell-mode)))
 
 (defun dtache-valid-session (session)
@@ -668,8 +670,8 @@ This function uses the `notifications' library."
         (t (message "Dtache session is in an unexpected state."))))
 
 (defun dtache-get-sessions ()
-  "Update and return sessions."
-  (dtache--update-sessions)
+  "Return validitated sessions."
+  (dtache--validate-unknown-sessions)
   (dtache--db-get-sessions))
 
 ;;;;; Other
@@ -833,28 +835,15 @@ Optionally CONCAT the command return command into a string."
   "Return the session assicated with ITEM."
   (cdr (assoc item dtache--session-candidates)))
 
-(defun dtache--update-sessions ()
-  "Update `dtache' sessions.
-
-Sessions running on  current host or localhost are updated."
-  (let ((host-name (plist-get (dtache--host) :name)))
-    (seq-do (lambda (it)
-              (if (and (or (string= host-name (plist-get (dtache--session-host it) :name))
-                           (eq 'local (plist-get (dtache--session-host it) :name)))
-                       (or (eq 'active (dtache--session-state it))
-                           (dtache--state-transition-p it)))
-                  (dtache--update-session it)))
-            (dtache--db-get-sessions))))
-
-(defun dtache--update-session (session)
-  "Update SESSION."
-  (cond ((dtache--session-missing-p session)
-         (dtache--db-remove-entry session))
-        ((dtache--state-transition-p session)
-         (progn
-           (setf (dtache--session-time session)
-                 (dtache--update-session-time session t))
-           (dtache--session-state-transition-update session)))))
+(defun dtache--validate-unknown-sessions ()
+  "Validate `dtache' sessions with state unknown."
+  (thread-last (dtache--db-get-sessions)
+               (seq-filter (lambda (it) (eq 'unknown (dtache--session-state it))))
+               (seq-do (lambda (it)
+                         (if (dtache--session-missing-p it)
+                             (dtache--db-remove-entry it)
+                           (setf (dtache--session-state it) 'active)
+                           (dtache--db-update-entry it))))))
 
 (defun dtache--session-file (session file &optional local)
   "Return the full path to SESSION's FILE.
@@ -992,32 +981,27 @@ Optionally make the path LOCAL to host."
 
 (defun dtache--session-state-transition-update (session)
   "Update SESSION due to state transition."
-  (if (dtache--session-missing-p session)
-      ;; Remove missing session
-      (dtache--db-remove-entry session)
+  ;; Update session
+  (setf (dtache--session-size session)
+        (file-attribute-size
+         (file-attributes
+          (dtache--session-file session 'log))))
+  (setf (dtache--session-time session)
+        (dtache--update-session-time session))
+  (setf (dtache--session-state session) 'inactive)
+  (let ((status (or (plist-get (dtache--session-action session) :status)
+                    #'dtache-session-exit-code-status)))
+    (setf (dtache--session-status session) (funcall status session)))
 
-    ;; Update session
-    (setf (dtache--session-size session)
-          (file-attribute-size
-           (file-attributes
-            (dtache--session-file session 'log))))
+  ;; Send notification
+  (funcall dtache-notification-function session)
 
-    (setf (dtache--session-state session) 'inactive)
+  ;; Update session in database
+  (dtache--db-update-entry session t)
 
-    ;; Update status
-    (let ((status (or (plist-get (dtache--session-action session) :status)
-                      #'dtache-session-exit-code-status)))
-      (setf (dtache--session-status session) (funcall status session)))
-
-    ;; Send notification
-    (funcall dtache-notification-function session)
-
-    ;; Update session in database
-    (dtache--db-update-entry session t)
-
-    ;; Execute callback
-    (when-let ((callback (plist-get (dtache--session-action session) :callback)))
-      (funcall callback session))))
+  ;; Execute callback
+  (when-let ((callback (plist-get (dtache--session-action session) :callback)))
+    (funcall callback session)))
 
 (defun dtache--kill-processes (pid)
   "Kill PID and all of its children."
@@ -1108,8 +1092,6 @@ session and trigger a state transition."
              (session-directory (dtache--session-directory session)))
 
         ;; Update session
-        (setf (dtache--session-time session)
-              (dtache--update-session-time session))
         (dtache--session-state-transition-update session)
 
         ;; Remove session directory from `dtache--watch-session-directory'
