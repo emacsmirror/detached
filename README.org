@@ -274,7 +274,7 @@ Users can customize the appearance of annotations in =dtache-open-session= by mo
   (defvar dtache-annotation-format
     `((:width 3 :function dtache--state-str :face dtache-state-face)
       (:width 3 :function dtache--status-str :face dtache-failure-face)
-      (:width 10 :function dtache--session-host :face dtache-host-face)
+      (:width 10 :function dtache--host-str :face dtache-host-face)
       (:width 40 :function dtache--working-dir-str :face dtache-working-dir-face)
       (:width 30 :function dtache--metadata-str :face dtache-metadata-face)
       (:width 10 :function dtache--duration-str :face dtache-duration-face)

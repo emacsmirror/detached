@@ -126,12 +126,11 @@ See `consult-multi' for a description of the source values."
     :action (lambda (x) (dtache-open-session (dtache--decode-session x)))
     :items
     ,(lambda ()
-       (let ((host "localhost"))
-         (mapcar #'car
-                 (seq-filter
-                  (lambda (x)
-                    (string= (dtache--session-host (cdr x)) host))
-                  (dtache-session-candidates (dtache-get-sessions))))))
+       (mapcar #'car
+               (seq-filter
+                (lambda (x)
+                  (eq 'local (plist-get (dtache--session-host (cdr x)) :type)))
+                (dtache-session-candidates (dtache-get-sessions)))))
     "Local host `dtache' sessions as a source for `consult'."))
 
 (defvar dtache-consult--source-remote-session
@@ -142,12 +141,11 @@ See `consult-multi' for a description of the source values."
     :action (lambda (x) (dtache-open-session (dtache--decode-session x)))
     :items
     ,(lambda ()
-       (let ((host "localhost"))
-         (mapcar #'car
-                 (seq-remove
-                  (lambda (x)
-                    (string= (dtache--session-host (cdr x)) host))
-                  (dtache-session-candidates (dtache-get-sessions)))))))
+       (mapcar #'car
+               (seq-filter
+                (lambda (x)
+                  (eq 'remote (plist-get (dtache--session-host (cdr x)) :type)))
+                (dtache-session-candidates (dtache-get-sessions))))))
   "Remote host `dtache' sessions as a source for `consult'.")
 
 (defvar dtache-consult--source-current-session
@@ -158,10 +156,10 @@ See `consult-multi' for a description of the source values."
     :action (lambda (x) (dtache-open-session (dtache--decode-session x)))
     :items
     ,(lambda ()
-       (let ((host (dtache--host)))
+       (let ((host-name (plist-get (dtache--host) :name)))
          (mapcar #'car (seq-filter
                         (lambda (x)
-                          (string= (dtache--session-host (cdr x)) host))
+                          (string= (plist-get (dtache--session-host (cdr x)) :name) host-name))
                         (dtache-session-candidates (dtache-get-sessions)))))))
   "Current host `dtache' sessions as a source for `consult'.")
 
