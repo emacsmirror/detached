@@ -908,12 +908,11 @@ Optionally make the path LOCAL to host."
 
 (defun dtache--get-working-directory ()
   "Return an abreviated working directory path."
-  (let* ((remote (file-remote-p default-directory))
-         (full-home (if remote (expand-file-name remote) (expand-file-name "~")))
-         (short-home (if remote (concat remote "~/") "~")))
-    (replace-regexp-in-string full-home
-                              short-home
-                              (expand-file-name default-directory))))
+  (if-let (remote (file-remote-p default-directory))
+      (replace-regexp-in-string  (expand-file-name remote)
+                                 (concat remote "~/")
+                                 (expand-file-name default-directory))
+    (abbreviate-file-name default-directory)))
 
 (defun dtache--attach-session (session)
   "Attach to SESSION."
