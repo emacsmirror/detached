@@ -355,4 +355,4 @@ I got inspired when reading about =Ambrevar's= pursuits on [[https://ambrevar.xy
 
 [[https://gitlab.com/ntdef][Troy de Freitas]] for solving the problem of getting =dtache= to work with =filenotify= on macOS.
 
-
+[[https://gitlab.com/minad][Daniel Mendler]] for helping out in improving =dtache=, among other things integration with other packages such as =embark= and =consult=.
