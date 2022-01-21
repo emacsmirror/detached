@@ -99,7 +99,7 @@ See `consult-multi' for a description of the source values."
        (mapcar #'car
                (seq-filter
                 (lambda (x)
-                  (eq 'failure (dtache--session-status (cdr x))))
+                  (eq 'failure (car (dtache--session-status (cdr x)))))
                 (dtache-session-candidates (dtache-get-sessions))))))
   "Failed `dtache' sessions as a source for `consult'.")
 
@@ -114,7 +114,7 @@ See `consult-multi' for a description of the source values."
        (mapcar #'car
                (seq-filter
                 (lambda (x)
-                  (eq 'success (dtache--session-status (cdr x))))
+                  (eq 'success (car (dtache--session-status (cdr x)))))
                 (dtache-session-candidates (dtache-get-sessions))))))
   "Successful `dtache' sessions as a source for `consult'.")
 

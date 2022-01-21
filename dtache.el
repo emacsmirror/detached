@@ -139,7 +139,7 @@ Valid values are: create, new and attach")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst dtache-session-version "0.3.4"
+(defconst dtache-session-version "0.3.5"
   "The version of `dtache-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -508,7 +508,7 @@ active session.  For sessions created with `dtache-compile' or
                                   :working-directory (dtache--get-working-directory)
                                   :attachable (dtache-attachable-command-p command)
                                   :time `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0)
-                                  :status 'unknown
+                                  :status '(unknown . 0)
                                   :size 0
                                   :directory (concat (file-remote-p default-directory) dtache-session-directory)
                                   :host (dtache--host)
@@ -623,18 +623,23 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
 (defun dtache-session-exit-code-status (session)
   "Return status based on exit-code in SESSION."
   (if (null dtache-env)
-      'unknown
-    (with-temp-buffer
-      (insert-file-contents (dtache--session-file session 'log))
-      (goto-char (point-max))
-      (if (string-match "Dtache session finished" (thing-at-point 'line t))
-          'success
-        'failure))))
+      `(unknown . 0)
+    (let ((dtache-env-message
+           (with-temp-buffer
+             (insert-file-contents (dtache--session-file session 'log))
+             (goto-char (point-max))
+             (thing-at-point 'line t)))
+          (success-message "Dtache session finished")
+          (failure-message (rx "Dtache session exited abnormally with code " (group (one-or-more digit)))))
+      (cond ((string-match success-message dtache-env-message) `(success . 0))
+            ((string-match failure-message dtache-env-message)
+             `(failure . ,(string-to-number (match-string 1 dtache-env-message))))
+            (t `(unknown . 0))))))
 
 (defun dtache-state-transitionion-echo-message (session)
   "Issue a notification when SESSION transitions from active to inactive.
 This function uses the echo area."
-  (let ((status (pcase (dtache--session-status session)
+  (let ((status (pcase (car (dtache--session-status session))
                   ('success "Dtache finished")
                   ('failure "Dtache failed")
                   ('unknown "Dtache finished"))))
@@ -643,7 +648,7 @@ This function uses the echo area."
 (defun dtache-state-transition-notifications-message (session)
   "Issue a notification when SESSION transitions from active to inactive.
 This function uses the `notifications' library."
-  (let ((status (dtache--session-status session))
+  (let ((status (car (dtache--session-status session)))
         (host (plist-get (dtache--session-host session) :name)))
     (notifications-notify
      :title (pcase status
@@ -656,13 +661,14 @@ This function uses the `notifications' library."
 
 (defun dtache-view-dwim (session)
   "View SESSION in a do what I mean fashion."
-  (cond ((eq 'success (dtache--session-status session))
-         (dtache-view-session session))
-        ((eq 'failure (dtache--session-status session))
-         (dtache-compile-session session))
-        ((eq 'unknown (dtache--session-status session))
-         (dtache-view-session session))
-        (t (message "Dtache session is in an unexpected state."))))
+  (let ((status (car (dtache--session-status session))))
+    (cond ((eq 'success status)
+           (dtache-view-session session))
+          ((eq 'failure status)
+           (dtache-compile-session session))
+          ((eq 'unknown status)
+           (dtache-view-session session))
+          (t (message "Dtache session is in an unexpected state.")))))
 
 (defun dtache-get-sessions ()
   "Return validitated sessions."
@@ -820,7 +826,8 @@ Optionally CONCAT the command return command into a string."
      ,(format "Working directory: %s" (dtache--working-dir-str session))
      ,(format "Host: %s" (plist-get (dtache--session-host session) :name))
      ,(format "Id: %s" (symbol-name (dtache--session-id session)))
-     ,(format "Status: %s" (dtache--session-status session))
+     ,(format "Status: %s" (car (dtache--session-status session)))
+     ,(format "Exit-code: %s" (cdr (dtache--session-status session)))
      ,(format "Metadata: %s" (dtache--metadata-str session))
      ,(format "Created at: %s" (dtache--creation-str session))
      ,(format "Duration: %s\n" (dtache--duration-str session))
@@ -1146,7 +1153,7 @@ session and trigger a state transition."
 
 (defun dtache--status-str (session)
   "Return string if SESSION has failed."
-  (pcase (dtache--session-status session)
+  (pcase (car (dtache--session-status session))
     ('failure "!")
     ('success " ")
     ('unknown " ")))

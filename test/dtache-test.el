@@ -264,9 +264,9 @@
   (should (string= "1k" (dtache--size-str (dtache--session-create :size 1024 :state 'inactive)))))
 
 (ert-deftest dtache-test-status-str ()
-  (should (string= "!" (dtache--status-str (dtache--session-create :status 'failure))))
-  (should (string= " " (dtache--status-str (dtache--session-create :status 'success))))
-  (should (string= " " (dtache--status-str (dtache--session-create :status 'unknown)))))
+  (should (string= "!" (dtache--status-str (dtache--session-create :status '(failure . 127)))))
+  (should (string= " " (dtache--status-str (dtache--session-create :status '(success . 0)))))
+  (should (string= " " (dtache--status-str (dtache--session-create :status '(unknown . 0))))))
 
 (ert-deftest dtache-test-state-str ()
   (should (string= "*" (dtache--state-str (dtache--session-create :state 'active))))

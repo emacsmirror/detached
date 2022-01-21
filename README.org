@@ -220,7 +220,7 @@ By default =dtache= uses the built in =notifications= library to issue a notific
 #+begin_src elisp :lexical t :results none
   (defun my/dtache-state-transition-alert-notification (session)
     "Send an `alert' notification when SESSION becomes inactive."
-    (let ((status (dtache--session-status session))
+    (let ((status (car (dtache--session-status session)))
           (host (plist-get (dtache--session-host session) :name)))
       (alert (dtache--session-command session)
        :title (pcase status
