@@ -979,16 +979,16 @@ Optionally make the path LOCAL to host."
 (defun dtache--session-state-transition-update (session)
   "Update SESSION due to state transition."
   ;; Update session
-  (setf (dtache--session-size session)
-        (file-attribute-size
-         (file-attributes
-          (dtache--session-file session 'log))))
-  (setf (dtache--session-time session)
-        (dtache--update-session-time session))
-  (setf (dtache--session-state session) 'inactive)
-  (let ((status (or (plist-get (dtache--session-action session) :status)
-                    #'dtache-session-exit-code-status)))
-    (setf (dtache--session-status session) (funcall status session)))
+  (let ((session-size (file-attribute-size
+                       (file-attributes
+                        (dtache--session-file session 'log))))
+        (session-time (dtache--update-session-time session) )
+        (status-fun (or (plist-get (dtache--session-action session) :status)
+                        #'dtache-session-exit-code-status)))
+    (setf (dtache--session-size session) session-size)
+    (setf (dtache--session-time session) session-time)
+    (setf (dtache--session-state session) 'inactive)
+    (setf (dtache--session-status session) (funcall status-fun session)))
 
   ;; Send notification
   (funcall dtache-notification-function session)
@@ -1037,16 +1037,16 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
 
 If APPROXIMATE, use latest modification time of SESSION's
 log to deduce the end time."
-  (let ((time (dtache--session-time session)))
+  (let* ((start-time (plist-get (dtache--session-time session) :start))
+         (end-time))
     (if approximate
-        (plist-put time :end
-                   (time-to-seconds
-                    (file-attribute-modification-time
-                     (file-attributes
-                      (dtache--session-file session 'log)))))
-      (plist-put time :end (time-to-seconds)))
-    (plist-put time :duration (- (plist-get time :end) (plist-get time :start)))
-    time))
+        (setq end-time
+              (time-to-seconds
+               (file-attribute-modification-time
+                (file-attributes
+                 (dtache--session-file session 'log)))))
+      (setq end-time (time-to-seconds)))
+    `(:start ,start-time :end ,end-time :duration ,(- end-time start-time))))
 
 (defun dtache--create-id (command)
   "Return a hash identifier for COMMAND."
