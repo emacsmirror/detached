@@ -248,9 +248,9 @@ This version is encoded as [package-version].[revision].")
 
 ;;;###autoload
 (defun dtache-shell-command (command &optional suppress-output)
-  "Execute COMMAND asynchronously with `dtache'.
+  "Execute COMMAND with `dtache'.
 
-Optionally SUPPRESS-OUTPUT."
+Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
   (interactive
    (list
     (read-shell-command (if shell-command-prompt-show-cwd
@@ -277,7 +277,10 @@ Optionally SUPPRESS-OUTPUT."
 
 ;;;###autoload
 (defun dtache-compile-session (session)
-  "Compile SESSION by opening the output in `compilation-mode'."
+  "Compile SESSION.
+
+The session is compiled by opening its output and enabling
+`compilation-minor-mode'."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
@@ -326,7 +329,7 @@ Optionally SUPPRESS-OUTPUT."
   (when (dtache-valid-session session)
     (if (or (eq 'inactive (dtache--session-state session))
             (not (dtache--session-attachable session)))
-        (dtache-view-session session)
+        (dtache-view-dwim session)
       (let* ((dtache--current-session session)
              (dtache-session-mode 'attach)
              (inhibit-message t))
@@ -361,7 +364,7 @@ Optionally SUPPRESS-OUTPUT."
 
 ;;;###autoload
 (defun dtache-insert-session-command (session)
-  "Insert SESSION."
+  "Insert SESSION's command."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
@@ -390,7 +393,7 @@ Optionally SUPPRESS-OUTPUT."
 
 ;;;###autoload
 (defun dtache-view-session (session)
-  "Open SESSION's output."
+  "View the SESSION."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
@@ -413,7 +416,7 @@ Optionally SUPPRESS-OUTPUT."
 
 ;;;###autoload
 (defun dtache-tail-session (session)
-  "Tail SESSION's output."
+  "Tail the SESSION."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
@@ -451,11 +454,11 @@ Optionally SUPPRESS-OUTPUT."
 
 ;;;###autoload
 (defun dtache-detach-session ()
-  "Detach from a session.
+  "Detach from session in current buffer.
 
-This command is only activated if `dtache--buffer-session' is set and
-`dtache--determine-session-state' returns active.  For modes such as
-compilation or `shell-command' the command will also kill the window."
+This command is only activated if `dtache--buffer-session' is an
+active session.  For sessions created with `dtache-compile' or
+`dtache-shell-command', the command will also kill the window."
   (interactive)
   (if (dtache-session-p dtache--buffer-session)
       (if-let ((command-or-compile
@@ -487,7 +490,7 @@ compilation or `shell-command' the command will also kill the window."
 
 ;;;###autoload
 (defun dtache-delete-sessions (&optional all-hosts)
-  "Delete `dtache' sessions on current host, unless ALL-HOSTS."
+  "Delete `dtache' sessions which belong to the current host, unless ALL-HOSTS."
   (interactive "P")
   (let* ((host-name (plist-get (dtache--host) :name))
          (sessions (if all-hosts
