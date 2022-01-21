@@ -104,7 +104,7 @@
   :group 'dtache)
 
 (defcustom dtache-shell-command-session-action
-  '(:attach dtache-attach-session
+  '(:attach dtache-shell-command-attach-session
             :view dtache-view-dwim
             :run dtache-shell-command)
   "Actions for a session created with `dtache-shell-command'."
@@ -139,7 +139,7 @@ Valid values are: create, new and attach")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst dtache-session-version "0.3.3"
+(defconst dtache-session-version "0.3.4"
   "The version of `dtache-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -271,9 +271,11 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
-    (if (eq 'active (dtache--determine-session-state session))
-        (dtache--attach-session session)
-      (dtache--view-session session))))
+    (if (eq 'active (dtache--session-state session))
+        (dtache-tail-session session)
+      (if-let ((view-fun (plist-get (dtache--session-action session) :view)))
+          (funcall view-fun session)
+        (dtache-view-dwim session)))))
 
 ;;;###autoload
 (defun dtache-compile-session (session)
@@ -329,20 +331,10 @@ The session is compiled by opening its output and enabling
   (when (dtache-valid-session session)
     (if (or (eq 'inactive (dtache--session-state session))
             (not (dtache--session-attachable session)))
-        (dtache-view-dwim session)
-      (let* ((dtache--current-session session)
-             (dtache-session-mode 'attach)
-             (inhibit-message t))
-        (if (not (dtache--session-attachable session))
-            (dtache-tail-session session)
-          (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
-                     (buffer (get-buffer-create dtache--shell-command-buffer))
-                     (default-directory (dtache--session-working-directory session))
-                     (dtach-command (dtache-dtach-command session t)))
-            (when (get-buffer-process buffer)
-              (setq buffer (generate-new-buffer (buffer-name buffer))))
-            (funcall #'async-shell-command dtach-command buffer)
-            (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session))))))))
+        (dtache-open-session session)
+      (if-let ((attach-fun (plist-get (dtache--session-action session) :attach)))
+          (funcall attach-fun session)
+        (dtache-shell-command-attach-session session)))))
 
 ;;;###autoload
 (defun dtache-copy-session (session)
@@ -677,6 +669,22 @@ This function uses the `notifications' library."
   (dtache--validate-unknown-sessions)
   (dtache--db-get-sessions))
 
+(defun dtache-shell-command-attach-session (session)
+  "Attach to SESSION with `async-shell-command'."
+  (let* ((dtache--current-session session)
+         (dtache-session-mode 'attach)
+         (inhibit-message t))
+    (if (not (dtache--session-attachable session))
+        (dtache-tail-session session)
+      (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
+                 (buffer (get-buffer-create dtache--shell-command-buffer))
+                 (default-directory (dtache--session-working-directory session))
+                 (dtach-command (dtache-dtach-command session t)))
+        (when (get-buffer-process buffer)
+          (setq buffer (generate-new-buffer (buffer-name buffer))))
+        (funcall #'async-shell-command dtach-command buffer)
+        (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session))))))
+
 ;;;;; Other
 
 (cl-defgeneric dtache-dtach-command (entity &optional concat)
@@ -902,20 +910,6 @@ Optionally make the path LOCAL to host."
                                  (concat remote "~/")
                                  (expand-file-name default-directory))
     (abbreviate-file-name default-directory)))
-
-(defun dtache--attach-session (session)
-  "Attach to SESSION."
-  (if (not (dtache--session-attachable session))
-      (dtache-tail-session session)
-    (if-let ((attach-fun (plist-get (dtache--session-action session) :attach)))
-        (funcall attach-fun session)
-      (dtache-tail-session session))))
-
-(defun dtache--view-session (session)
-  "View SESSION."
-  (if-let ((view-fun (plist-get (dtache--session-action session) :view)))
-      (funcall view-fun session)
-    (dtache-view-dwim session)))
 
 ;;;;; Database
 
