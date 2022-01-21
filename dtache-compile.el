@@ -32,7 +32,7 @@
 
 (defcustom dtache-compile-session-action
   '(:attach dtache-compile-attach
-            :view dtache-post-compile-session
+            :view dtache-compile-session
             :run dtache-compile)
   "Actions for a session created with `dtache-compile'."
   :group 'dtache
@@ -83,7 +83,7 @@ Optionally EDIT-COMMAND."
   (when (dtache-valid-session session)
     (if (eq 'active (dtache--session-state session))
         (dtache-compile-attach session)
-      (dtache-post-compile-session session))))
+      (dtache-compile-session session))))
 
 ;;;###autoload
 (defun dtache-compile-setup ()

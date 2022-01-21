@@ -33,7 +33,7 @@
 ;;;; Variables
 
 (defcustom dtache-eshell-session-action
-  '(:attach dtache-tail-output
+  '(:attach dtache-tail-session
             :view dtache-view-dwim
             :run dtache-shell-command)
   "Actions for a session created with `dtache-eshell'."
@@ -80,7 +80,7 @@ If prefix-argument directly DETACH from the session."
     (call-interactively #'eshell-send-input)))
 
 ;;;###autoload
-(defun dtache-eshell-attach (session)
+(defun dtache-eshell-attach-session (session)
   "Attach to SESSION."
   (interactive
    (list (dtache-eshell-select-session)))

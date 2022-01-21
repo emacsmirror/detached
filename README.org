@@ -65,7 +65,7 @@ A minimal configuration for =dtache=.
     :hook (after-init . dtache-setup)
     :bind (([remap async-shell-command] . dtache-shell-command)
            :map dtache-shell-mode-map
-           ("C-c C-q" . dtache-detach-dwim)))
+           ("C-c C-q" . dtache-detach-session)))
 #+end_src
 
 * Commands
@@ -98,15 +98,15 @@ The actions are controlled by the customizable variables named =dtache-.*-sessio
 
 | Command (Keybinding)              | Description                                 |
 |-----------------------------------+---------------------------------------------|
-| dtache-open-output (o)            | Open a session's output                     |
-| dtache-attach (a)                 | Attach to a session                         |
-| dtache-tail-output  (t)           | Tail the output of an active session        |
+| dtache-view-session (v)           | View a session's output                     |
+| dtache-attach-session (a)         | Attach to a session                         |
+| dtache-tail-session  (t)          | Tail the output of an active session        |
 | dtache-diff-session (=)           | Diff a session with another session         |
-| dtache-post-compile-session (c)   | Open the session output in compilation mode |
+| dtache-compile-session (c)        | Open the session output in compilation mode |
 | dtache-rerun-session (r)          | Rerun a session                             |
 | dtache-insert-session-command (i) | Insert the session's command at point       |
 | dtache-copy-session-command (w)   | Copy the session's shell command            |
-| dtache-copy-session-output (W)    | Copy the session's output                   |
+| dtache-copy-session (W)           | Copy the session's output                   |
 | dtache-kill-session (k)           | Kill an active session                      |
 | dtache-delete-session (d)         | Delete an inactive session                  |
 
@@ -128,18 +128,18 @@ A =use-package= configuration of the =dtache-shell= extension, which provides th
     :hook (after-init . dtache-shell-setup)
     :bind (:map dtache-shell-mode-map
            (("<S-return>" . dtache-shell-send-input)
-            ("<C-return>" . dtache-shell-attach)))
+            ("<C-return>" . dtache-shell-attach-session)))
     :config
     (setq dtache-shell-history-file "~/.bash_history"))
 #+end_src
 
 A minor mode named =dtache-shell-mode= is provided, and will be enabled in =shell=. The commands that are implemented are:
 
-| Command                 | Description                  |
-|-------------------------+------------------------------|
-| dtache-shell-send-input | Run command with dtache      |
-| dtache-shell-attach     | Attach to a dtache session   |
-| dtache-detach-dwim      | Detach from a dtache session |
+| Command                     | Description                  |
+|-----------------------------+------------------------------|
+| dtache-shell-send-input     | Run command with dtache      |
+| dtache-shell-attach-session | Attach to a dtache session   |
+| dtache-detach-session       | Detach from a dtache session |
 
 ** Dtache-eshell
 
@@ -150,17 +150,17 @@ A =use-package= configuration of the =dtache-eshell= extension, which provides t
     :hook (after-init . dtache-eshell-setup)
     :bind (:map dtache-eshell-mode-map
            (("<S-return>" . dtache-eshell-send-input)
-            ("<C-return>" . dtache-eshell-attach)
-            ("C-c C-q" . dtache-detach-dwim))))
+            ("<C-return>" . dtache-eshell-attach-session)
+            ("C-c C-q" . dtache-detach-session))))
 #+end_src
 
 A minor mode named =dtache-eshell-mode= is provided, and will be enabled in =eshell=. The commands that are implemented are:
 
-| Command                  | Description                  |
-|--------------------------+------------------------------|
-| dtache-eshell-send-input | Run command with dtache      |
-| dtache-eshell-attach     | Attach to a dtache session   |
-| dtache-detach-dwim       | Detach from a dtache session |
+| Command                      | Description                  |
+|------------------------------+------------------------------|
+| dtache-eshell-send-input     | Run command with dtache      |
+| dtache-eshell-attach-session | Attach to a dtache session   |
+| dtache-detach-session        | Detach from a dtache session |
 
 In this [[https://niklaseklund.gitlab.io/blog/posts/dtache_eshell/][blog post]] there are examples and more information about the extension.
 
@@ -174,7 +174,7 @@ A =use-package= configuration of the =dtache-compile= extension, which provides 
     :bind (([remap compile] . dtache-compile)
            ([remap recompile] . dtache-compile-recompile)
            :map dtache-compilation-mode-map
-           ("C-c C-q" . dtache-detach-dwim)))
+           ("C-c C-q" . dtache-detach-session)))
 #+end_src
 
 The package implements the commands =dtache-compile= and =dtache-compile-recompile=, which are thin wrappers around the original =compile= and =recompile= commands. The users should be able to use the former as replacements for the latter without noticing any difference except from the possibility to =detach=.

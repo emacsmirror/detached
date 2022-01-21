@@ -104,7 +104,7 @@
   :group 'dtache)
 
 (defcustom dtache-shell-command-session-action
-  '(:attach dtache-attach
+  '(:attach dtache-attach-session
             :view dtache-view-dwim
             :run dtache-shell-command)
   "Actions for a session created with `dtache-shell-command'."
@@ -145,16 +145,16 @@ This version is encoded as [package-version].[revision].")
 
 (defvar dtache-action-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "a" #'dtache-attach)
-    (define-key map "c" #'dtache-post-compile-session)
+    (define-key map "a" #'dtache-attach-session)
+    (define-key map "c" #'dtache-compile-session)
     (define-key map "d" #'dtache-delete-session)
     (define-key map "i" #'dtache-insert-session-command)
     (define-key map "k" #'dtache-kill-session)
-    (define-key map "o" #'dtache-open-output)
     (define-key map "r" #'dtache-rerun-session)
-    (define-key map "t" #'dtache-tail-output)
+    (define-key map "t" #'dtache-tail-session)
+    (define-key map "v" #'dtache-view-session)
     (define-key map "w" #'dtache-copy-session-command)
-    (define-key map "W" #'dtache-copy-session-output)
+    (define-key map "W" #'dtache-copy-session)
     (define-key map "=" #'dtache-diff-session)
     map))
 
@@ -276,8 +276,8 @@ Optionally SUPPRESS-OUTPUT."
       (dtache--view-session session))))
 
 ;;;###autoload
-(defun dtache-post-compile-session (session)
-  "Post `compile' by opening the output of a SESSION in `compilation-mode'."
+(defun dtache-compile-session (session)
+  "Compile SESSION by opening the output in `compilation-mode'."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
@@ -319,19 +319,19 @@ Optionally SUPPRESS-OUTPUT."
           (dtache-start-session command))))))
 
 ;;;###autoload
-(defun dtache-attach (session)
+(defun dtache-attach-session (session)
   "Attach to SESSION."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
     (if (or (eq 'inactive (dtache--session-state session))
             (not (dtache--session-attachable session)))
-        (dtache-open-output session)
+        (dtache-view-session session)
       (let* ((dtache--current-session session)
              (dtache-session-mode 'attach)
              (inhibit-message t))
         (if (not (dtache--session-attachable session))
-            (dtache-tail-output session)
+            (dtache-tail-session session)
           (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
                      (buffer (get-buffer-create dtache--shell-command-buffer))
                      (default-directory (dtache--session-working-directory session))
@@ -342,8 +342,8 @@ Optionally SUPPRESS-OUTPUT."
             (with-current-buffer buffer (setq dtache--buffer-session dtache--current-session))))))))
 
 ;;;###autoload
-(defun dtache-copy-session-output (session)
-  "Copy SESSION's log."
+(defun dtache-copy-session (session)
+  "Copy SESSION's output."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
@@ -353,7 +353,7 @@ Optionally SUPPRESS-OUTPUT."
 
 ;;;###autoload
 (defun dtache-copy-session-command (session)
-  "Copy SESSION command."
+  "Copy SESSION's command."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
@@ -389,7 +389,7 @@ Optionally SUPPRESS-OUTPUT."
         (dtache--kill-processes pid)))))
 
 ;;;###autoload
-(defun dtache-open-output (session)
+(defun dtache-view-session (session)
   "Open SESSION's output."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
@@ -412,7 +412,7 @@ Optionally SUPPRESS-OUTPUT."
         (message "Dtache can't find file: %s" file-path)))))
 
 ;;;###autoload
-(defun dtache-tail-output (session)
+(defun dtache-tail-session (session)
   "Tail SESSION's output."
   (interactive
    (list (dtache-completing-read (dtache-get-sessions))))
@@ -426,7 +426,7 @@ Optionally SUPPRESS-OUTPUT."
             (setq dtache--buffer-session session)
             (dtache-tail-mode)
             (goto-char (point-max))))
-      (dtache-open-output session))))
+      (dtache-view-session session))))
 
 ;;;###autoload
 (defun dtache-diff-session (session1 session2)
@@ -450,8 +450,8 @@ Optionally SUPPRESS-OUTPUT."
       (ediff-buffers buffer1 buffer2))))
 
 ;;;###autoload
-(defun dtache-detach-dwim ()
-  "Detach from current session.
+(defun dtache-detach-session ()
+  "Detach from a session.
 
 This command is only activated if `dtache--buffer-session' is set and
 `dtache--determine-session-state' returns active.  For modes such as
@@ -662,11 +662,11 @@ This function uses the `notifications' library."
 (defun dtache-view-dwim (session)
   "View SESSION in a do what I mean fashion."
   (cond ((eq 'success (dtache--session-status session))
-         (dtache-open-output session))
+         (dtache-view-session session))
         ((eq 'failure (dtache--session-status session))
-         (dtache-post-compile-session session))
+         (dtache-compile-session session))
         ((eq 'unknown (dtache--session-status session))
-         (dtache-open-output session))
+         (dtache-view-session session))
         (t (message "Dtache session is in an unexpected state."))))
 
 (defun dtache-get-sessions ()
@@ -903,10 +903,10 @@ Optionally make the path LOCAL to host."
 (defun dtache--attach-session (session)
   "Attach to SESSION."
   (if (not (dtache--session-attachable session))
-      (dtache-tail-output session)
+      (dtache-tail-session session)
     (if-let ((attach-fun (plist-get (dtache--session-action session) :attach)))
         (funcall attach-fun session)
-      (dtache-tail-output session))))
+      (dtache-tail-session session))))
 
 (defun dtache--view-session (session)
   "View SESSION."

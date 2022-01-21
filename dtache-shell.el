@@ -30,7 +30,7 @@
 ;;;; Variables
 
 (defcustom dtache-shell-session-action
-  '(:attach dtache-tail-output
+  '(:attach dtache-tail-session
             :view dtache-view-dwim
             :run dtache-shell-command)
   "Actions for a session created with `dtache-shell'."
@@ -74,7 +74,7 @@
     (comint-send-input)))
 
 ;;;###autoload
-(defun dtache-shell-attach (session)
+(defun dtache-shell-attach-session (session)
   "Attach to SESSION.
 
 `comint-add-to-input-history' is temporarily disabled to avoid

@@ -14,7 +14,7 @@
 - Add version for =dtache-session= objects. This makes dtache not break whenever non-backwards compatible changes are made to the dtache-session object.
 - The commands for launching sessions are now renamed to resemble the non dtache commands. The commands are =dtache-shell-command=, =dtache-shell-send-input=, =dtache-eshell-send-input=, =dtache-compile=.
 - Add action value to a session. This value is set to dtache-session-action which is a property list optionally specifying attach, view and run properties. These properties are then used in dwim commands to improve their functionality.
-- Add a generic detach command, =dtache-detach-dwim=. This command is supposed to be used to detach from sessions in all supported modes.
+- Add a generic detach command, =dtache-detach-session=. This command is supposed to be used to detach from sessions in all supported modes.
 - Add =dtache-compile.el=. This library provides commands =dtache-compile= and =dtache-compile-recompile= which are supposed to be used instead of =compile=/=recompile=.
 - Improve =dtache-shell-command=, the command is now very similar to =async-shell-command= and can be considered a replacement of the latter.
 - Add integration with the =consult= package through =dtache-consult.el=.
