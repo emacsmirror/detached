@@ -2,6 +2,8 @@
 #+author: Niklas Eklund
 #+language: en
 
+#+html: <a href="http://elpa.gnu.org/devel/dtache.html"><img alt="GNU-devel ELPA" src="https://elpa.gnu.org/devel/dtache.svg"/></a>
+
 * Introduction
   :properties:
   :description: Why Dtache?
