@@ -144,7 +144,7 @@ Valid values are: create, new and attach")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst dtache-session-version "0.3.6"
+(defconst dtache-session-version "0.4.0"
   "The version of `dtache-session'.
 This version is encoded as [package-version].[revision].")
 
