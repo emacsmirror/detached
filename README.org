@@ -221,7 +221,7 @@ By default =dtache= uses the built in =notifications= library to issue a notific
   (defun my/dtache-state-transition-alert-notification (session)
     "Send an `alert' notification when SESSION becomes inactive."
     (let ((status (car (dtache--session-status session)))
-          (host (plist-get (dtache--session-host session) :name)))
+          (host (car (dtache--session-host session))))
       (alert (dtache--session-command session)
        :title (pcase status
                 ('success (format "Dtache finished [%s]" host))

@@ -139,7 +139,7 @@ Valid values are: create, new and attach")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst dtache-session-version "0.3.5"
+(defconst dtache-session-version "0.3.6"
   "The version of `dtache-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -484,11 +484,11 @@ active session.  For sessions created with `dtache-compile' or
 (defun dtache-delete-sessions (&optional all-hosts)
   "Delete `dtache' sessions which belong to the current host, unless ALL-HOSTS."
   (interactive "P")
-  (let* ((host-name (plist-get (dtache--host) :name))
+  (let* ((host-name (car (dtache--host)))
          (sessions (if all-hosts
                        (dtache-get-sessions)
                      (seq-filter (lambda (it)
-                                   (string= (plist-get (dtache--session-host it) :name) host-name))
+                                   (string= (car (dtache--session-host it)) host-name))
                                  (dtache-get-sessions)))))
     (seq-do #'dtache--db-remove-entry sessions)))
 
@@ -582,7 +582,7 @@ Optionally SUPPRESS-OUTPUT."
 
     ;; Remove missing local sessions
     (thread-last (dtache--db-get-sessions)
-                 (seq-filter (lambda (it) (eq 'local (plist-get (dtache--session-host it) :type))))
+                 (seq-filter (lambda (it) (eq 'local (cdr (dtache--session-host it)))))
                  (seq-filter #'dtache--session-missing-p)
                  (seq-do #'dtache--db-remove-entry))
 
@@ -616,7 +616,7 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
     (if (not (dtache--session-missing-p session))
         t
       (let ((host (dtache--session-host session)))
-        (message "Session does not exist. Initiate sesion cleanup on host %s" (plist-get host :name))
+        (message "Session does not exist. Initiate sesion cleanup on host %s" (car host))
         (dtache--cleanup-host-sessions host)
         nil))))
 
@@ -643,13 +643,13 @@ This function uses the echo area."
                   ('success "Dtache finished")
                   ('failure "Dtache failed")
                   ('unknown "Dtache finished"))))
-    (message "%s [%s]: %s" status (plist-get (dtache--session-host session) :name) (dtache--session-command session))))
+    (message "%s [%s]: %s" status (car (dtache--session-host session)) (dtache--session-command session))))
 
 (defun dtache-state-transition-notifications-message (session)
   "Issue a notification when SESSION transitions from active to inactive.
 This function uses the `notifications' library."
   (let ((status (car (dtache--session-status session)))
-        (host (plist-get (dtache--session-host session) :name)))
+        (host (car (dtache--session-host session))))
     (notifications-notify
      :title (pcase status
               ('success (format "Dtache finished [%s]" host))
@@ -824,7 +824,7 @@ Optionally CONCAT the command return command into a string."
    #'identity
    `(,(format "Command: %s" (dtache--session-command session))
      ,(format "Working directory: %s" (dtache--working-dir-str session))
-     ,(format "Host: %s" (plist-get (dtache--session-host session) :name))
+     ,(format "Host: %s" (car (dtache--session-host session)))
      ,(format "Id: %s" (symbol-name (dtache--session-id session)))
      ,(format "Status: %s" (car (dtache--session-status session)))
      ,(format "Exit-code: %s" (cdr (dtache--session-status session)))
@@ -882,9 +882,9 @@ Optionally make the path LOCAL to host."
 
 (defun dtache--cleanup-host-sessions (host)
   "Run cleanuup on HOST sessions."
-  (let ((host-name (plist-get host :name)))
+  (let ((host-name (car host)))
     (thread-last (dtache--db-get-sessions)
-                 (seq-filter (lambda (it) (string= host-name (plist-get (dtache--session-host it) :name))))
+                 (seq-filter (lambda (it) (string= host-name (car (dtache--session-host it)))))
                  (seq-filter #'dtache--session-missing-p)
                  (seq-do #'dtache--db-remove-entry))))
 
@@ -1034,10 +1034,9 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
     (format "{ %s %s; } %s" env command redirect)))
 
 (defun dtache--host ()
-  "Return name of host."
+  "Return a cons with (host . type)."
   (let ((remote (file-remote-p default-directory)))
-    `(:type ,(if remote 'remote 'local)
-            :name ,(if remote (file-remote-p default-directory 'host) (system-name)))))
+    `(,(if remote (file-remote-p default-directory 'host) (system-name)) . ,(if remote 'remote 'local))))
 
 (defun dtache--update-session-time (session &optional approximate)
   "Update SESSION's time property.
@@ -1174,7 +1173,7 @@ session and trigger a state transition."
 
 (defun dtache--host-str (session)
   "Return host name of SESSION."
-  (plist-get (dtache--session-host session) :name))
+  (car (dtache--session-host session)))
 
 ;;;; Minor modes
 

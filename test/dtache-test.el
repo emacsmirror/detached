@@ -141,20 +141,20 @@
 
 (ert-deftest dtache-test-host ()
   (cl-letf (((symbol-function #'system-name) (lambda () "localhost")))
-    (should (equal '(:type local :name "localhost") (dtache--host))))
+    (should (equal '("localhost" . local) (dtache--host))))
   (let ((default-directory "/ssh:remotehost:/home/user/git"))
-    (should (equal '(:type remote :name "remotehost") (dtache--host)))))
+    (should (equal '("remotehost" . remote) (dtache--host)))))
 
 (ert-deftest dtache-test-session-active-p ()
   (dtache-test--with-temp-database
-   (let ((session (dtache-test--create-session :command "foo" :host '(:type local :name "bar"))))
+   (let ((session (dtache-test--create-session :command "foo" :host '("bar" . local))))
      (should (eq 'active (dtache--determine-session-state session)))
      (dtache-test--change-session-state session 'deactivate)
      (should (eq 'inactive (dtache--determine-session-state session))))))
 
 (ert-deftest dtache-test-session-dead-p ()
   (dtache-test--with-temp-database
-   (let ((session (dtache-test--create-session :command "foo" :host '(:type local :name "bar"))))
+   (let ((session (dtache-test--create-session :command "foo" :host '("bar" . local))))
      (should (not (dtache--session-missing-p session)))
      (dtache-test--change-session-state session 'deactivate)
      (should (not (dtache--session-missing-p session)))
@@ -163,10 +163,10 @@
 
 (ert-deftest dtache-test-cleanup-host-sessions ()
   (dtache-test--with-temp-database
-   (cl-letf* ((session1 (dtache-test--create-session :command "foo" :host '(:type remote :name "remotehost")))
-              (session2 (dtache-test--create-session :command "bar" :host '(:type local :name "localhost")))
-              (session3 (dtache-test--create-session :command "baz" :host '(:type local :name "localhost")))
-              (host '(:type local :name "localhost"))
+   (cl-letf* ((session1 (dtache-test--create-session :command "foo" :host '("remotehost" . remote)))
+              (session2 (dtache-test--create-session :command "bar" :host '("localhost" . local)))
+              (session3 (dtache-test--create-session :command "baz" :host '("localhost" . local)))
+              (host '("localhost" . local))
               ((symbol-function #'dtache--host) (lambda () host)))
      ;; One inactive, one missing, one active
      (dtache-test--change-session-state session1 'deactivate)
@@ -191,21 +191,21 @@
 
 (ert-deftest dtache-test-db-insert-session ()
   (dtache-test--with-temp-database
-   (let* ((session (dtache-test--create-session :command "foo" :host '(:type local :name "localhost"))))
+   (let* ((session (dtache-test--create-session :command "foo" :host '("localhost" . local))))
      (should (equal (dtache--db-get-sessions) `(,session))))))
 
 (ert-deftest dtache-test-db-remove-session ()
   (dtache-test--with-temp-database
    (let* ((host '(:type local :name "host"))
-          (session1 (dtache-test--create-session :command "foo" :host '(:type local :name "host")))
-          (session2 (dtache-test--create-session :command "bar" :host '(:type local :name "host"))))
+          (session1 (dtache-test--create-session :command "foo" :host '("host" . local)))
+          (session2 (dtache-test--create-session :command "bar" :host '("host" . local))))
      (should (seq-set-equal-p `(,session1 ,session2) (dtache--db-get-sessions)))
      (dtache--db-remove-entry session1)
      (should (seq-set-equal-p `(,session2) (dtache--db-get-sessions))))))
 
 (ert-deftest dtache-test-db-update-session ()
   (dtache-test--with-temp-database
-   (let* ((session (dtache-test--create-session :command "foo" :host '(:type local :name "host")))
+   (let* ((session (dtache-test--create-session :command "foo" :host '("host" . local)))
           (id (dtache--session-id session))
           (copy))
      (setq copy (copy-dtache-session session))

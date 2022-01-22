@@ -129,7 +129,7 @@ See `consult-multi' for a description of the source values."
        (mapcar #'car
                (seq-filter
                 (lambda (x)
-                  (eq 'local (plist-get (dtache--session-host (cdr x)) :type)))
+                  (eq 'local (cdr (dtache--session-host (cdr x)))))
                 (dtache-session-candidates (dtache-get-sessions)))))
     "Local host `dtache' sessions as a source for `consult'."))
 
@@ -144,7 +144,7 @@ See `consult-multi' for a description of the source values."
        (mapcar #'car
                (seq-filter
                 (lambda (x)
-                  (eq 'remote (plist-get (dtache--session-host (cdr x)) :type)))
+                  (eq 'remote (cdr (dtache--session-host (cdr x)))))
                 (dtache-session-candidates (dtache-get-sessions))))))
   "Remote host `dtache' sessions as a source for `consult'.")
 
@@ -156,10 +156,10 @@ See `consult-multi' for a description of the source values."
     :action (lambda (x) (dtache-open-session (dtache--decode-session x)))
     :items
     ,(lambda ()
-       (let ((host-name (plist-get (dtache--host) :name)))
+       (let ((host-name (car (dtache--host))))
          (mapcar #'car (seq-filter
                         (lambda (x)
-                          (string= (plist-get (dtache--session-host (cdr x)) :name) host-name))
+                          (string= (car (dtache--session-host (cdr x))) host-name))
                         (dtache-session-candidates (dtache-get-sessions)))))))
   "Current host `dtache' sessions as a source for `consult'.")
 

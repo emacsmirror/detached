@@ -53,11 +53,11 @@
 
 (defun dtache-shell-select-session ()
   "Return selected session."
-  (let* ((host-name (plist-get (dtache--host) :name))
+  (let* ((host-name (car (dtache--host)))
          (sessions
           (thread-last (dtache-get-sessions)
                        (seq-filter (lambda (it)
-                                     (string= (plist-get (dtache--session-host it) :name) host-name)))
+                                     (string= (car (dtache--session-host it)) host-name)))
                        (seq-filter (lambda (it) (eq 'active (dtache--determine-session-state it)))))))
     (dtache-completing-read sessions)))
 
