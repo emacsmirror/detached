@@ -453,31 +453,33 @@ active session.  For sessions created with `dtache-compile' or
 `dtache-shell-command', the command will also kill the window."
   (interactive)
   (if (dtache-session-p dtache--buffer-session)
-      (if-let ((command-or-compile
-                (cond ((string-match dtache--shell-command-buffer (buffer-name)) t)
-                      ((string-match "\*dtache-compilation" (buffer-name)) t)
-                      ((eq major-mode 'dtache-log-mode) t)
-                      ((eq major-mode 'dtache-tail-mode) t)
-                      (t nil))))
-          ;; `dtache-shell-command' or `dtache-compile'
-          (let ((kill-buffer-query-functions nil))
-            (when-let ((process (get-buffer-process (current-buffer))))
-              (comint-simple-send process dtache--dtach-detach-character)
-              (message "[detached]"))
-            (setq dtache--buffer-session nil)
-            (kill-buffer-and-window))
-        (if (eq 'active (dtache--determine-session-state dtache--buffer-session))
-            ;; `dtache-eshell'
-            (if-let ((process (and (eq major-mode 'eshell-mode)
-                                   (dtache-eshell-get-dtach-process))))
-                (progn
-                  (setq dtache--buffer-session nil)
-                  (process-send-string process dtache--dtach-detach-character))
-              ;; `dtache-shell'
-              (let ((process (get-buffer-process (current-buffer))))
-                (comint-simple-send process dtache--dtach-detach-character)
-                (setq dtache--buffer-session nil)))
-          (message "No active dtache-session found in buffer.")))
+      (if (eq major-mode 'dtache-tail-mode)
+          (dtache-quit-tail-session)
+          (if-let ((command-or-compile
+                    (cond ((string-match dtache--shell-command-buffer (buffer-name)) t)
+                          ((string-match "\*dtache-compilation" (buffer-name)) t)
+                          ((eq major-mode 'dtache-log-mode) t)
+                          ((eq major-mode 'dtache-tail-mode) t)
+                          (t nil))))
+              ;; `dtache-shell-command' or `dtache-compile'
+              (let ((kill-buffer-query-functions nil))
+                (when-let ((process (get-buffer-process (current-buffer))))
+                  (comint-simple-send process dtache--dtach-detach-character)
+                  (message "[detached]"))
+                (setq dtache--buffer-session nil)
+                (kill-buffer-and-window))
+            (if (eq 'active (dtache--determine-session-state dtache--buffer-session))
+                ;; `dtache-eshell'
+                (if-let ((process (and (eq major-mode 'eshell-mode)
+                                       (dtache-eshell-get-dtach-process))))
+                    (progn
+                      (setq dtache--buffer-session nil)
+                      (process-send-string process dtache--dtach-detach-character))
+                  ;; `dtache-shell'
+                  (let ((process (get-buffer-process (current-buffer))))
+                    (comint-simple-send process dtache--dtach-detach-character)
+                    (setq dtache--buffer-session nil)))
+              (message "No active dtache-session found in buffer."))))
     (message "No dtache-session found in buffer.")))
 
 ;;;###autoload
@@ -491,6 +493,18 @@ active session.  For sessions created with `dtache-compile' or
                                    (string= (car (dtache--session-host it)) host-name))
                                  (dtache-get-sessions)))))
     (seq-do #'dtache--db-remove-entry sessions)))
+
+;;;###autoload
+(defun dtache-quit-tail-session ()
+  "Quit `dtache' tail session.
+
+The log can have been updated, but that is not done by the user but
+rather the tail mode.  To avoid a promtp `buffer-modified-p' is set to
+nil before closing."
+  (interactive)
+  (set-buffer-modified-p nil)
+  (setq dtache--buffer-session nil)
+  (kill-buffer-and-window))
 
 ;;;; Functions
 
