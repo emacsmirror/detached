@@ -50,9 +50,9 @@ The sessions are made persistent by writing the =dtache-session= objects to file
 
 * Installation
 
-The package is available on [[https://elpa.gnu.org/devel/dtache.html][GNU-devel ELPA]].
+The package is available on [[https://elpa.gnu.org/packages/dtache][GNU ELPA]] and [[https://elpa.gnu.org/devel/dtache.html][GNU-devel ELPA]].
 
-For users the [[https://guix.gnu.org/][GNU Guix package manager]] there is a [[https://guix.gnu.org/en/packages/emacs-dtache-0.3-0.9e0acd5/][guix package]].
+For users of the [[https://guix.gnu.org/][GNU Guix package manager]] there is a [[https://guix.gnu.org/en/packages/emacs-dtache-0.3-0.9e0acd5/][guix package]].
 
 * Configuration
 
