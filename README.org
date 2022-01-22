@@ -241,6 +241,7 @@ The package provides the following customizable variables.
 | dtache-tail-interval          | How often =dtache= should refresh the output when tailing    |
 | dtache-nonattachable-commands | A list of commands that should be considered nonattachable   |
 | dtache-notification-function  | Specifies which function to issue notifications with         |
+| dtache-detach-key             | Specifies which keybinding to use to detach from a session   |
 
 Apart from those variables there is also the different =action= variables, which can be configured differently depending on the origin of the session.
 
