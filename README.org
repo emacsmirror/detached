@@ -63,9 +63,7 @@ A minimal configuration for =dtache=.
 #+begin_src elisp :lexical t :results none
   (use-package dtache
     :hook (after-init . dtache-setup)
-    :bind (([remap async-shell-command] . dtache-shell-command)
-           :map dtache-shell-mode-map
-           ("C-c C-q" . dtache-detach-session)))
+    :bind (([remap async-shell-command] . dtache-shell-command)))
 #+end_src
 
 * Commands
@@ -83,7 +81,7 @@ There are tree different ways to create a dtache session.
 
 The =dtache-shell-command= is for the Emacs users that are accustomed to running shell commands from =M-x shell-command= or =M-x async-shell-command=. The =dtache-shell-send-input= is for those that want to run a command through =dtache= when inside a =shell= buffer. The =dtache-eshell-send-input= is the equivalent for =eshell=. The =dtache-compile= is supposed to be used as a replacement for =compile=. Last there is the =dtache-start-session= function, which users can utilize in their own custom commands.
 
-To detach from a =dtache= session you should use the univeral =dtache-detach-dwim= command.
+To detach from a =dtache= session you should use the universal =dtache-detach-session= command. The keybinding for this command is defined by the =dtache-detach-key= variable, which by default has the value =C-c C-d=.
 
 ** Interacting with a session
 
@@ -125,21 +123,19 @@ A =use-package= configuration of the =dtache-shell= extension, which provides th
 
 #+begin_src elisp :lexical t :results none
   (use-package dtache-shell
-    :hook (after-init . dtache-shell-setup)
-    :bind (:map dtache-shell-mode-map
-           (("<S-return>" . dtache-shell-send-input)
-            ("<C-return>" . dtache-shell-attach-session)))
+    :after dtache
     :config
+    (dtache-shell-setup)
     (setq dtache-shell-history-file "~/.bash_history"))
 #+end_src
 
 A minor mode named =dtache-shell-mode= is provided, and will be enabled in =shell=. The commands that are implemented are:
 
-| Command                     | Description                  |
-|-----------------------------+------------------------------|
-| dtache-shell-send-input     | Run command with dtache      |
-| dtache-shell-attach-session | Attach to a dtache session   |
-| dtache-detach-session       | Detach from a dtache session |
+| Command                     | Description                  | Keybinding        |
+|-----------------------------+------------------------------+-------------------|
+| dtache-shell-send-input     | Run command with dtache      | <S-return>        |
+| dtache-shell-attach-session | Attach to a dtache session   | <C-return>        |
+| dtache-detach-session       | Detach from a dtache session | dtache-detach-key |
 
 ** Dtache-eshell
 
@@ -147,20 +143,16 @@ A =use-package= configuration of the =dtache-eshell= extension, which provides t
 
 #+begin_src elisp :lexical t :results none
   (use-package dtache-eshell
-    :hook (after-init . dtache-eshell-setup)
-    :bind (:map dtache-eshell-mode-map
-           (("<S-return>" . dtache-eshell-send-input)
-            ("<C-return>" . dtache-eshell-attach-session)
-            ("C-c C-q" . dtache-detach-session))))
+    :hook (eshell-mode . dtache-eshell-mode))
 #+end_src
 
 A minor mode named =dtache-eshell-mode= is provided, and will be enabled in =eshell=. The commands that are implemented are:
 
-| Command                      | Description                  |
-|------------------------------+------------------------------|
-| dtache-eshell-send-input     | Run command with dtache      |
-| dtache-eshell-attach-session | Attach to a dtache session   |
-| dtache-detach-session        | Detach from a dtache session |
+| Command                      | Description                  | Keybinding        |
+|------------------------------+------------------------------+-------------------|
+| dtache-eshell-send-input     | Run command with dtache      | <S-return>        |
+| dtache-eshell-attach-session | Attach to a dtache session   | <C-return>        |
+| dtache-detach-session        | Detach from a dtache session | dtache-detach-key |
 
 In this [[https://niklaseklund.gitlab.io/blog/posts/dtache_eshell/][blog post]] there are examples and more information about the extension.
 
@@ -172,9 +164,7 @@ A =use-package= configuration of the =dtache-compile= extension, which provides 
   (use-package dtache-compile
     :hook (after-init . dtache-compile-setup)
     :bind (([remap compile] . dtache-compile)
-           ([remap recompile] . dtache-compile-recompile)
-           :map dtache-compilation-mode-map
-           ("C-c C-q" . dtache-detach-session)))
+           ([remap recompile] . dtache-compile-recompile)))
 #+end_src
 
 The package implements the commands =dtache-compile= and =dtache-compile-recompile=, which are thin wrappers around the original =compile= and =recompile= commands. The users should be able to use the former as replacements for the latter without noticing any difference except from the possibility to =detach=.

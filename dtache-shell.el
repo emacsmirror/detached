@@ -141,6 +141,12 @@ This function also makes sure that the HISTFILE is disabled for local shells."
   "Add hook to save history when killing `shell' buffer."
   (add-hook 'kill-buffer-hook #'dtache-shell--save-history 0 t))
 
+;;;; Minor mode
+
+(let ((map dtache-shell-mode-map))
+  (define-key map (kbd "<S-return>") #'dtache-shell-send-input)
+  (define-key map (kbd "<C-return>") #'dtache-shell-attach-session))
+
 (provide 'dtache-shell)
 
 ;;; dtache-shell.el ends here

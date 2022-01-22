@@ -121,6 +121,11 @@
   :type 'function
   :group 'dtache)
 
+(defcustom dtache-detach-key "C-c C-d"
+  "Variable to set the keybinding for detaching."
+  :type 'string
+  :group 'dtache)
+
 ;;;;; Public
 
 (defvar dtache-enabled nil)
@@ -619,8 +624,9 @@ Optionally SUPPRESS-OUTPUT."
                  (seq-uniq)
                  (seq-do #'dtache--watch-session-directory))
 
-    ;; Add hooks
-    (add-hook 'shell-mode-hook #'dtache-shell-mode)))
+    ;; Other
+    (add-hook 'shell-mode-hook #'dtache-shell-mode)
+    (global-set-key (kbd dtache-detach-key) #'dtache-detach-session)))
 
 (defun dtache-valid-session (session)
   "Ensure that SESSION is valid.
@@ -1190,6 +1196,12 @@ session and trigger a state transition."
   (car (dtache--session-host session)))
 
 ;;;; Minor modes
+
+(defvar dtache-shell-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd dtache-detach-key) #'dtache-detach-session)
+    map)
+  "Keymap for `dtache-shell-mode'.")
 
 ;;;###autoload
 (define-minor-mode dtache-shell-mode
