@@ -4,6 +4,9 @@
 
 * Development
 
+* Version 0.4 (2022-010-22)
+
+- =dtache= takes care of setting up the keybindings for its users. The detach key can be customized through =dtache-detach-key=
 - =dtache= now has full on macOS. The previous issue of not being able to utilize =filenotify= has been resolved.
 - =dtache= now uses =notifications= library to issue notifications by default.
 - =dtache= now uses =filenotify= for notifications except on local macOS hosts.
