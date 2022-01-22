@@ -30,7 +30,7 @@
 ;;;; Variables
 
 (defcustom dtache-shell-session-action
-  '(:attach dtache-tail-session
+  '(:attach dtache-shell-command-attach-session
             :view dtache-view-dwim
             :run dtache-shell-command)
   "Actions for a session created with `dtache-shell'."
