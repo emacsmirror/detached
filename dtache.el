@@ -134,7 +134,7 @@ Valid values are: create, new and attach")
 (defvar dtache-shell-command-history nil
   "History of commands run with `dtache-shell-command'.")
 
-(defvar dtache-compile-hooks nil
+(defvar dtache-compile-session-hooks nil
   "Hooks to run when compiling a session.")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
@@ -297,7 +297,7 @@ The session is compiled by opening its output and enabling
           (insert (dtache--session-output session))
           (setq-local default-directory
                       (dtache--session-working-directory session))
-          (run-hooks 'dtache-compile-hooks)
+          (run-hooks 'dtache-compile-session-hooks)
           (dtache-log-mode)
           (compilation-minor-mode)
           (setq dtache--buffer-session session)
