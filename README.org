@@ -7,7 +7,9 @@
   :description: Why Dtache?
   :end:
 
-=Dtache=, or =Detach Emacs=, is a package to run shell commands completely detached from Emacs. With shell commands, we refer to commands that otherwise would be run in a terminal. This is made possible through the program [[https://github.com/crigler/dtach][dtach]], which =dtache= derives its name from. The package enables a seamless integration where commands are run using decoupled =dtach= processes, which =dtache= makes sure behind the scenes, that Emacs can attach to. The commands are therefore detached as soon as they are started. This makes it possible for commands to outlive Emacs, which also works on remote hosts, essentially offering a lightweight alternative to [[https://github.com/tmux/tmux][Tmux]] or [[https://www.gnu.org/software/screen/][GNU Screen]].
+=Dtache=, or =Detach Emacs=, is a package to run shell commands completely detached from Emacs itself. The package achieves this functionality by launching the commands with the program [[https://github.com/crigler/dtach][dtach]]. Even though the commands are run decoupled, the package makes sure the integration to Emacs is seamless. The advantage is that the processes are insensitive to Emacs being killed, and this holds true for remote hosts as well, essentially making =dtache= a lightweight alternative to [[https://github.com/tmux/tmux][Tmux]] or [[https://www.gnu.org/software/screen/][GNU Screen]].
+
+Another advantage of =dtache= is that in order to implement the detached feature it actually represents the processes as text inside of Emacs. This enables features such as history of all session outputs, possibility to diff session outputs etc.
 
 The following videos about =dtache=. They are currently a bit outdated but the core concept is still true.
 - [[https://www.youtube.com/watch?v=if1W58SrClk][Dtache - An Emacs package that provides detachable shell commands]]
@@ -19,7 +21,7 @@ The way =dtache= is designed with its =dtache-session= objects opens up the poss
 
 *** Output
 
-The user always have access to the session's output. The user never needs to fear that the output history of the terminal is not enough to capture all of its output. Also its pretty handy to be able to go back in time and see the output from a session you ran earlier today. Also having access to the output as well as the other information from the session makes it possible to enable =compilation-minor-mode= in order to use Emacs built in capabilities to perform a post compilation. This enables navigation between errors in the output as well as proper syntax highlighting. This is something =dtache= will do automatically if it detects that you are opening the output of a session with status =failure=.
+The user always have access to the session's output. The user never needs to fear that the output history of the terminal is not enough to capture all of its output. Also its pretty handy to be able to go back in time and see the output from a session you ran earlier today. Having access to the output as well as the other information from the session makes it possible to compile a session using Emacs built in functionality. This enables navigation between errors in the output as well as proper syntax highlighting. This is something =dtache= will do automatically if it detects that you are opening the output of a session with status =failure=.
 
 *** Notifications
 
@@ -31,7 +33,7 @@ The session always contain metadata, such as when the session was started, for h
 
 *** Annotations
 
-Arbitrarily metadata can be captured when a session is started through the =dtache-metadata-annotators-alist=
+Arbitrary metadata can be captured when a session is started. An example further down is how to leverage this feature to capture the git branch for a session.
 
 *** Remote
 
@@ -41,16 +43,16 @@ Proper support for running session on a remote host.
 
 The package provides commands that can act on a session. There is the functionality to =kill= an active session, to =rerun= a session, or =diff= two sessions.
 
-*** Persistency
+*** Persistent
 
 The sessions are made persistent by writing the =dtache-session= objects to file. This makes it possible for Emacs to resume the knowledge of prior sessions when Emacs is restarted.
 
 
 * Installation
 
-There exists a [[https://guix.gnu.org/en/packages/emacs-dtache-0.3-0.9e0acd5/][guix package]] of =dtache= which users of the [[https://guix.gnu.org/][GNU Guix package manager]] can install.
+The package is available on [[https://elpa.gnu.org/devel/dtache.html][GNU-devel ELPA]].
 
-For the time being =dtache= is not available in any of the Emacs repositories and must therefore be installed from souce.
+For users the [[https://guix.gnu.org/][GNU Guix package manager]] there is a [[https://guix.gnu.org/en/packages/emacs-dtache-0.3-0.9e0acd5/][guix package]].
 
 * Configuration
 
@@ -331,9 +333,13 @@ The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_n
 
 Information about larger changes that has been made between versions can be found in the =CHANGELOG.org=
 
+* Support
+
+The =dtache= package should work on =Linux= and =macOS=. It is regularly tested on =Ubuntu= and =GNU Guix System=.
+
 * Contributions
 
-I have signed the papers for a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Copyright-Assignment.html][copyright assignment]] in order to contribute the package to [[https://elpa.gnu.org/][ELPA]]. This means that other contributors needs to have their copyright assigned as well.
+The package is part of [[https://elpa.gnu.org/][ELPA]] which means that if you want to contribute you must have a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Copyright-Assignment.html][copyright assignment]].
 
 * Credits
 
