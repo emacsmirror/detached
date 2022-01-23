@@ -625,8 +625,7 @@ Optionally SUPPRESS-OUTPUT."
                  (seq-do #'dtache--watch-session-directory))
 
     ;; Other
-    (add-hook 'shell-mode-hook #'dtache-shell-mode)
-    (global-set-key (kbd dtache-detach-key) #'dtache-detach-session)))
+    (add-hook 'shell-mode-hook #'dtache-shell-mode)))
 
 (defun dtache-valid-session (session)
   "Ensure that SESSION is valid.
@@ -1220,6 +1219,7 @@ session and trigger a state transition."
 
 (defvar dtache-log-mode-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd dtache-detach-key) #'dtache-detach-session)
     map)
   "Keymap for `dtache-log-mode'.")
 
@@ -1230,6 +1230,7 @@ session and trigger a state transition."
 
 (defvar dtache-tail-mode-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd dtache-detach-key) #'dtache-detach-session)
     map)
   "Keymap for `dtache-tail-mode'.")
 

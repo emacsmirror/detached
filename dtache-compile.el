@@ -90,7 +90,8 @@ Optionally EDIT-COMMAND."
   "Setup `dtache-compile'."
   (dtache-setup)
   (advice-add #'compilation-start :around #'dtache-compile--compilation-start)
-  (add-hook 'compilation-start-hook #'dtache-compile--start))
+  (add-hook 'compilation-start-hook #'dtache-compile--start)
+  (add-hook 'compilation-shell-minor-mode-hook #'dtache-shell-mode))
 
 ;;;;; Support functions
 
@@ -148,6 +149,12 @@ Optionally EDIT-COMMAND."
         (delete-region (match-beginning 0) (match-end 0))))))
 
 ;;;;; Major modes
+
+(defvar dtache-compilation-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd dtache-detach-key) #'dtache-detach-session)
+    map)
+  "Keymap for `dtache-compilation-mode'.")
 
 ;;;###autoload
 (define-derived-mode dtache-compilation-mode compilation-mode "Dtache Compilation"
