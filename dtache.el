@@ -5,7 +5,7 @@
 ;; Author: Niklas Eklund <niklas.eklund@posteo.net>
 ;; Maintainer: Niklas Eklund <niklas.eklund@posteo.net>
 ;; URL: https://www.gitlab.com/niklaseklund/dtache.git
-;; Version: 0.3
+;; Version: 0.4
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: convenience processes
 
