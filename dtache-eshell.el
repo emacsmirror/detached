@@ -49,7 +49,7 @@
           (thread-last (dtache-get-sessions)
                        (seq-filter (lambda (it)
                                      (string= (car (dtache--session-host it)) host-name)))
-                       (seq-filter #'dtache--determine-session-state))))
+                       (seq-filter (lambda (it) (eq 'active (dtache--determine-session-state it)))))))
     (dtache-completing-read sessions)))
 
 (defun dtache-eshell-get-dtach-process ()
