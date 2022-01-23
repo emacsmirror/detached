@@ -1,4 +1,4 @@
-#+title: dtache.el - Dtach Emacs
+#+title: dtache.el - Detach Emacs
 #+author: Niklas Eklund
 #+language: en
 
@@ -10,7 +10,7 @@
   :description: Why Dtache?
   :end:
 
-=Dtache=, or =Detach Emacs=, is a package to run shell commands completely detached from Emacs itself. The package achieves this functionality by launching the commands with the program [[https://github.com/crigler/dtach][dtach]]. Even though the commands are run decoupled, the package makes sure the integration to Emacs is seamless. The advantage is that the processes are insensitive to Emacs being killed, and this holds true for remote hosts as well, essentially making =dtache= a lightweight alternative to [[https://github.com/tmux/tmux][Tmux]] or [[https://www.gnu.org/software/screen/][GNU Screen]].
+Dtache is a package to run, and interact with, shell commands that are completely detached from Emacs itself. The package achieves this functionality by launching the commands with the program [[https://github.com/crigler/dtach][dtach]]. Even though the commands are run decoupled, the package makes sure the integration to Emacs is seamless. The advantage is that the processes are insensitive to Emacs being killed, and this holds true for remote hosts as well, essentially making =dtache= a lightweight alternative to [[https://github.com/tmux/tmux][Tmux]] or [[https://www.gnu.org/software/screen/][GNU Screen]].
 
 Another advantage of =dtache= is that in order to implement the detached feature it actually represents the processes as text inside of Emacs. This enables features such as history of all session outputs, possibility to diff session outputs etc.
 
