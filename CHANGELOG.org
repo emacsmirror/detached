@@ -4,6 +4,8 @@
 
 * Development
 
+- Support for multiple Emacs sessions. When a =dtache= session is created, it will now become visible in all active Emacs sessions.
+
 * Version 0.4 (2022-010-22)
 
 - =dtache= takes care of setting up the keybindings for its users. The detach key can be customized through =dtache-detach-key=

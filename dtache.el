@@ -214,6 +214,8 @@ This version is encoded as [package-version].[revision].")
   "A list of sessions.")
 (defvar dtache--watched-session-directories nil
   "An alist where values are a (directory . descriptor).")
+(defvar dtache--db-watch nil
+  "A descriptor to the `dtache-db-directory'.")
 (defvar dtache--buffer-session nil
   "The `dtache-session' session in current buffer.")
 (defvar dtache--current-session nil
@@ -598,6 +600,11 @@ Optionally SUPPRESS-OUTPUT."
     (unless (file-exists-p dtache-db-directory)
       (make-directory dtache-db-directory t))
     (dtache--db-initialize)
+    (setq dtache--db-watch
+      (file-notify-add-watch dtache-db-directory
+                             '(change attribute-change)
+                             #'dtache--db-directory-event))
+    (setq dtache--sessions-initialized t)
 
     ;; Remove missing local sessions
     (thread-last (dtache--db-get-sessions)
@@ -1128,6 +1135,16 @@ session and trigger a state transition."
            (alist-get session-directory dtache--watched-session-directories))
           (setq dtache--watched-session-directories
                 (assoc-delete-all session-directory dtache--watched-session-directories)))))))
+
+(defun dtache--db-directory-event (event)
+  "Act on EVENT in `dtache-db-directory'.
+
+If event is cased by an update to the `dtache' database, re-initialize
+`dtache--sessions'."
+  (pcase-let ((`(,_descriptor ,action ,file)))
+    (when (and (string= "dtache.db" file)
+               (eq 'attribute-changed action)))
+    (dtache--db-initialize)))
 
 ;;;;; UI
 
