@@ -42,7 +42,7 @@ Arbitrary metadata can be captured when a session is started. An example further
 
 *** Remote
 
-Proper support for running session on a remote host.
+Proper support for running session on a remote host. See the =Remote suppport= section of the README for further details on how to configure =dtache= to work for a remote host.
 
 *** Actions
 
@@ -282,6 +282,23 @@ Apart from those variables there is also the different =action= variables, which
 | dtache-compile-session-action       | Actions for sessions launched with =dtache-compile=           |
 | dtache-org-session-action           | Actions for sessions launched with =dtache-org=               |
 
+** Remote support
+
+The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Connection-Local-Variables.html][Connection Local Variables]] which allows the user to customize the variables used by =dtache= when running on a remote host. This example shows how the following variables are customized for all remote hosts.
+
+#+begin_src elisp :lexical t :results none
+  (connection-local-set-profile-variables
+   'remote-dtache
+   '((dtache-env . "~/bin/dtache-env")
+     (dtache-shell-program . "/bin/bash")
+     (dtache-shell-history-file . "~/.bash_history")
+     (dtache-session-directory . "~/tmp")
+     (dtache-dtach-program . "/home/user/.local/bin/dtach")))
+
+  (connection-local-set-profiles
+   '(:application tramp :protocol "ssh") 'remote-dtache)
+#+end_src
+
 ** Completion annotations
 
 Users can customize the appearance of annotations in =dtache-open-session= by modifying the =dtache-annotation-format=. The default annotation format is the following.
@@ -338,23 +355,6 @@ For these situations =dtache= provides the =dtache-nonattachable-commands= varia
 #+end_src
 
 Here a command beginning with =ls= would from now on be considered nonattachable.
-
-** Remote support
-
-The =dtache= package supports [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Connection-Local-Variables.html][Connection Local Variables]] which allows the user to customize the variables used by =dtache= when running on a remote host. This example shows how the following variables are customized for all remote hosts.
-
-#+begin_src elisp :lexical t :results none
-  (connection-local-set-profile-variables
-   'remote-dtache
-   '((dtache-env . "~/bin/dtache-env")
-     (dtache-shell-program . "/bin/bash")
-     (dtache-shell-history-file . "~/.bash_history")
-     (dtache-session-directory . "~/tmp")
-     (dtache-dtach-program . "/home/user/.local/bin/dtach")))
-
-  (connection-local-set-profiles
-   '(:application tramp :protocol "ssh") 'remote-dtache)
-#+end_src
 
 * Versions
 
