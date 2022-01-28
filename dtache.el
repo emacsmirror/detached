@@ -1116,9 +1116,9 @@ session and trigger a state transition."
   (pcase-let* ((`(,_ ,action ,file) event))
     (when (and (eq action 'deleted)
                (string= "socket" (file-name-extension file)))
-      (let* ((id (intern (file-name-base file)))
-             (session (dtache--db-get-session id))
-             (session-directory (dtache--session-directory session)))
+      (when-let* ((id (intern (file-name-base file)))
+                  (session (dtache--db-get-session id))
+                  (session-directory (dtache--session-directory session)))
 
         ;; Update session
         (dtache--session-state-transition-update session)
