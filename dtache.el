@@ -1141,9 +1141,10 @@ session and trigger a state transition."
 
 If event is cased by an update to the `dtache' database, re-initialize
 `dtache--sessions'."
-  (pcase-let ((`(,_descriptor ,action ,file)))
-    (when (and (string= "dtache.db" file)
-               (eq 'attribute-changed action)))
+  (pcase-let* ((`(,_descriptor ,action ,file) event)
+               (database-updated  (and (string= "dtache.db" file)
+                                       (eq 'attribute-changed action))))
+    (when database-updated)
     (dtache--db-initialize)))
 
 ;;;;; UI
