@@ -4,6 +4,7 @@
 
 * Development
 
+- Add support for =org= through the =dtache-org= extension. This makes it possible to use =dtache= with =org-babel= (shell) source code blocks.
 - Support for multiple Emacs sessions. When a =dtache= session is created, it will now become visible in all active Emacs sessions.
 
 * Version 0.4 (2022-010-22)
