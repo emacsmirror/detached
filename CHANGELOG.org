@@ -4,10 +4,12 @@
 
 * Development
 
+* Version 0.5 (2022-02-02)
+
 - Add support for =org= through the =dtache-org= extension. This makes it possible to use =dtache= with =org-babel= (shell) source code blocks.
 - Support for multiple Emacs sessions. When a =dtache= session is created, it will now become visible in all active Emacs sessions.
 
-* Version 0.4 (2022-010-22)
+* Version 0.4 (2022-01-22)
 
 - =dtache= takes care of setting up the keybindings for its users. The detach key can be customized through =dtache-detach-key=
 - =dtache= now has full on macOS. The previous issue of not being able to utilize =filenotify= has been resolved.
