@@ -372,6 +372,15 @@ The package can be integrated with [[https://github.com/bbatsov/projectile][proj
 
   (advice-add 'projectile-run-compilation :override #'my/dtache-projectile-run-compilation)
 #+end_src
+** ANSI escape sequences
+
+The =dtache-log-mode= which is the major mode used when either =dtache-compile-session= or =dtache-view-session= is called. The hook of the mode runs the function =dtache--ansi-color-output= which removes the potential escape sequences present in the log. If you don't mind the sequences there is always the option to remove the function from the =dtache-log-mode-hook=.
+
+To get the =ansi-color= on the output when being attached to a session with =dtache-compile= add the following hook to your configuration.
+
+#+begin_src elisp
+  (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter)
+#+end_src
 
 * Versions
 

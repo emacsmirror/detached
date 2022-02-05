@@ -34,7 +34,7 @@
 
 ;; When a session is created, dtache makes sure that Emacs is attached
 ;; to it the same time, which makes it a seamless experience for the
-;; users.  The `dtache' package internaly creates a `dtache-session'
+;; users.  The `dtache' package internally creates a `dtache-session'
 ;; for all commands.
 
 ;; [1] https://github.com/crigler/dtach
@@ -43,6 +43,7 @@
 
 ;;;; Requirements
 
+(require 'ansi-color)
 (require 'autorevert)
 (require 'notifications)
 (require 'filenotify)
@@ -132,6 +133,11 @@ If set to a non nil value the latest entry to
 (defcustom dtache-detach-key "C-c C-d"
   "Variable to set the keybinding for detaching."
   :type 'string
+  :group 'dtache)
+
+(defcustom dtache-log-mode-hook '(dtache--ansi-color-output)
+  "Hook for customizing `dtache-log' mode."
+  :type 'hook
   :group 'dtache)
 
 ;;;;; Public
@@ -1078,6 +1084,10 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
   (let ((remote (file-remote-p default-directory)))
     `(,(if remote (file-remote-p default-directory 'host) (system-name)) . ,(if remote 'remote 'local))))
 
+(defun dtache--ansi-color-output ()
+  "Apply `ansi-color' on output."
+  (ansi-color-apply-on-region (point-min) (point-max)))
+
 (defun dtache--update-session-time (session &optional approximate)
   "Update SESSION's time property.
 
@@ -1257,8 +1267,7 @@ If event is cased by an update to the `dtache' database, re-initialize
 
 ;;;###autoload
 (define-derived-mode dtache-log-mode nil "Dtache Log"
-  "Major mode for dtache logs."
-  (read-only-mode t))
+  "Major mode for `dtache' logs.")
 
 (defvar dtache-tail-mode-map
   (let ((map (make-sparse-keymap)))
