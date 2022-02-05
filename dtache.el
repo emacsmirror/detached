@@ -699,11 +699,13 @@ This function uses the `notifications' library."
     (notifications-notify
      :title (pcase status
               ('success (format "Dtache finished [%s]" host))
-              ('failure (format "Dtache failed [%s]" host)))
+              ('failure (format "Dtache failed [%s]" host))
+              ('unknown (format "Dtache finished [%s]" host)))
      :body (dtache--session-command session)
      :urgency (pcase status
                 ('success 'normal)
-                ('failure 'critical)))))
+                ('failure 'critical)
+                ('unknown 'normal)))))
 
 (defun dtache-view-dwim (session)
   "View SESSION in a do what I mean fashion."
