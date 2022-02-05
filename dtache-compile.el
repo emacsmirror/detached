@@ -52,8 +52,9 @@ Optionally enable COMINT if prefix-argument is provided."
         command))
     (consp current-prefix-arg)))
   (let* ((dtache-enabled t)
-         (dtache-session-action dtache-compile-session-action)
-         (dtache-session-origin 'compile)
+         (dtache-session-origin (or dtache-session-origin 'compile))
+         (dtache-session-action (or dtache-session-action
+                                    dtache-compile-session-action))
          (dtache-session-mode 'create-and-attach))
     (compile command comint)))
 

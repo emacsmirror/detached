@@ -283,8 +283,9 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
                           (car dtache-shell-command-history))
                         'dtache-shell-command-history)
     current-prefix-arg))
-  (let* ((dtache-session-origin 'shell-command)
-         (dtache-session-action dtache-shell-command-session-action)
+  (let* ((dtache-session-origin (or dtache-session-origin 'shell-command))
+         (dtache-session-action (or dtache-session-action
+                                    dtache-shell-command-session-action))
          (dtache--current-session (dtache-create-session command)))
     (dtache-start-session command suppress-output)))
 
