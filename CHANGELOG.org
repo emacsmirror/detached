@@ -4,6 +4,8 @@
 
 * Development
 
+- The =dtache-log-mode-hook= is preconfigured to run a function which removes ANSI escape sequences
+
 * Version 0.5 (2022-02-02)
 
 - Add support for =org= through the =dtache-org= extension. This makes it possible to use =dtache= with =org-babel= (shell) source code blocks.
