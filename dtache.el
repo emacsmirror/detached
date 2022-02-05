@@ -108,8 +108,16 @@
             :view dtache-view-dwim
             :run dtache-shell-command)
   "Actions for a session created with `dtache-shell-command'."
-  :group 'dtache
-  :type 'plist)
+  :type 'plist
+  :group 'dtache)
+
+(defcustom dtache-shell-command-initial-input t
+  "Variable to control initial command input for `dtache-shell-command'.
+If set to a non nil value the latest entry to
+`dtache-shell-command-history' will be used as the initial input in
+`dtache-shell-command' when it is used as a command."
+  :type 'bool
+  :group 'dtache)
 
 (defcustom dtache-nonattachable-commands nil
   "A list of commands which `dtache' should consider nonattachable."
@@ -265,7 +273,9 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
                                             (abbreviate-file-name
                                              default-directory))
                           "Dtache shell command: ")
-                        nil 'dtache-shell-command-history)
+                        (when dtache-shell-command-initial-input
+                          (car dtache-shell-command-history))
+                        'dtache-shell-command-history)
     current-prefix-arg))
   (let* ((dtache-session-origin 'shell-command)
          (dtache-session-action dtache-shell-command-session-action)
