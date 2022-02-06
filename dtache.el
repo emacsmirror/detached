@@ -1092,9 +1092,10 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
   (let ((remote (file-remote-p default-directory)))
     `(,(if remote (file-remote-p default-directory 'host) (system-name)) . ,(if remote 'remote 'local))))
 
-(defun dtache--ansi-color-output ()
-  "Apply `ansi-color' on output."
-  (ansi-color-apply-on-region (point-min) (point-max)))
+(defun dtache--ansi-color-tail ()
+  "Apply `ansi-color' on tail output."
+  (let ((inhibit-read-only t))
+    (ansi-color-apply-on-region auto-revert-tail-pos (point-max))))
 
 (defun dtache--update-session-time (session &optional approximate)
   "Update SESSION's time property.
@@ -1277,7 +1278,7 @@ If event is cased by an update to the `dtache' database, re-initialize
 (define-derived-mode dtache-log-mode nil "Dtache Log"
   "Major mode for `dtache' logs."
   (when dtache-filter-ansi-sequences
-    (dtache--ansi-color-output))
+    (ansi-color-apply-on-region (point-min) (point-max)))
   (read-only-mode t))
 
 (defvar dtache-tail-mode-map
@@ -1297,6 +1298,9 @@ If event is cased by an update to the `dtache' database, re-initialize
   (auto-revert-set-timer)
   (setq-local auto-revert-verbose nil)
   (auto-revert-tail-mode)
+  (when dtache-filter-ansi-sequences
+    (add-hook 'after-revert-hook #'dtache--ansi-color-tail nil t)
+    (ansi-color-apply-on-region (point-min) (point-max)))
   (read-only-mode t))
 
 (provide 'dtache)
