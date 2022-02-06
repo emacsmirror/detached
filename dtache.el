@@ -71,7 +71,7 @@
   :type 'string
   :group 'dtache)
 
-(defcustom dtache-shell-program "bash"
+(defcustom dtache-shell-program shell-file-namue
   "Shell to run the dtach command in."
   :type 'string
   :group 'dtache)
