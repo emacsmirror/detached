@@ -227,21 +227,22 @@ Examples of the different sources are featured in this [[https://niklaseklund.gi
 
 The package provides the following customizable variables.
 
-| Name                               | Description                                                  |
-|------------------------------------+--------------------------------------------------------------|
-| dtache-session-directory           | A host specific directory to store sessions in               |
-| dtache-db-directory                | A localhost specific directory to store the database         |
-| dtache-dtach-program               | Name or path to the =dtach= program                            |
-| dtache-shell-program               | Name or path to the =shell= that =dtache= should use             |
-| dtache-timer-configuration         | Configuration of the timer that runs on remote hosts         |
-| dtache-env                         | Name or path to the =dtache-env= script                        |
-| dtache-annotation-format           | A list of annotations that should be present in completion   |
-| dtache-max-command-length          | How many characters should be used when displaying a command |
-| dtache-tail-interval               | How often =dtache= should refresh the output when tailing      |
-| dtache-nonattachable-commands      | A list of commands that should be considered nonattachable   |
-| dtache-notification-function       | Specifies which function to issue notifications with         |
-| dtache-detach-key                  | Specifies which keybinding to use to detach from a session   |
-| dtache-shell-command-initial-input | Enables latest value in history to be used as initial input  |
+| Name                               | Description                                                            |
+|------------------------------------+------------------------------------------------------------------------|
+| dtache-session-directory           | A host specific directory to store sessions in                         |
+| dtache-db-directory                | A localhost specific directory to store the database                   |
+| dtache-dtach-program               | Name or path to the =dtach= program                                      |
+| dtache-shell-program               | Name or path to the =shell= that =dtache= should use                       |
+| dtache-timer-configuration         | Configuration of the timer that runs on remote hosts                   |
+| dtache-env                         | Name or path to the =dtache-env= script                                  |
+| dtache-annotation-format           | A list of annotations that should be present in completion             |
+| dtache-max-command-length          | How many characters should be used when displaying a command           |
+| dtache-tail-interval               | How often =dtache= should refresh the output when tailing                |
+| dtache-nonattachable-commands      | A list of commands that should be considered nonattachable             |
+| dtache-notification-function       | Specifies which function to issue notifications with                   |
+| dtache-detach-key                  | Specifies which keybinding to use to detach from a session             |
+| dtache-shell-command-initial-input | Enables latest value in history to be used as initial input            |
+| dtache-filter-ansi-sequences       | Specifies if dtache will use ansi-color to filter out escape sequences |
 
 Apart from those variables there is also the different =action= variables, which can be configured differently depending on the origin of the session.
 
@@ -371,15 +372,6 @@ The package can be integrated with [[https://github.com/bbatsov/projectile][proj
       (dtache-compile cmd use-comint-mode)))
 
   (advice-add 'projectile-run-compilation :override #'my/dtache-projectile-run-compilation)
-#+end_src
-** ANSI escape sequences
-
-The =dtache-log-mode= which is the major mode used when either =dtache-compile-session= or =dtache-view-session= is called. The hook of the mode runs the function =dtache--ansi-color-output= which removes the potential escape sequences present in the log. If you don't mind the sequences there is always the option to remove the function from the =dtache-log-mode-hook=.
-
-To get the =ansi-color= on the output when being attached to a session with =dtache-compile= add the following hook to your configuration.
-
-#+begin_src elisp
-  (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter)
 #+end_src
 
 * Versions

@@ -118,6 +118,8 @@ Optionally EDIT-COMMAND."
   (when dtache-enabled
     (setq dtache--buffer-session dtache--current-session)
     (dtache-compile--replace-modesetter)
+    (when dtache-filter-ansi-sequences
+      (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter 0 t))
     (add-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter 0 t)
     (add-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter 0 t)))
 

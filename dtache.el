@@ -135,7 +135,12 @@ If set to a non nil value the latest entry to
   :type 'string
   :group 'dtache)
 
-(defcustom dtache-log-mode-hook '(dtache--ansi-color-output)
+(defcustom dtache-filter-ansi-sequences t
+  "Variable to instruct `dtache' to use `ansi-filter'."
+  :type 'bool
+  :group 'dtache)
+
+(defcustom dtache-log-mode-hook '()
   "Hook for customizing `dtache-log' mode."
   :type 'hook
   :group 'dtache)
@@ -1270,7 +1275,10 @@ If event is cased by an update to the `dtache' database, re-initialize
 
 ;;;###autoload
 (define-derived-mode dtache-log-mode nil "Dtache Log"
-  "Major mode for `dtache' logs.")
+  "Major mode for `dtache' logs."
+  (when dtache-filter-ansi-sequences
+    (dtache--ansi-color-output))
+  (read-only-mode t))
 
 (defvar dtache-tail-mode-map
   (let ((map (make-sparse-keymap)))
@@ -1280,7 +1288,7 @@ If event is cased by an update to the `dtache' database, re-initialize
 
 ;;;###autoload
 (define-derived-mode dtache-tail-mode auto-revert-tail-mode "Dtache Tail"
-  "Major mode for tailing dtache logs."
+  "Major mode to tail `dtache' logs."
   (setq-local auto-revert-interval dtache-tail-interval)
   (setq-local tramp-verbose 1)
   (setq-local auto-revert-remote-files t)
