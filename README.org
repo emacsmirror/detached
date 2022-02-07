@@ -396,7 +396,7 @@ The package can be integrated with the [[https://github.com/akermu/emacs-libvter
       (let* ((input (car kill-ring))
              (dtache-session-mode
               (if detach 'create 'create-and-attach)))
-        (vterm-insert (dtache-dtach-command input t))
+        (process-send-string vterm--process (dtache-dtach-command input t))
         (vterm-send-C-e)
         (vterm-send-return)))
 
@@ -412,7 +412,7 @@ The package can be integrated with the [[https://github.com/akermu/emacs-libvter
                              (seq-filter (lambda (it) (eq 'active (dtache--determine-session-state it)))))))
           (dtache-completing-read sessions))))
       (let ((dtache-session-mode 'attach))
-        (vterm-insert (dtache-dtach-command session t))
+        (process-send-string vterm--process (dtache-dtach-command session t))
         (vterm-send-return)))
 
     (defun dtache-vterm-detach ()
