@@ -391,7 +391,7 @@ The package can be integrated with the [[https://github.com/akermu/emacs-libvter
       "Create a `dtache' session."
       (interactive)
       (vterm-send-C-a)
-      (let* ((input (buffer-substring (point) (vterm-end-of-line)))
+      (let* ((input (buffer-substring-no-properties (point) (vterm-end-of-line)))
              (dtache-session-origin 'vterm)
              (dtache-session-action
               '(:attach dtache-shell-command-attach-session
