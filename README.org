@@ -435,7 +435,7 @@ The package is part of [[https://elpa.gnu.org/][ELPA]] which means that if you w
 
 * Credits
 
-I got inspired when reading about =Ambrevar's= pursuits on [[https://ambrevar.xyz/emacs-eshell/][using eshell as his main shell]]. I discovered his [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]] which got me into the idea of using =dtach= as a base for detached shell commands.
+I got inspired when reading =Ambrevar's= [[https://www.reddit.com/r/emacs/comments/6y3q4k/yes_eshell_is_my_main_shell/][yes eshell is my main shell]]. I discovered his [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]] which got me into the idea of using =dtach= as a base for detached shell commands.
 
 [[https://gitlab.com/ntdef][Troy de Freitas]] for solving the problem of getting =dtache= to work with =filenotify= on macOS.
 
