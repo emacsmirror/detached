@@ -391,11 +391,15 @@ The package can be integrated with the [[https://github.com/akermu/emacs-libvter
       "Create a `dtache' session."
       (interactive)
       (vterm-send-C-a)
-      (kill-ring-save (point) (vterm-end-of-line))
-      (vterm-send-C-k)
-      (let* ((input (car kill-ring))
+      (let* ((input (buffer-substring (point) (vterm-end-of-line)))
+             (dtache-session-origin 'vterm)
+             (dtache-session-action
+              '(:attach dtache-shell-command-attach-session
+                        :view dtache-view-dwim
+                        :run dtache-shell-command))
              (dtache-session-mode
               (if detach 'create 'create-and-attach)))
+        (vterm-send-C-k)
         (process-send-string vterm--process (dtache-dtach-command input t))
         (vterm-send-C-e)
         (vterm-send-return)))
@@ -418,7 +422,7 @@ The package can be integrated with the [[https://github.com/akermu/emacs-libvter
     (defun dtache-vterm-detach ()
       "Detach from a `dtache' session."
       (interactive)
-      (vterm-send-key "\\" nil nil t)))
+      (process-send-string vterm--process dtache--dtach-detach-character)))
 #+end_src
 
 * Versions
