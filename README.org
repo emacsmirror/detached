@@ -374,6 +374,53 @@ The package can be integrated with [[https://github.com/bbatsov/projectile][proj
   (advice-add 'projectile-run-compilation :override #'my/dtache-projectile-run-compilation)
 #+end_src
 
+*** Vterm
+
+The package can be integrated with the [[https://github.com/akermu/emacs-libvterm][vterm]] package. This is for users that want =dtache= to run in a terminal emulator.
+
+#+begin_src elisp :lexical t :results none
+  (use-package vterm
+    :defer t
+    :bind (:map vterm-mode-map
+                ("<S-return>" . #'dtache-vterm-send-input)
+                ("<C-return>" . #'dtache-vterm-attach)
+                ("C-c C-d" . #'dtache-vterm-detach))
+    :config
+
+    (defun dtache-vterm-send-input (&optional detach)
+      "Create a `dtache' session."
+      (interactive)
+      (vterm-send-C-a)
+      (kill-ring-save (point) (vterm-end-of-line))
+      (vterm-send-C-k)
+      (let* ((input (car kill-ring))
+             (dtache-session-mode
+              (if detach 'create 'create-and-attach)))
+        (vterm-insert (dtache-dtach-command input t))
+        (vterm-send-C-e)
+        (vterm-send-return)))
+
+    (defun dtache-vterm-attach (session)
+      "Attach to an active `dtache' session."
+      (interactive
+       (list
+        (let* ((host-name (car (dtache--host)))
+               (sessions
+                (thread-last (dtache-get-sessions)
+                             (seq-filter (lambda (it)
+                                           (string= (car (dtache--session-host it)) host-name)))
+                             (seq-filter (lambda (it) (eq 'active (dtache--determine-session-state it)))))))
+          (dtache-completing-read sessions))))
+      (let ((dtache-session-mode 'attach))
+        (vterm-insert (dtache-dtach-command session t))
+        (vterm-send-return)))
+
+    (defun dtache-vterm-detach ()
+      "Detach from a `dtache' session."
+      (interactive)
+      (vterm-send-key "\\" nil nil t)))
+#+end_src
+
 * Versions
 
 Information about larger changes that has been made between versions can be found in the =CHANGELOG.org=
