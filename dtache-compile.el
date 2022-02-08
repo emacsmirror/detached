@@ -28,6 +28,8 @@
 (require 'compile)
 (require 'dtache)
 
+(declare-function ansi-color-compilation-filter "ansi-color")
+
 ;;;; Variables
 
 (defcustom dtache-compile-session-action
