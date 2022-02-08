@@ -425,6 +425,22 @@ The package can be integrated with the [[https://github.com/akermu/emacs-libvter
       (process-send-string vterm--process dtache--dtach-detach-character)))
 #+end_src
 
+*** Dired-rsync
+
+The [[https://github.com/stsquad/dired-rsync][dired-rsync]] is a package to run rsync commands from within =dired=. Its a perfect package to integrate with =dtache= since it typically requires some time to run and you don't want to have your Emacs limited by that process.
+
+#+begin_src elisp
+  (defun my/dtache-dired-rsync (command _details)
+    "Run COMMAND with `dtache'."
+    (let ((dtache-local-session t)
+          (dtache-session-origin 'rsync))
+      (dtache-start-session command t)))
+
+  (advice-add #'dired-rsync--do-run :override #'my/dtache-dired-rsync)
+#+end_src
+
+The above code block shows how to make =dired-rsync= use =dtache=.
+
 * Versions
 
 Information about larger changes that has been made between versions can be found in the =CHANGELOG.org=
