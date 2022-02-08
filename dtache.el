@@ -157,6 +157,8 @@ Valid values are: create, new and attach")
   "A property list of actions for a session.")
 (defvar dtache-shell-command-history nil
   "History of commands run with `dtache-shell-command'.")
+(defvar dtache-local-session nil
+  "If set to t enforces a local session.")
 
 (defvar dtache-compile-session-hooks nil
   "Hooks to run when compiling a session.")
@@ -269,6 +271,17 @@ This version is encoded as [package-version].[revision].")
   (status nil)
   (size nil)
   (state nil))
+
+;;;; Macros
+
+(defmacro dtache-connection-local-variables (&rest body)
+  "A macro that conditionally use `connection-local-variables' when executing BODY."
+  `(if dtache-local-session
+       (progn
+         ,@body)
+     (with-connection-local-variables
+      (progn
+        ,@body))))
 
 ;;;; Commands
 
@@ -545,7 +558,7 @@ nil before closing."
 
 (defun dtache-create-session (command)
   "Create a `dtache' session from COMMAND."
-  (with-connection-local-variables
+  (dtache-connection-local-variables
    (dtache--create-session-directory)
    (let ((session
           (dtache--session-create :id (intern (dtache--create-id command))
@@ -557,7 +570,8 @@ nil before closing."
                                   :time `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0)
                                   :status '(unknown . 0)
                                   :size 0
-                                  :directory (concat (file-remote-p default-directory) dtache-session-directory)
+                                  :directory (if dtache-local-session dtache-session-directory
+                                               (concat (file-remote-p default-directory) dtache-session-directory))
                                   :host (dtache--host)
                                   :metadata (dtache-metadata)
                                   :state 'unknown)))
@@ -580,8 +594,11 @@ Optionally SUPPRESS-OUTPUT."
                        (not (dtache--session-attachable dtache--current-session)))))
              (dtache-session-mode 'create))
         (progn (setq dtache-enabled nil)
-               (apply #'start-file-process-shell-command
-                      `("dtache" nil ,(dtache-dtach-command dtache--current-session t))))
+               (if dtache-local-session
+                   (apply #'start-process-shell-command
+                          `("dtache" nil ,(dtache-dtach-command dtache--current-session t)))
+                 (apply #'start-file-process-shell-command
+                        `("dtache" nil ,(dtache-dtach-command dtache--current-session t)))))
       (cl-letf* ((dtache-session-mode 'create-and-attach)
                  ((symbol-function #'set-process-sentinel) #'ignore)
                  (buffer (get-buffer-create dtache--shell-command-buffer)))
@@ -760,7 +777,7 @@ Optionally CONCAT the command return command into a string."
   "Return dtach command for SESSION.
 
 Optionally CONCAT the command return command into a string."
-  (with-connection-local-variables
+  (dtache-connection-local-variables
    (let* ((dtache-session-mode (cond ((eq dtache-session-mode 'attach) 'attach)
                                      ((not (dtache--session-attachable session)) 'create)
                                      (t dtache-session-mode)))
@@ -965,7 +982,7 @@ Optionally make the path LOCAL to host."
       (make-directory directory t))))
 
 (defun dtache--get-working-directory ()
-  "Return an abreviated working directory path."
+  "Return an abbreviated working directory path."
   (if-let (remote (file-remote-p default-directory))
       (replace-regexp-in-string  (expand-file-name remote)
                                  (concat remote "~/")
