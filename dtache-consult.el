@@ -34,6 +34,11 @@
 
 ;;;; Variables
 
+(defcustom dtache-consult-hidden-predicates nil
+  "Predicates for sessions that should be hidden."
+  :type '(repeat function)
+  :group 'dtache)
+
 (defcustom dtache-consult-sources
   '(dtache-consult--source-session
     dtache-consult--source-active-session
@@ -55,8 +60,31 @@ See `consult-multi' for a description of the source values."
     :action (lambda (x) (dtache-open-session (dtache--decode-session x)))
     :items
     ,(lambda ()
-       (seq-map #'car (dtache-session-candidates (dtache-get-sessions)))))
+       (mapcar #'car
+               (seq-remove
+                (lambda (x)
+                  (seq-find (lambda (predicate)
+                              (apply predicate `(,(cdr x))))
+                         dtache-consult-hidden-predicates))
+                (dtache-session-candidates (dtache-get-sessions))))))
   "All `dtache' sessions as a source for `consult'.")
+
+(defvar dtache-consult--source-hidden-session
+  `(:narrow (?\s . "Hidden")
+    :hidden t
+    :category dtache
+    :annotate dtache-session-annotation
+    :action (lambda (x) (dtache-open-session (dtache--decode-session x)))
+    :items
+    ,(lambda ()
+       (mapcar #'car
+               (seq-filter
+                (lambda (x)
+                  (seq-find (lambda (predicate)
+                              (apply predicate `(,(cdr x))))
+                         dtache-consult-hidden-predicates))
+                (dtache-session-candidates (dtache-get-sessions))))))
+  "Active `dtache' sessions as a source for `consult'.")
 
 (defvar dtache-consult--source-active-session
   `(:narrow (?a . "Active")
