@@ -318,6 +318,7 @@ Next add the annotation function to the =dtache-metadata-annotators-alist= toget
 #+end_src
 
 ** Nonattachable commands
+
 To be able to both attach to a dtach session as well as logging its output =dtache= relies on the usage of =tee=. However it is possible that the user tries to run a command which involves a program that doesn't integrate well with tee. In those situations the output could be delayed until the session ends, which is not preferable.
 
 For these situations =dtache= provides the =dtache-nonattachable-commands= variable. This is a list of regular expressions. Any command that matches any of the strings will be getting the property =attachable= set to false.
@@ -369,7 +370,8 @@ The package can be integrated with [[https://github.com/bbatsov/projectile][proj
     "If CMD is a string execute it with `dtache-compile', optionally USE-COMINT-MODE."
     (if (functionp cmd)
         (funcall cmd)
-      (dtache-compile cmd use-comint-mode)))
+      (let ((dtache-session-origin 'projectile))
+        (dtache-compile cmd use-comint-mode))))
 
   (advice-add 'projectile-run-compilation :override #'my/dtache-projectile-run-compilation)
 #+end_src
@@ -427,7 +429,7 @@ The package can be integrated with the [[https://github.com/akermu/emacs-libvter
 
 *** Dired-rsync
 
-The [[https://github.com/stsquad/dired-rsync][dired-rsync]] is a package to run rsync commands from within =dired=. Its a perfect package to integrate with =dtache= since it typically requires some time to run and you don't want to have your Emacs limited by that process.
+The [[https://github.com/stsquad/dired-rsync][dired-rsync]] is a package to run [[https://linux.die.net/man/1/rsync][rsync]] commands from within =dired=. Its a perfect package to integrate with =dtache= since it typically requires some time to run and you don't want to have your Emacs limited by that process.
 
 #+begin_src elisp
   (defun my/dtache-dired-rsync (command _details)
