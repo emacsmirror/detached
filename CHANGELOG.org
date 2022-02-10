@@ -4,6 +4,7 @@
 
 * Development
 
+- Example configuration for =dtache= integration with =vterm= added.
 - The package now uses =ansi-color= to handle ANSI escape sequences. This feature is enabled by default but can be turned of if =dtache-filter-ansi-sequences= is set to nil.
 
 * Version 0.5 (2022-02-02)
