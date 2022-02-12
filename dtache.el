@@ -71,8 +71,8 @@
   :type 'string
   :group 'dtache)
 
-(defcustom dtache-shell-program shell-file-namue
-  "Shell to run the dtach command in."
+(defcustom dtache-shell-program shell-file-name
+  "Path to the shell to run the dtach command in."
   :type 'string
   :group 'dtache)
 
@@ -1094,6 +1094,12 @@ Optionally make the path LOCAL to host."
 
 If SESSION is nonattachable fallback to a command that doesn't rely on tee."
   (let* ((log (dtache--session-file session 'log t))
+         (begin-shell-group (if (string= "fish" (file-name-nondirectory dtache-shell-program))
+                                "begin;"
+                              "{"))
+         (end-shell-group (if (or (string= "fish" (file-name-nondirectory dtache-shell-program)))
+                              "end"
+                            "}"))
          (redirect
           (if (dtache--session-attachable session)
               (format "2>&1 | tee %s" log)
@@ -1102,7 +1108,7 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
          (command
           (shell-quote-argument
            (dtache--session-command session))))
-    (format "{ %s %s; } %s" env command redirect)))
+    (format "%s %s %s; %s %s" begin-shell-group env command end-shell-group redirect)))
 
 (defun dtache--host ()
   "Return a cons with (host . type)."
