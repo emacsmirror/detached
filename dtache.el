@@ -77,6 +77,16 @@
   :type 'string
   :group 'dtache)
 
+(defcustom dtache-show-output-on-attach nil
+  "If set to t show the session output when attaching to it."
+  :type 'bool
+  :group 'dtache)
+
+(defcustom dtache-show-output-command (executable-find "cat")
+  "The command to be run to show a sessions output."
+  :type 'string
+  :group 'dtache)
+
 (defcustom dtache-env nil
   "The name of, or path to, the `dtache' environment script."
   :type 'string
@@ -357,7 +367,7 @@ The session is compiled by opening its output and enabling
          current-prefix-arg))
   (when (dtache-valid-session session)
     (let* ((default-directory
-             (dtache--session-working-directory session))
+            (dtache--session-working-directory session))
            (dtache-session-action (dtache--session-action session))
            (command (dtache--session-command session)))
       (if suppress-output
@@ -783,17 +793,23 @@ Optionally CONCAT the command return command into a string."
                                      ((not (dtache--session-attachable session)) 'create)
                                      (t dtache-session-mode)))
           (socket (dtache--session-file session 'socket t))
+          (log (dtache--session-file session 'log t))
           (dtach-arg (dtache--dtach-arg)))
      (setq dtache--buffer-session session)
      (if (eq dtache-session-mode 'attach)
          (if concat
              (mapconcat #'identity
-                        `(,dtache-dtach-program
+                        `(,(when dtache-show-output-on-attach
+                             (concat dtache-show-output-command " " log ";"))
+                          ,dtache-dtach-program
                           ,dtach-arg
                           ,socket
                           "-r none")
                         " ")
-           `(,dtach-arg ,socket "-r" "none"))
+           (append
+            (when dtache-show-output-on-attach
+              `(,dtache-show-output-command  ,(concat log ";")))
+            `(,dtach-arg ,socket "-r" "none")))
        (if concat
            (mapconcat #'identity
                       `(,dtache-dtach-program

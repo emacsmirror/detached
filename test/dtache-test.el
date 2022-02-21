@@ -71,6 +71,8 @@
               (dtache-env "dtache-env")
               (dtache-shell-program "bash")
               (session (dtache-create-session "ls -la"))
+              (dtache-show-output-on-attach t)
+              (dtache-show-output-command "/bin/cat")
               ((symbol-function #'dtache-create-session)
                (lambda (_)
                  session)))
@@ -90,8 +92,12 @@
        (should (equal expected (dtache-dtach-command session)))
        (should (equal expected-concat (dtache-dtach-command session t))))
      (let* ((dtache-session-mode 'attach)
-            (expected `("-a" ,(dtache--session-file session 'socket t) "-r" "none"))
-            (expected-concat (format "%s -a %s -r none"
+            (expected `("-a" ,(dtache--session-file session 'socket t) "-r" "none"
+                        ,dtache-show-output-command
+                        ,(format "%s;" (dtache--session-file session 'log t))))
+            (expected-concat (format "%s %s; %s -a %s -r none"
+                                     dtache-show-output-command
+                                     (dtache--session-file session 'log t)
                                      dtache-dtach-program
                                      (dtache--session-file session 'socket t))))
        (should (equal expected (dtache-dtach-command session)))
