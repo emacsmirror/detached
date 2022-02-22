@@ -45,6 +45,7 @@
 
 (require 'ansi-color)
 (require 'autorevert)
+(require 'comint)
 (require 'notifications)
 (require 'filenotify)
 (require 'simple)
@@ -1302,6 +1303,8 @@ If event is cased by an update to the `dtache' database, re-initialize
 (define-derived-mode dtache-log-mode nil "Dtache Log"
   "Major mode for `dtache' logs."
   (when dtache-filter-ansi-sequences
+    (comint-carriage-motion (point-min) (point-max))
+    (set-buffer-modified-p nil)
     (ansi-color-apply-on-region (point-min) (point-max)))
   (read-only-mode t))
 
@@ -1323,6 +1326,8 @@ If event is cased by an update to the `dtache' database, re-initialize
   (setq-local auto-revert-verbose nil)
   (auto-revert-tail-mode)
   (when dtache-filter-ansi-sequences
+    (comint-carriage-motion (point-min) (point-max))
+    (set-buffer-modified-p nil)
     (add-hook 'after-revert-hook #'dtache--ansi-color-tail nil t)
     (ansi-color-apply-on-region (point-min) (point-max)))
   (read-only-mode t))
