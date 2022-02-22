@@ -451,6 +451,32 @@ The [[https://github.com/stsquad/dired-rsync][dired-rsync]] is a package to run 
 
 The above code block shows how to make =dired-rsync= use =dtache=.
 
+*** Enable more colors in output
+
+Many programs such as =git= or =grep= don't show colors in dtache unless they are forced to. This is because these commands only use colors and ansi sequences if they are being run in a terminal as opposed to a pipe. This lets you get color output when you are running these programs interactively while still getting readable output when you are piping them or redirecting them to a logfile. =Dtache= does not run programs in interactive terminal, though, so these commands turn off their colors even though =dtache= supports ansi colors and some rudimentary escape sequences. We can make programs default to having color output in =dtache= by modifying the =dtache-env= program to use the =script= command to make programs run in =dtache= think they are inside of a full-featured terminal.
+
+*WARNING:* =Dtache= only supports a few basic escape sequences, so this fix /will/ mess up the output for some commands.
+
+First, put the following script into an executable file:
+
+#+begin_src sh :results none
+#!/usr/bin/env bash
+
+dtache_command="$*"
+
+if eval script --quiet -f -e -c "\"$dtache_command\"" /dev/null; then
+    echo -e "\nDtache session finished"
+else
+    echo -e "\nDtache session exited abnormally with code $?"
+fi
+#+end_src
+
+Then, add the following to your =init.el=
+
+#+begin_src elisp :lexical t :results none
+  (setq dtache-env "/path/to/file")
+#+end_src
+
 * Versions
 
 Information about larger changes that has been made between versions can be found in the =CHANGELOG.org=
