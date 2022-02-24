@@ -789,18 +789,19 @@ Optionally CONCAT the command return command into a string."
              (mapconcat #'identity
                         `(,dtache-dtach-program
                           ,dtach-arg
-                          ,socket)
+                          ,socket
+                          "-r none")
                         " ")
-           `(,dtach-arg ,socket))
+           `(,dtach-arg ,socket "-r none"))
        (if concat
            (mapconcat #'identity
                       `(,dtache-dtach-program
                         ,dtach-arg
-                        ,socket "-z"
+                        ,socket "-z" "-r none"
                         ,dtache-shell-program "-c"
                         ,(shell-quote-argument (dtache--dtache-command session)))
                       " ")
-         `(,dtach-arg ,socket "-z"
+         `(,dtach-arg ,socket "-z" "-r none"
                       ,dtache-shell-program "-c"
                       ,(dtache--dtache-command session)))))))
 
