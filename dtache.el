@@ -797,11 +797,11 @@ Optionally CONCAT the command return command into a string."
            (mapconcat #'identity
                       `(,dtache-dtach-program
                         ,dtach-arg
-                        ,socket "-z" "-r none"
+                        ,socket "-z"
                         ,dtache-shell-program "-c"
                         ,(shell-quote-argument (dtache--dtache-command session)))
                       " ")
-         `(,dtach-arg ,socket "-z" "-r none"
+         `(,dtach-arg ,socket "-z"
                       ,dtache-shell-program "-c"
                       ,(dtache--dtache-command session)))))))
 
