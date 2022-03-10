@@ -430,6 +430,23 @@ The package can be integrated with the [vterm](https://github.com/akermu/emacs-l
     (process-send-string vterm--process dtache--dtach-detach-character)))
 ```
 
+### Dired
+
+Dtache can be used to run async commands in `dired`, with all of dired's special features for inserting filenames an working with marked files.
+
+``` emacs-lisp
+(defun my/dtache-dired-do-shell-command (dired-do-shell-command &rest args)
+  "Make sure `dtache' is used before running DIRED-DO-SHELL-COMMAND with ARGS."
+  (cl-letf* ((dtache-session-origin 'dired)
+             ((symbol-function #'dired-run-shell-command)
+              (lambda (command)
+                (dtache-start-session command)
+                nil)))
+    (apply dired-do-shell-command args)))
+
+(advice-add 'dired-do-shell-command :around #'my/dtache-dired-do-shell-command)
+```
+
 ### Dired-rsync
 
 The [dired-rsync](https://github.com/stsquad/dired-rsync) is a package to run [rsync](https://linux.die.net/man/1/rsync) commands from within `dired`. Its a perfect package to integrate with `dtache` since it typically requires some time to run and you don't want to have your Emacs limited by that process.
