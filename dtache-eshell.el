@@ -28,6 +28,7 @@
 (require 'dtache)
 (require 'eshell)
 (require 'esh-mode)
+(require 'esh-ext)
 (require 'em-hist)
 
 ;;;; Variables
@@ -57,6 +58,13 @@
   (when-let* ((process (and eshell-process-list (caar eshell-process-list))))
     (and (string= (process-name process) "dtach")
          process)))
+
+;;;###autoload
+(defun dtache-eshell-setup ()
+  "Setup `dtache-eshell'."
+  (dtache-setup)
+  (add-hook 'eshell-mode-hook #'dtache-eshell-mode)
+  (advice-add #'eshell-external-command :around #'dtache-eshell--external-command))
 
 ;;;; Commands
 
@@ -98,19 +106,19 @@ If prefix-argument directly DETACH from the session."
 
 ;;;; Support functions
 
-(defun dtache-eshell--maybe-create-session ()
-  "Create a session if `dtache-eshell-command' value is t."
-  (when dtache-enabled
-    (let* ((dtache-session-action dtache-eshell-session-action)
-           (command (mapconcat #'identity
-                               `(,eshell-last-command-name
-                                 ,@eshell-last-arguments)
-                               " "))
-           (session (dtache-create-session command)))
-      (setq eshell-last-arguments (dtache-dtach-command session))
-      (setq dtache--buffer-session session)
-      (setq dtache-enabled nil)
-      (setq eshell-last-command-name "dtach"))))
+(defun dtache-eshell--external-command (orig-fun &rest args)
+  "Advice `eshell-external-command' to optionally use `dtache'."
+  (if dtache-enabled
+      (let* ((dtache-session-action dtache-eshell-session-action)
+             (command (string-trim-right
+                       (mapconcat #'identity
+                                  (flatten-list args)
+                                  " ")))
+             (session (dtache-create-session command)))
+        (setq dtache--buffer-session session)
+        (setq dtache-enabled nil)
+        (apply orig-fun `(,dtache-dtach-program ,(dtache-dtach-command session))))
+    (apply orig-fun args)))
 
 ;;;; Minor mode
 
@@ -132,10 +140,8 @@ If prefix-argument directly DETACH from the session."
   (if dtache-eshell-mode
       (progn
         (dtache-setup)
-        (add-hook 'eshell-prepare-command-hook #'dtache-eshell--maybe-create-session)
         (add-hook 'eshell-preoutput-filter-functions #'dtache--dtache-env-message-filter)
         (add-hook 'eshell-preoutput-filter-functions #'dtache--dtach-eof-message-filter))
-    (remove-hook 'eshell-prepare-command-hook #'dtache-eshell--maybe-create-session)
     (remove-hook 'eshell-preoutput-filter-functions #'dtache--dtache-env-message-filter)
     (remove-hook 'eshell-preoutput-filter-functions #'dtache--dtach-eof-message-filter)))
 

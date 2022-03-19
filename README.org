@@ -149,7 +149,9 @@ A =use-package= configuration of the =dtache-eshell= extension, which provides t
 
 #+begin_src elisp :lexical t :results none
   (use-package dtache-eshell
-    :hook (eshell-mode . dtache-eshell-mode))
+    :after (eshell dtache)
+    :config
+    (dtache-eshell-setup))
 #+end_src
 
 A minor mode named =dtache-eshell-mode= is provided, and will be enabled in =eshell=. The commands that are implemented are:
