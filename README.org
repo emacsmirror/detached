@@ -457,10 +457,18 @@ The =dtache= package should work on =Linux= and =macOS=. It is regularly tested 
 
 The package is part of [[https://elpa.gnu.org/][ELPA]] which means that if you want to contribute you must have a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Copyright-Assignment.html][copyright assignment]].
 
-* Credits
+* Acknowledgments
 
-I got inspired when reading =Ambrevar's= [[https://www.reddit.com/r/emacs/comments/6y3q4k/yes_eshell_is_my_main_shell/][yes eshell is my main shell]]. I discovered his [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]] which got me into the idea of using =dtach= as a base for detached shell commands.
+This package wouldn't have been were it is today without these contributors.
 
-[[https://gitlab.com/ntdef][Troy de Freitas]] for solving the problem of getting =dtache= to work with =filenotify= on macOS.
+** Code contributors
 
-[[https://gitlab.com/minad][Daniel Mendler]] for helping out in improving =dtache=, among other things integration with other packages such as =embark= and =consult=.
+- [[https://gitlab.com/rosetail][rosetail]]
+
+** Idea contributors
+
+- [[https://gitlab.com/ntdef][Troy de Freitas]] for solving the problem of getting =dtache= to work with =filenotify= on macOS.
+
+- [[https://gitlab.com/minad][Daniel Mendler]] for helping out in improving =dtache=, among other things integration with other packages such as =embark= and =consult=.
+
+- [[https://gitlab.com/ambrevar][Ambrevar]] who indirectly contributed by inspiring me with his =[[https://www.reddit.com/r/emacs/comments/6y3q4k/yes_eshell_is_my_main_shell/][yes eshell is my main shell]]. It was through that I discovered his [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]] which got me into the idea of using =dtach= as a base for detached shell commands.
