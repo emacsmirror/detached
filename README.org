@@ -1,6 +1,7 @@
 #+title: dtache.el - Detach Emacs
 #+author: Niklas Eklund
 #+language: en
+#+OPTIONS: toc:nil
 
 #+html: <a href="http://elpa.gnu.org/packages/dtache.html"><img alt="GNU ELPA" src="https://elpa.gnu.org/packages/dtache.svg"/></a>
 #+html: <a href="http://elpa.gnu.org/devel/dtache.html"><img alt="GNU-devel ELPA" src="https://elpa.gnu.org/devel/dtache.svg"/></a>
