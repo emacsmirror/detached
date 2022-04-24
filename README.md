@@ -6,6 +6,8 @@
 
 <a href="https://stable.melpa.org/#/dtache"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/dtache-badge.svg"/></a>
 
+<a href="https://builds.sr.ht/~niklaseklund/dtache/commits/main/.build.yml"><img alt="Build" src="https://builds.sr.ht/~niklaseklund/dtache/commits/main/.build.yml.svg"/></a>
+
 
 # Introduction
 
