@@ -792,7 +792,7 @@ Optionally CONCAT the command return command into a string."
                           ,socket
                           "-r none")
                         " ")
-           `(,dtach-arg ,socket "-r none"))
+           `(,dtach-arg ,socket "-r" "none"))
        (if concat
            (mapconcat #'identity
                       `(,dtache-dtach-program

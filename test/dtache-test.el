@@ -90,8 +90,8 @@
        (should (equal expected (dtache-dtach-command session)))
        (should (equal expected-concat (dtache-dtach-command session t))))
      (let* ((dtache-session-mode 'attach)
-            (expected `("-a" ,(dtache--session-file session 'socket t)))
-            (expected-concat (format "%s -a %s"
+            (expected `("-a" ,(dtache--session-file session 'socket t) "-r" "none"))
+            (expected-concat (format "%s -a %s -r none"
                                      dtache-dtach-program
                                      (dtache--session-file session 'socket t))))
        (should (equal expected (dtache-dtach-command session)))

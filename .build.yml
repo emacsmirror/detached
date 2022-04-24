@@ -7,5 +7,4 @@ environment:
 tasks:
 - guix: |
     cd $project
-    guix pull
     guix build --file=guix.scm
