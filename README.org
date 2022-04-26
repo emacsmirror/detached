@@ -7,6 +7,10 @@
 #+html: <a href="https://melpa.org/#/dtache"><img alt="MELPA" src="https://melpa.org/packages/dtache-badge.svg"/></a>
 #+html: <a href="https://stable.melpa.org/#/dtache"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/dtache-badge.svg"/></a>
 
+* Announcement
+
+The development of the project has been migrated to =sourcehut=, it can now be found at [[https://git.sr.ht/~niklaseklund/dtache][https://git.sr.ht/~niklaseklund/dtache]].
+
 * Introduction
   :properties:
   :description: Why Dtache?
