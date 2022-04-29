@@ -1,13 +1,9 @@
 # Detach Emacs
 
 <a href="http://elpa.gnu.org/packages/dtache.html"><img alt="GNU ELPA" src="https://elpa.gnu.org/packages/dtache.svg"/></a>
-
 <a href="http://elpa.gnu.org/devel/dtache.html"><img alt="GNU-devel ELPA" src="https://elpa.gnu.org/devel/dtache.svg"/></a>
-
 <a href="https://melpa.org/#/dtache"><img alt="MELPA" src="https://melpa.org/packages/dtache-badge.svg"/></a>
-
 <a href="https://stable.melpa.org/#/dtache"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/dtache-badge.svg"/></a>
-
 <a href="https://builds.sr.ht/~niklaseklund/dtache/commits/main/.build.yml"><img alt="Build" src="https://builds.sr.ht/~niklaseklund/dtache/commits/main/.build.yml.svg"/></a>
 
 # Introduction
@@ -77,58 +73,14 @@ A minimal configuration for `dtache`.
 
 There are tree different ways to create a dtache session.
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
-
-
-<colgroup>
-<col  class="org-left" />
-
-<col  class="org-left" />
-</colgroup>
-<thead>
-<tr>
-<th scope="col" class="org-left">Function</th>
-<th scope="col" class="org-left">Description</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td class="org-left"><code>dtache-shell-command</code></td>
-<td class="org-left">Called from M-x</td>
-</tr>
-
-
-<tr>
-<td class="org-left"><code>dtache-shell-send-input</code></td>
-<td class="org-left">Called from inside M-x shell</td>
-</tr>
-
-
-<tr>
-<td class="org-left"><code>dtache-eshell-send-input</code></td>
-<td class="org-left">Called from inside eshell</td>
-</tr>
-
-
-<tr>
-<td class="org-left"><code>dtache-compile</code></td>
-<td class="org-left">Called from M-x</td>
-</tr>
-
-
-<tr>
-<td class="org-left"><code>dtache-org</code></td>
-<td class="org-left">Used in org-babel src blocks</td>
-</tr>
-
-
-<tr>
-<td class="org-left"><code>dtache-start-session</code></td>
-<td class="org-left">Called from within a function</td>
-</tr>
-</tbody>
-</table>
+| Function                   | Description                   |
+|----------------------------|-------------------------------|
+| `dtache-shell-command`     | Called from M-x               |
+| `dtache-shell-send-input`  | Called from inside M-x shell  |
+| `dtache-eshell-send-input` | Called from inside eshell     |
+| `dtache-compile`           | Called from M-x               |
+| `dtache-org`               | Used in org-babel src blocks  |
+| `dtache-start-session`     | Called from within a function |
 
 The `dtache-shell-command` is for the Emacs users that are accustomed to running shell commands from `M-x shell-command` or `M-x async-shell-command`. The `dtache-shell-send-input` is for those that want to run a command through `dtache` when inside a `shell` buffer. The `dtache-eshell-send-input` is the equivalent for `eshell`. The `dtache-compile` is supposed to be used as a replacement for `compile`. The `dtache-org` provides integration with `org-babel` in order to execute shell source code blocks with `dtache`. Last there is the `dtache-start-session` function, which users can utilize in their own custom commands.
 
@@ -145,88 +97,19 @@ The actions are controlled by the customizable variables named `dtache-.*-sessio
     
 The package also provides additional commands to interact with a session.
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
-
-
-<colgroup>
-<col  class="org-left" />
-
-<col  class="org-left" />
-</colgroup>
-<thead>
-<tr>
-<th scope="col" class="org-left">Command (Keybinding)</th>
-<th scope="col" class="org-left">Description</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td class="org-left">dtache-view-session (v)</td>
-<td class="org-left">View a session's output</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-attach-session (a)</td>
-<td class="org-left">Attach to a session</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-tail-session  (t)</td>
-<td class="org-left">Tail the output of an active session</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-diff-session (=)</td>
-<td class="org-left">Diff a session with another session</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-compile-session (c)</td>
-<td class="org-left">Open the session output in compilation mode</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-rerun-session (r)</td>
-<td class="org-left">Rerun a session</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-insert-session-command (i)</td>
-<td class="org-left">Insert the session's command at point</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-copy-session-command (w)</td>
-<td class="org-left">Copy the session's shell command</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-copy-session (W)</td>
-<td class="org-left">Copy the session's output</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-kill-session (k)</td>
-<td class="org-left">Kill an active session</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-delete-session (d)</td>
-<td class="org-left">Delete an inactive session</td>
-</tr>
-</tbody>
-</table>
+| Command (Keybinding)              | Description                                 |
+|-----------------------------------|---------------------------------------------|
+| dtache-view-session (v)           | View a session's output                     |
+| dtache-attach-session (a)         | Attach to a session                         |
+| dtache-tail-session  (t)          | Tail the output of an active session        |
+| dtache-diff-session (=)           | Diff a session with another session         |
+| dtache-compile-session (c)        | Open the session output in compilation mode |
+| dtache-rerun-session (r)          | Rerun a session                             |
+| dtache-insert-session-command (i) | Insert the session's command at point       |
+| dtache-copy-session-command (w)   | Copy the session's shell command            |
+| dtache-copy-session (W)           | Copy the session's output                   |
+| dtache-kill-session (k)           | Kill an active session                      |
+| dtache-delete-session (d)         | Delete an inactive session                  |
 
 These commands are available through the `dtache-action-map`. The user can bind the action map to a keybinding of choice. For example
 
@@ -252,46 +135,11 @@ A `use-package` configuration of the `dtache-shell` extension, which provides th
 
 A minor mode named `dtache-shell-mode` is provided, and will be enabled in `shell`. The commands that are implemented are:
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
-
-
-<colgroup>
-<col  class="org-left" />
-
-<col  class="org-left" />
-
-<col  class="org-left" />
-</colgroup>
-<thead>
-<tr>
-<th scope="col" class="org-left">Command</th>
-<th scope="col" class="org-left">Description</th>
-<th scope="col" class="org-left">Keybinding</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td class="org-left">dtache-shell-send-input</td>
-<td class="org-left">Run command with dtache</td>
-<td class="org-left">&lt;S-return&gt;</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-shell-attach-session</td>
-<td class="org-left">Attach to a dtache session</td>
-<td class="org-left">&lt;C-return&gt;</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-detach-session</td>
-<td class="org-left">Detach from a dtache session</td>
-<td class="org-left">dtache-detach-key</td>
-</tr>
-</tbody>
-</table>
+| Command                     | Description                  | Keybinding        |
+|-----------------------------|------------------------------|-------------------|
+| dtache-shell-send-input     | Run command with dtache      | <S-return>        |
+| dtache-shell-attach-session | Attach to a dtache session   | <C-return>        |
+| dtache-detach-session       | Detach from a dtache session | dtache-detach-key |
 
 ## Eshell
 
@@ -306,46 +154,11 @@ A `use-package` configuration of the `dtache-eshell` extension, which provides t
 
 A minor mode named `dtache-eshell-mode` is provided, and will be enabled in `eshell`. The commands that are implemented are:
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
-
-
-<colgroup>
-<col  class="org-left" />
-
-<col  class="org-left" />
-
-<col  class="org-left" />
-</colgroup>
-<thead>
-<tr>
-<th scope="col" class="org-left">Command</th>
-<th scope="col" class="org-left">Description</th>
-<th scope="col" class="org-left">Keybinding</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td class="org-left">dtache-eshell-send-input</td>
-<td class="org-left">Run command with dtache</td>
-<td class="org-left">&lt;S-return&gt;</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-eshell-attach-session</td>
-<td class="org-left">Attach to a dtache session</td>
-<td class="org-left">&lt;C-return&gt;</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-detach-session</td>
-<td class="org-left">Detach from a dtache session</td>
-<td class="org-left">dtache-detach-key</td>
-</tr>
-</tbody>
-</table>
+| Command                      | Description                  | Keybinding        |
+|------------------------------|------------------------------|-------------------|
+| dtache-eshell-send-input     | Run command with dtache      | <S-return>        |
+| dtache-eshell-attach-session | Attach to a dtache session   | <C-return>        |
+| dtache-detach-session        | Detach from a dtache session | dtache-detach-key |
 
 In this [blog post](https://niklaseklund.gitlab.io/blog/posts/dtache_eshell/) there are examples and more information about the extension.
 
@@ -398,64 +211,15 @@ A `use-package` configuration of the `dtache-consult` extension, which provides 
 
 The command `dtache-consult-session` is a replacement for `dtache-open-session`. The difference is that the consult command provides multiple session sources, which is defined in the `dtache-consult-sources` variable. Users can customize which sources to use, as well as use individual sources in other `consult` commands, such as `consult-buffer`. The users can also narrow the list of sessions by entering a key. The list of supported keys are:
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
-
-
-<colgroup>
-<col  class="org-left" />
-
-<col  class="org-left" />
-</colgroup>
-<thead>
-<tr>
-<th scope="col" class="org-left">Type</th>
-<th scope="col" class="org-left">Key</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td class="org-left">Active sessions</td>
-<td class="org-left">a</td>
-</tr>
-
-
-<tr>
-<td class="org-left">Inactive sessions</td>
-<td class="org-left">i</td>
-</tr>
-
-
-<tr>
-<td class="org-left">Successful sessions</td>
-<td class="org-left">s</td>
-</tr>
-
-
-<tr>
-<td class="org-left">Failed sessions</td>
-<td class="org-left">f</td>
-</tr>
-
-
-<tr>
-<td class="org-left">Local host sessions</td>
-<td class="org-left">l</td>
-</tr>
-
-
-<tr>
-<td class="org-left">Remote host sessions</td>
-<td class="org-left">r</td>
-</tr>
-
-
-<tr>
-<td class="org-left">Current host sessions</td>
-<td class="org-left">c</td>
-</tr>
-</tbody>
-</table>
+| Type                  | Key |
+|-----------------------+-----|
+| Active sessions       | a   |
+| Inactive sessions     | i   |
+| Successful sessions   | s   |
+| Failed sessions       | f   |
+| Local host sessions   | l   |
+| Remote host sessions  | r   |
+| Current host sessions | c   |
 
 Examples of the different sources are featured in this [blog post](https://niklaseklund.gitlab.io/blog/posts/dtache_consult/).
 
@@ -465,155 +229,32 @@ Examples of the different sources are featured in this [blog post](https://nikla
 
 The package provides the following customizable variables.
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
-
-
-<colgroup>
-<col  class="org-left" />
-
-<col  class="org-left" />
-</colgroup>
-<thead>
-<tr>
-<th scope="col" class="org-left">Name</th>
-<th scope="col" class="org-left">Description</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td class="org-left">dtache-session-directory</td>
-<td class="org-left">A host specific directory to store sessions in</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-db-directory</td>
-<td class="org-left">A localhost specific directory to store the database</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-dtach-program</td>
-<td class="org-left">Name or path to the <code>dtach</code> program</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-shell-program</td>
-<td class="org-left">Name or path to the <code>shell</code> that <code>dtache</code> should use</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-timer-configuration</td>
-<td class="org-left">Configuration of the timer that runs on remote hosts</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-env</td>
-<td class="org-left">Name or path to the <code>dtache-env</code> script</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-annotation-format</td>
-<td class="org-left">A list of annotations that should be present in completion</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-max-command-length</td>
-<td class="org-left">How many characters should be used when displaying a command</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-tail-interval</td>
-<td class="org-left">How often <code>dtache</code> should refresh the output when tailing</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-nonattachable-commands</td>
-<td class="org-left">A list of commands that should be considered nonattachable</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-notification-function</td>
-<td class="org-left">Specifies which function to issue notifications with</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-detach-key</td>
-<td class="org-left">Specifies which keybinding to use to detach from a session</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-shell-command-initial-input</td>
-<td class="org-left">Enables latest value in history to be used as initial input</td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-filter-ansi-sequences</td>
-<td class="org-left">Specifies if dtache will use ansi-color to filter out escape sequences</td>
-</tr>
-</tbody>
-</table>
+| Name                               | Description                                                            |
+|------------------------------------|------------------------------------------------------------------------|
+| dtache-session-directory           | A host specific directory to store sessions in                         |
+| dtache-db-directory                | A localhost specific directory to store the database                   |
+| dtache-dtach-program               | Name or path to the `dtach` program                                    |
+| dtache-shell-program               | Name or path to the `shell` that `dtache` should use                   |
+| dtache-timer-configuration         | Configuration of the timer that runs on remote hosts                   |
+| dtache-env                         | Name or path to the `dtache-env` script                                |
+| dtache-annotation-format           | A list of annotations that should be present in completion             |
+| dtache-max-command-length          | How many characters should be used when displaying a command           |
+| dtache-tail-interval               | How often `dtache` should refresh the output when tailing              |
+| dtache-nonattachable-commands      | A list of commands that should be considered nonattachable             |
+| dtache-notification-function       | Specifies which function to issue notifications with                   |
+| dtache-detach-key                  | Specifies which keybinding to use to detach from a session             |
+| dtache-shell-command-initial-input | Enables latest value in history to be used as initial input            |
+| dtache-filter-ansi-sequences       | Specifies if dtache will use ansi-color to filter out escape sequences |
 
 Apart from those variables there is also the different `action` variables, which can be configured differently depending on the origin of the session.
 
-<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
-
-
-<colgroup>
-<col  class="org-left" />
-
-<col  class="org-left" />
-</colgroup>
-<thead>
-<tr>
-<th scope="col" class="org-left">Name</th>
-<th scope="col" class="org-left">Description</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td class="org-left">dtache-shell-command-session-action</td>
-<td class="org-left">Actions for sessions launched with <code>dtache-shell-command</code></td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-eshell-session-action</td>
-<td class="org-left">Actions for sessions launched with <code>dtache-eshell-send-input</code></td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-shell-session-action</td>
-<td class="org-left">Actions for sessions launched with <code>dtache-shell-send-input</code></td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-compile-session-action</td>
-<td class="org-left">Actions for sessions launched with <code>dtache-compile</code></td>
-</tr>
-
-
-<tr>
-<td class="org-left">dtache-org-session-action</td>
-<td class="org-left">Actions for sessions launched with <code>dtache-org</code></td>
-</tr>
-</tbody>
-</table>
+| Name                                | Description                                                   |
+|-------------------------------------|---------------------------------------------------------------|
+| dtache-shell-command-session-action | Actions for sessions launched with `dtache-shell-command`     |
+| dtache-eshell-session-action        | Actions for sessions launched with `dtache-eshell-send-input` |
+| dtache-shell-session-action         | Actions for sessions launched with `dtache-shell-send-input`  |
+| dtache-compile-session-action       | Actions for sessions launched with `dtache-compile`           |
+| dtache-org-session-action           | Actions for sessions launched with `dtache-org`               |
 
 ## Remote support
 
