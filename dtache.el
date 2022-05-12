@@ -92,6 +92,11 @@
   :type 'string
   :group 'dtache)
 
+(defcustom dtache-env-smart-mode-block-list nil
+  "A list of regexps for commands that should be run in dumb mode in `dtache-env'."
+  :type 'list
+  :group 'dtache)
+
 (defcustom dtache-annotation-format
   '((:width 3 :function dtache--state-str :face dtache-state-face)
     (:width 3 :function dtache--status-str :face dtache-failure-face)
@@ -1126,9 +1131,19 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
          (env (if dtache-env dtache-env (format "%s -c" dtache-shell-program)))
          (command
           (if dtache-env
-              (concat "smart " (shell-quote-argument (dtache--session-command session)))
+              (concat (format "%s " (dtache--env-mode (dtache--session-command session)))
+                      (shell-quote-argument (dtache--session-command session)))
             (shell-quote-argument (dtache--session-command session)))))
     (format "%s %s %s; %s %s" begin-shell-group env command end-shell-group redirect)))
+
+(defun dtache--env-mode (command)
+  "Return mode to run in `dtache-env' based on COMMAND."
+  (if-let ((blocked-command
+            (seq-find (lambda (regexp)
+                        (string-match-p regexp command))
+                      dtache-env-smart-mode-block-list)))
+     'dumb
+    'smart))
 
 (defun dtache--host ()
   "Return a cons with (host . type)."
