@@ -114,10 +114,11 @@ If prefix-argument directly DETACH from the session."
                        (mapconcat #'identity
                                   (flatten-list args)
                                   " ")))
-             (session (dtache-create-session command)))
+             (session (dtache-create-session command))
+             (command (dtache-dtach-command session)))
         (setq dtache--buffer-session session)
         (setq dtache-enabled nil)
-        (apply orig-fun `(,dtache-dtach-program ,(dtache-dtach-command session))))
+        (apply orig-fun `(,(seq-first command) ,(seq-rest command))))
     (apply orig-fun args)))
 
 ;;;; Minor mode

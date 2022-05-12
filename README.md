@@ -229,22 +229,23 @@ Examples of the different sources are featured in this [blog post](https://nikla
 
 The package provides the following customizable variables.
 
-| Name                               | Description                                                            |
-|------------------------------------|------------------------------------------------------------------------|
-| dtache-session-directory           | A host specific directory to store sessions in                         |
-| dtache-db-directory                | A localhost specific directory to store the database                   |
-| dtache-dtach-program               | Name or path to the `dtach` program                                    |
-| dtache-shell-program               | Name or path to the `shell` that `dtache` should use                   |
-| dtache-timer-configuration         | Configuration of the timer that runs on remote hosts                   |
-| dtache-env                         | Name or path to the `dtache-env` script                                |
-| dtache-annotation-format           | A list of annotations that should be present in completion             |
-| dtache-max-command-length          | How many characters should be used when displaying a command           |
-| dtache-tail-interval               | How often `dtache` should refresh the output when tailing              |
-| dtache-nonattachable-commands      | A list of commands that should be considered nonattachable             |
-| dtache-notification-function       | Specifies which function to issue notifications with                   |
-| dtache-detach-key                  | Specifies which keybinding to use to detach from a session             |
-| dtache-shell-command-initial-input | Enables latest value in history to be used as initial input            |
-| dtache-filter-ansi-sequences       | Specifies if dtache will use ansi-color to filter out escape sequences |
+| Name                               | Description                                                               |
+|------------------------------------|---------------------------------------------------------------------------|
+| dtache-session-directory           | A host specific directory to store sessions in                            |
+| dtache-db-directory                | A localhost specific directory to store the database                      |
+| dtache-dtach-program               | Name or path to the `dtach` program                                       |
+| dtache-shell-program               | Name or path to the `shell` that `dtache` should use                      |
+| dtache-timer-configuration         | Configuration of the timer that runs on remote hosts                      |
+| dtache-env                         | Name or path to the `dtache-env` script                                   |
+| dtache-annotation-format           | A list of annotations that should be present in completion                |
+| dtache-max-command-length          | How many characters should be used when displaying a command              |
+| dtache-tail-interval               | How often `dtache` should refresh the output when tailing                 |
+| dtache-nonattachable-commands      | A list of commands that should be considered nonattachable                |
+| dtache-notification-function       | Specifies which function to issue notifications with                      |
+| dtache-detach-key                  | Specifies which keybinding to use to detach from a session                |
+| dtache-shell-command-initial-input | Enables latest value in history to be used as initial input               |
+| dtache-filter-ansi-sequences       | Specifies if dtache will use ansi-color to filter out escape sequences    |
+| dtache-show-output-command         | Specifies if dtache should show the session's output when attaching to it |
 
 Apart from those variables there is also the different `action` variables, which can be configured differently depending on the origin of the session.
 

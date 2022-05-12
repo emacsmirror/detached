@@ -77,7 +77,7 @@
   :type 'string
   :group 'dtache)
 
-(defcustom dtache-show-output-on-attach nil
+(defcustom dtache-show-output-on-attach t
   "If set to t show the session output when attaching to it."
   :type 'bool
   :group 'dtache)
@@ -809,7 +809,7 @@ Optionally CONCAT the command return command into a string."
            (append
             (when dtache-show-output-on-attach
               `(,dtache-show-output-command  ,(concat log ";")))
-            `(,dtach-arg ,socket "-r" "none")))
+            `(,dtache-dtach-program ,dtach-arg ,socket "-r" "none")))
        (if concat
            (mapconcat #'identity
                       `(,dtache-dtach-program
@@ -818,7 +818,8 @@ Optionally CONCAT the command return command into a string."
                         ,dtache-shell-program "-c"
                         ,(shell-quote-argument (dtache--dtache-command session)))
                       " ")
-         `(,dtach-arg ,socket "-z"
+         `(,dtache-dtach-program
+           ,dtach-arg ,socket "-z"
                       ,dtache-shell-program "-c"
                       ,(dtache--dtache-command session)))))))
 
