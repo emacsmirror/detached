@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 
-dtache_command="$*"
+mode="$1"
+shift
+dtache_command="$@"
 
-if eval "$dtache_command"; then
-    echo -e "\nDtache session finished"
-else
-    echo -e "\nDtache session exited abnormally with code $?"
+if [ "$mode" = "dumb" ]; then
+    if eval "$dtache_command"; then
+        echo -e "\nDtache session finished"
+    else
+        echo -e "\nDtache session exited abnormally with code $?"
+    fi
+elif [ "$mode" = "smart" ]; then
+    TERM="eterm-color"
+    if eval script --quiet -f -e -c "\"$dtache_command\"" /dev/null; then
+        echo -e "\nDtache session finished"
+    else
+        echo -e "\nDtache session exited abnormally with code $?"
+    fi
 fi

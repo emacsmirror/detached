@@ -1125,8 +1125,9 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
             (format "&> %s" log)))
          (env (if dtache-env dtache-env (format "%s -c" dtache-shell-program)))
          (command
-          (shell-quote-argument
-           (dtache--session-command session))))
+          (if dtache-env
+              (concat "smart " (shell-quote-argument (dtache--session-command session)))
+            (shell-quote-argument (dtache--session-command session)))))
     (format "%s %s %s; %s %s" begin-shell-group env command end-shell-group redirect)))
 
 (defun dtache--host ()
