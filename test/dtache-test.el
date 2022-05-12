@@ -81,14 +81,14 @@
                         "-c" ,(dtache--session-file session 'socket t)
                         "-z" ,dtache-shell-program
                         "-c"
-                        ,(format "{ dtache-env ls\\ -la; } 2>&1 | tee %s"
+                        ,(format "{ dtache-env smart ls\\ -la; } 2>&1 | tee %s"
                                  (dtache--session-file session 'log t))))
             (expected-concat (format "%s -c %s -z %s -c %s"
                                      dtache-dtach-program
                                      (dtache--session-file session 'socket t)
                                      dtache-shell-program
                                      (shell-quote-argument
-                                      (format "{ dtache-env ls\\ -la; } 2>&1 | tee %s"
+                                      (format "{ dtache-env smart ls\\ -la; } 2>&1 | tee %s"
                                               (dtache--session-file session 'log t))))))
        (should (equal expected (dtache-dtach-command session)))
        (should (equal expected-concat (dtache-dtach-command session t))))
@@ -234,10 +234,13 @@
                                                 :id 'foo123)))
     ;; With dtache-env
     (let ((dtache-env "dtache-env"))
-      (should (string= "{ dtache-env ls\\ -la; } 2>&1 | tee /tmp/dtache/foo123.log"
+      (should (string= "{ dtache-env smart ls\\ -la; } 2>&1 | tee /tmp/dtache/foo123.log"
                        (dtache--dtache-command attachable-session)))
-      (should (string= "{ dtache-env ls\\ -la; } &> /tmp/dtache/foo123.log"
-                       (dtache--dtache-command nonattachable-session))))
+      (should (string= "{ dtache-env smart ls\\ -la; } &> /tmp/dtache/foo123.log"
+                       (dtache--dtache-command nonattachable-session)))
+      (let ((dtache-env-smart-mode-block-list '("ls -la")))
+        (should (string= "{ dtache-env dumb ls\\ -la; } 2>&1 | tee /tmp/dtache/foo123.log"
+                       (dtache--dtache-command attachable-session)))))
 
     ;; Without dtache-env
     (let ((dtache-env nil)
