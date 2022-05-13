@@ -73,6 +73,7 @@ Optionally EDIT-COMMAND."
 
 ;;;;; Functions
 
+;;;###autoload
 (defun dtache-compile-attach (session)
   "Attach to SESSION with `compile'."
   (when (dtache-valid-session session)
