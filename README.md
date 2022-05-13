@@ -332,6 +332,18 @@ For these situations `dtache` provides the `dtache-nonattachable-commands` varia
 
 Here a command beginning with `ls` would from now on be considered nonattachable.
 
+## Colors in sessions
+
+Many programs such as `git` or `grep` don't show colors in dtache unless they are forced to. This is because these commands only use colors and ansi sequences if they are being run in a terminal, as opposed to a pipe. This seting lets you get color output when you are running these programs interactively, while still getting readable output when you are piping them or redirecting them to a logfile. `Dtache` does not run programs in interactive terminal, though, so these commands turn off their colors even though `dtache` supports ansi colors and some rudimentary escape sequences. We can make programs default to having color output in `dtache` by modifying the `dtache-env` program to use the `script` command to make programs run in `dtache` think they are inside of a full-featured terminal.
+
+*WARNING:* =Dtache= only supports a few basic escape sequences, so this fix /will/ mess up the output for some commands.
+
+First, put the following script into an executable file:
+
+``` emacs-lisp
+(setq dtache-env-smart-mode-block-list '(".*"))
+```
+
 # Tips & Tricks
 
 ## 3rd party extensions
