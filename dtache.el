@@ -403,6 +403,9 @@ The session is compiled by opening its output and enabling
   (when (dtache-valid-session session)
     (with-temp-buffer
       (insert (dtache--session-output session))
+      (when (eq 'terminal-data (dtache--session-env-mode session))
+        ;; Enable `dtache-log-mode' to parse ansi-escape sequences
+        (dtache-log-mode))
       (kill-new (buffer-string)))))
 
 ;;;###autoload
