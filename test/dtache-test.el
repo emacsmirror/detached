@@ -132,20 +132,6 @@
     (should (string= "/ssh:foo:/home/user/tmp/s12345.log" (dtache--session-file session 'log)))
     (should (string= "/ssh:foo:/home/user/tmp/s12345.socket" (dtache--session-file session 'socket)))))
 
-(ert-deftest dtache-test-session-truncate-command ()
-  (let ((dtache-max-command-length 7))
-    (dtache--session-truncate-command
-     (dtache--session-create :command "12345678"))
-    (should (string= "123...678"
-                     (dtache--session-truncate-command
-                      (dtache--session-create :command "12345678")))))
-  (let ((dtache-max-command-length 2))
-    (dtache--session-truncate-command
-                      (dtache--session-create :command "12345678"))
-    (should (string= "1...8"
-                     (dtache--session-truncate-command
-                      (dtache--session-create :command "12345678"))))))
-
 (ert-deftest dtache-test-host ()
   (cl-letf (((symbol-function #'system-name) (lambda () "localhost")))
     (should (equal '("localhost" . local) (dtache--host))))
@@ -274,12 +260,12 @@
 
 (ert-deftest dtache-test-status-str ()
   (should (string= "!" (dtache--status-str (dtache--session-create :status '(failure . 127)))))
-  (should (string= " " (dtache--status-str (dtache--session-create :status '(success . 0)))))
-  (should (string= " " (dtache--status-str (dtache--session-create :status '(unknown . 0))))))
+  (should (string= "" (dtache--status-str (dtache--session-create :status '(success . 0)))))
+  (should (string= "" (dtache--status-str (dtache--session-create :status '(unknown . 0))))))
 
 (ert-deftest dtache-test-state-str ()
   (should (string= "*" (dtache--state-str (dtache--session-create :state 'active))))
-  (should (string= " " (dtache--state-str (dtache--session-create :state 'inactive)))))
+  (should (string= "" (dtache--state-str (dtache--session-create :state 'inactive)))))
 
 (ert-deftest dtache-test-working-dir-str ()
   (should

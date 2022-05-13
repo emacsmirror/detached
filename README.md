@@ -238,7 +238,7 @@ The package provides the following customizable variables.
 | dtache-timer-configuration         | Configuration of the timer that runs on remote hosts                      |
 | dtache-env                         | Name or path to the `dtache-env` script                                   |
 | dtache-annotation-format           | A list of annotations that should be present in completion                |
-| dtache-max-command-length          | How many characters should be used when displaying a command              |
+| dtache-command-format              | A configuration for displaying a session command                          |
 | dtache-tail-interval               | How often `dtache` should refresh the output when tailing                 |
 | dtache-nonattachable-commands      | A list of commands that should be considered nonattachable                |
 | dtache-notification-function       | Specifies which function to issue notifications with                      |
