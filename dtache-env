@@ -2,7 +2,7 @@
 
 mode="$1"
 shift
-dtache_command="$@"
+dtache_command="$*"
 
 if [ "$mode" = "dumb" ]; then
     if eval "$dtache_command"; then
