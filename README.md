@@ -498,7 +498,7 @@ This package wouldn't have been were it is today without these contributors.
 
 ## Idea contributors
 
-- [rosetail](https://gitlab.com/rosetail) for all great ideas and improvements to the package.
+- [rosetail](https://gitlab.com/rosetail) for all the great ideas and improvements to the package. Without those contributions `dtache` would be a less sophisticated package.
 - [Troy de Freitas](https://gitlab.com/ntdef) for solving the problem of getting `dtache` to work with `filenotify` on macOS.
 - [Daniel Mendler](https://gitlab.com/minad) for helping out in improving `dtache`, among other things integration with other packages such as `embark` and `consult`.
 - [Ambrevar](https://gitlab.com/ambrevar) who indirectly contributed by inspiring me with his [yes eshell is my main shell](https://www.reddit.com/r/emacs/comments/6y3q4k/yes_eshell_is_my_main_shell/). It was through that I discovered his [package-eshell-detach](https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el) which got me into the idea of using `dtach` as a base for detached shell commands.
