@@ -59,13 +59,6 @@
     (and (string= (process-name process) "dtach")
          process)))
 
-;;;###autoload
-(defun dtache-eshell-setup ()
-  "Setup `dtache-eshell'."
-  (dtache-setup)
-  (add-hook 'eshell-mode-hook #'dtache-eshell-mode)
-  (advice-add #'eshell-external-command :around #'dtache-eshell--external-command))
-
 ;;;; Commands
 
 ;;;###autoload
@@ -145,6 +138,8 @@ If prefix-argument directly DETACH from the session."
         (add-hook 'eshell-preoutput-filter-functions #'dtache--dtach-eof-message-filter))
     (remove-hook 'eshell-preoutput-filter-functions #'dtache--dtache-env-message-filter)
     (remove-hook 'eshell-preoutput-filter-functions #'dtache--dtach-eof-message-filter)))
+
+(advice-add #'eshell-external-command :around #'dtache-eshell--external-command)
 
 (provide 'dtache-eshell)
 

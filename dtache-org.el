@@ -41,12 +41,6 @@
 
 ;;;; Functions
 
-;;;###autoload
-(defun dtache-org-setup ()
-  "Setup `dtache-org'."
-  (dtache-setup)
-  (advice-add #'org-babel-sh-evaluate :around #'dtache-org-babel-sh))
-
 (defun dtache-org-babel-sh (org-babel-sh-evaluate-fun &rest args)
   "Modify ARGS before calling ORG-BABEL-SH-EVALUATE-FUN.
 

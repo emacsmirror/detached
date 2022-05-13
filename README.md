@@ -63,8 +63,10 @@ A minimal configuration for `dtache`.
 
 ``` emacs-lisp
 (use-package dtache
-  :hook (after-init . dtache-setup)
-  :bind (([remap async-shell-command] . dtache-shell-command)))
+  :defer t
+  :hook ((shell-mode . dtache-shell-mode))
+  :bind (([remap async-shell-command] . dtache-shell-command))
+  :custom ((dtache-show-output-on-attach t)))
 ```
 
 # Commands
@@ -127,10 +129,11 @@ A `use-package` configuration of the `dtache-shell` extension, which provides th
 
 ``` emacs-lisp
 (use-package dtache-shell
-  :after dtache
-  :config
-  (dtache-shell-setup)
-  (setq dtache-shell-history-file "~/.bash_history"))
+  :after shell
+  :init
+  (advice-add 'shell :around #'dtache-shell-override-history)
+  (add-hook 'shell-mode-hook #'dtache-shell-save-history-on-kill)
+  :custom (dtache-shell-history-file "~/.bash_history"))
 ```
 
 A minor mode named `dtache-shell-mode` is provided, and will be enabled in `shell`. The commands that are implemented are:
@@ -147,9 +150,8 @@ A `use-package` configuration of the `dtache-eshell` extension, which provides t
 
 ``` emacs-lisp
 (use-package dtache-eshell
-  :after (eshell dtache)
-  :config
-  (dtache-eshell-setup))
+  :defer t
+  :hook ((eshell-mode . dtache-eshell-mode)))
 ```
 
 A minor mode named `dtache-eshell-mode` is provided, and will be enabled in `eshell`. The commands that are implemented are:
@@ -167,10 +169,12 @@ In this [blog post](https://niklaseklund.gitlab.io/blog/posts/dtache_eshell/) th
 A `use-package` configuration of the `dtache-compile` extension, which provides the integration with `compile`.
 
 ``` emacs-lisp
-    (use-package dtache-compile
-      :hook (after-init . dtache-compile-setup)
-      :bind (([remap compile] . dtache-compile)
-             ([remap recompile] . dtache-compile-recompile)))
+(use-package dtache-compile
+  :defer t
+  :bind (([remap compile] . dtache-compile)
+         ([remap recompile] . dtache-compile-recompile))
+  :hook ((compilation-start . dtache-compile-start)
+         (compilation-shell-minor-mode . dtache-shell-mode)))
 ```
 
 The package implements the commands `dtache-compile` and `dtache-compile-recompile`, which are thin wrappers around the original `compile` and `recompile` commands. The users should be able to use the former as replacements for the latter without noticing any difference except from the possibility to `detach`.
@@ -182,14 +186,14 @@ A `use-package` configuration of the `dtache-org` extension, which provides the 
 
 ``` emacs-lisp
 (use-package dtache-org
-  :after (dtache org)
-  :config
-  (dtache-org-setup))
+  :after ob
+  :init
+  (advice-add #'org-babel-sh-evaluate :around #'dtache-org-babel-sh))
 ```
 
 The package implements an additional header argument for `ob-shell`. The header argument is `:dtache t`. When provided it will enable the code inside a src block to be run with `dtache`. Since org is not providing any live updates on the output the session is created with `dtache-sesion-mode` set to `create`. This means that if you want to access the output of the session you do that the same way you would for any other type of session. The `dtache-org` works both with and without the `:session` header argument.
 
-``` emacs-lisp
+```
 #+begin_src sh :dtache t
     cd ~/code
     ls -la

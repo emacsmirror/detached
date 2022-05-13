@@ -44,13 +44,6 @@
 
 ;;;; Functions
 
-;;;###autoload
-(defun dtache-shell-setup ()
-  "Setup `dtache-shell'."
-  (dtache-setup)
-  (add-hook 'shell-mode-hook #'dtache-shell--save-history-on-kill)
-  (advice-add 'shell :around #'dtache-shell-override-history))
-
 (defun dtache-shell-select-session ()
   "Return selected session."
   (let* ((host-name (car (dtache--host)))
@@ -137,7 +130,7 @@ This function also makes sure that the HISTFILE is disabled for local shells."
     (advice-add 'comint-read-input-ring :around #'dtache-shell--comint-read-input-ring-advice)
     (apply orig-fun args)))
 
-(defun dtache-shell--save-history-on-kill ()
+(defun dtache-shell-save-history-on-kill ()
   "Add hook to save history when killing `shell' buffer."
   (add-hook 'kill-buffer-hook #'dtache-shell--save-history 0 t))
 

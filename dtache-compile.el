@@ -82,6 +82,7 @@ Optionally EDIT-COMMAND."
            (dtache--current-session session))
       (compilation-start (dtache--session-command session)))))
 
+;;;###autoload
 (defun dtache-compile-open (session)
   "Open SESSION with `dtache-compile'."
   (when (dtache-valid-session session)
@@ -89,13 +90,15 @@ Optionally EDIT-COMMAND."
         (dtache-compile-attach session)
       (dtache-compile-session session))))
 
-;;;###autoload
-(defun dtache-compile-setup ()
-  "Setup `dtache-compile'."
-  (dtache-setup)
-  (advice-add #'compilation-start :around #'dtache-compile--compilation-start)
-  (add-hook 'compilation-start-hook #'dtache-compile--start)
-  (add-hook 'compilation-shell-minor-mode-hook #'dtache-shell-mode))
+(defun dtache-compile-start (_)
+  "Run in `compilation-start-hook' if `dtache-enabled'."
+  (when dtache-enabled
+    (setq dtache--buffer-session dtache--current-session)
+    (dtache-compile--replace-modesetter)
+    (when dtache-filter-ansi-sequences
+      (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter 0 t))
+    (add-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter 0 t)
+    (add-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter 0 t)))
 
 ;;;;; Support functions
 
@@ -115,16 +118,6 @@ Optionally EDIT-COMMAND."
                                        ,name-function
                                        ,highlight-regexp)))))
     (apply compilation-start args)))
-
-(defun dtache-compile--start (_)
-  "Run in `compilation-start-hook' if `dtache-enabled'."
-  (when dtache-enabled
-    (setq dtache--buffer-session dtache--current-session)
-    (dtache-compile--replace-modesetter)
-    (when dtache-filter-ansi-sequences
-      (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter 0 t))
-    (add-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter 0 t)
-    (add-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter 0 t)))
 
 (defun dtache-compile--replace-modesetter ()
   "Replace the modsetter inserted by `compilation-start'."
@@ -164,9 +157,11 @@ Optionally EDIT-COMMAND."
 
 ;;;###autoload
 (define-derived-mode dtache-compilation-mode compilation-mode "Dtache Compilation"
-  "Major mode for tailing dtache logs."
+  "Major mode for tailing `dtache' logs."
   (add-hook 'compilation-filter-hook #'dtache-compile--compilation-eof-filter 0 t)
   (add-hook 'compilation-filter-hook #'dtache-compile--compilation-dtache-filter 0 t))
+
+(advice-add #'compilation-start :around #'dtache-compile--compilation-start)
 
 (provide 'dtache-compile)
 

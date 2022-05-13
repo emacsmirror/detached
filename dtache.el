@@ -162,6 +162,13 @@ If set to a non nil value the latest entry to
   :type 'hook
   :group 'dtache)
 
+(defcustom dtache-shell-mode-filter-functions
+  '(dtache--dtache-env-message-filter
+    dtache--dtach-eof-message-filter)
+  "A list of filter functions that are run in `dtache-shell-mode'."
+  :type 'list
+  :group 'dtache)
+
 ;;;;; Public
 
 (defvar dtache-enabled nil)
@@ -673,22 +680,6 @@ Optionally SUPPRESS-OUTPUT."
                            ))))
      "")))
 
-(defun dtache--annotation-widths (sessions annotation-format)
-  "Return widths for ANNOTATION-FORMAT based on SESSIONS."
-  (seq-map (lambda (it) (dtache--annotation-width sessions it)) annotation-format))
-
-(defun dtache--annotation-width (sessions annotation)
-  "Determine width for ANNOTATION based on SESSIONS."
-  (let ((annotation-fun (plist-get annotation ':function))
-        (width (plist-get annotation ':width)))
-    `(,annotation-fun .
-                      ,(thread-last sessions
-                                    (seq-map annotation-fun)
-                                    (seq-map #'length)
-                                    (seq-max)
-                                    (min width)))))
-
-;;;###autoload
 (defun dtache-setup ()
   "Initialize `dtache'."
 
@@ -726,10 +717,7 @@ Optionally SUPPRESS-OUTPUT."
                  (seq-filter (lambda (it) (eq 'active (dtache--session-state it))))
                  (seq-map #'dtache--session-directory)
                  (seq-uniq)
-                 (seq-do #'dtache--watch-session-directory))
-
-    ;; Other
-    (add-hook 'shell-mode-hook #'dtache-shell-mode)))
+                 (seq-do #'dtache--watch-session-directory))))
 
 (defun dtache-valid-session (session)
   "Ensure that SESSION is valid.
@@ -796,7 +784,8 @@ This function uses the `notifications' library."
           (t (message "Dtache session is in an unexpected state.")))))
 
 (defun dtache-get-sessions ()
-  "Return validitated sessions."
+  "Return validated sessions."
+  (dtache-setup)
   (dtache--validate-unknown-sessions)
   (dtache--db-get-sessions))
 
@@ -1272,6 +1261,21 @@ If event is cased by an update to the `dtache' database, re-initialize
     (when database-updated)
     (dtache--db-initialize)))
 
+(defun dtache--annotation-widths (sessions annotation-format)
+  "Return widths for ANNOTATION-FORMAT based on SESSIONS."
+  (seq-map (lambda (it) (dtache--annotation-width sessions it)) annotation-format))
+
+(defun dtache--annotation-width (sessions annotation)
+  "Determine width for ANNOTATION based on SESSIONS."
+  (let ((annotation-fun (plist-get annotation ':function))
+        (width (plist-get annotation ':width)))
+    `(,annotation-fun .
+                      ,(thread-last sessions
+                                    (seq-map annotation-fun)
+                                    (seq-map #'length)
+                                    (seq-max)
+                                    (min width)))))
+
 ;;;;; UI
 
 (defun dtache--command-str (session max-length)
@@ -1359,11 +1363,10 @@ If event is cased by an update to the `dtache' database, re-initialize
   :keymap (let ((map (make-sparse-keymap)))
             map)
   (if dtache-shell-mode
-      (progn
-        (add-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter 0 t)
-        (add-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter 0 t))
-    (remove-hook 'comint-preoutput-filter-functions #'dtache--dtache-env-message-filter t)
-    (remove-hook 'comint-preoutput-filter-functions #'dtache--dtach-eof-message-filter t)))
+      (dolist (filter dtache-shell-mode-filter-functions)
+        (add-hook 'comint-preoutput-filter-functions filter 0 t))
+     (dolist (filter dtache-shell-mode-filter-functions)
+        (remove-hook 'comint-preoutput-filter-functions filter t))))
 
 ;;;; Major modes
 
