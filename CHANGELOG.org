@@ -3,7 +3,7 @@
 #+language: en
 
 *   Development
-- Improvements to =dtache-env=. The package will now control which mode =dtache-env= should be run in. The mode is either =plain-text= or =terminal-data=. The latter is enabled by default and allows =dtache= to capture control sequences for e.g. colored output.
+- Improvements to =dtache-env=. The package will now control which mode =dtache-env= should be run in. The mode is either =plain-text= or =terminal-data=. The latter is enabled by default and allows =dtache= to capture control sequences for e.g. colored output. This update will require users to update their =dtache-env= scripts.
 - Add integration with =dired= through =dired-do-shell-command=
 - Add option to show a session's output when attaching to a it. This feature is enabled with =dtache-show-output-on-attach=.
 
