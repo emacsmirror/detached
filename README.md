@@ -325,7 +325,6 @@ Next add the annotation function to the `dtache-metadata-annotators-alist` toget
 To be able to both attach to a dtach session as well as logging its output `dtache` relies on the usage of `tee`. However it is possible that the user tries to run a command which involves a program that doesn't integrate well with tee. In those situations the output could be delayed until the session ends, which is not preferable.
 
 For these situations `dtache` provides the `dtache-nonattachable-commands` variable. This is a list of regular expressions. Any command that matches any of the strings will be getting the property `attachable` set to false.
-
 ``` emacs-lisp
 (setq dtache-nonattachable-commands '("^ls"))
 ```
@@ -334,14 +333,12 @@ Here a command beginning with `ls` would from now on be considered nonattachable
 
 ## Colors in sessions
 
-Many programs such as `git` or `grep` don't show colors in dtache unless they are forced to. This is because these commands only use colors and ansi sequences if they are being run in a terminal, as opposed to a pipe. This seting lets you get color output when you are running these programs interactively, while still getting readable output when you are piping them or redirecting them to a logfile. `Dtache` does not run programs in interactive terminal, though, so these commands turn off their colors even though `dtache` supports ansi colors and some rudimentary escape sequences. We can make programs default to having color output in `dtache` by modifying the `dtache-env` program to use the `script` command to make programs run in `dtache` think they are inside of a full-featured terminal.
+Dtache needs to use a trick to get programs programs such as `git` or `grep` to show color in their outputs. This is because these commands only use colors and ansi sequences if they are being run in a terminal, as opposed to a pipe. The `dtache-env` therefore has two different modes. The mode can be either `plain-text` or `terminal-data`, the latter is now the default. The `dtache-env` program then uses the `script` command to make programs run in `dtache` think they are inside of a full-featured terminal, and therefore can log their raw terminal data.
 
-*WARNING:* =Dtache= only supports a few basic escape sequences, so this fix /will/ mess up the output for some commands.
-
-First, put the following script into an executable file:
+The drawback is that there can be commands which generates escape sequences that `dtache` supports and will therefore mess up the output for some commands. If you detect such an incompatible command you can add a regexp that matches that command to the list `dtache-env-plain-text-commands`. By doing so `dtache` will instruct `dtache-env` to run those commands in plain-text mode.
 
 ``` emacs-lisp
-(setq dtache-env-smart-mode-block-list '(".*"))
+(setq dtache-env-plain-text-commands '(".*"))
 ```
 
 # Tips & Tricks

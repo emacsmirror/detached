@@ -92,8 +92,8 @@
   :type 'string
   :group 'dtache)
 
-(defcustom dtache-env-smart-mode-block-list nil
-  "A list of regexps for commands that should be run in dumb mode in `dtache-env'."
+(defcustom dtache-env-plain-text-commands nil
+  "A list of regexps for commands to run in plain-text mode."
   :type 'list
   :group 'dtache)
 
@@ -181,7 +181,7 @@ Valid values are: create, new and attach")
 (defvar dtache-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst dtache-session-version "0.6.0"
+(defconst dtache-session-version "0.6.1"
   "The version of `dtache-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -282,6 +282,7 @@ This version is encoded as [package-version].[revision].")
   (metadata nil :read-only t)
   (host nil :read-only t)
   (attachable nil :read-only t)
+  (env-mode nil :read-only t)
   (action nil :read-only t)
   (time nil)
   (status nil)
@@ -588,6 +589,7 @@ nil before closing."
                                   :size 0
                                   :directory (if dtache-local-session dtache-session-directory
                                                (concat (file-remote-p default-directory) dtache-session-directory))
+                                  :env-mode (dtache--env-mode command)
                                   :host (dtache--host)
                                   :metadata (dtache-metadata)
                                   :state 'unknown)))
@@ -1131,19 +1133,18 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
          (env (if dtache-env dtache-env (format "%s -c" dtache-shell-program)))
          (command
           (if dtache-env
-              (concat (format "%s " (dtache--env-mode (dtache--session-command session)))
+              (concat (format "%s " (dtache--session-env-mode session))
                       (shell-quote-argument (dtache--session-command session)))
             (shell-quote-argument (dtache--session-command session)))))
     (format "%s %s %s; %s %s" begin-shell-group env command end-shell-group redirect)))
 
 (defun dtache--env-mode (command)
   "Return mode to run in `dtache-env' based on COMMAND."
-  (if-let ((blocked-command
-            (seq-find (lambda (regexp)
-                        (string-match-p regexp command))
-                      dtache-env-smart-mode-block-list)))
-     'dumb
-    'smart))
+  (if (seq-find (lambda (regexp)
+                  (string-match-p regexp command))
+                dtache-env-plain-text-commands)
+      'plain-text
+    'terminal-data))
 
 (defun dtache--host ()
   "Return a cons with (host . type)."
