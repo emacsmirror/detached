@@ -25,28 +25,15 @@
 
 ;;;; Requirements
 
-(require 'subr-x)
-
-(declare-function dtache-compile "dtache")
-(declare-function dtache-get-sessions "dtache")
-(declare-function dtache--host "dtache")
-(declare-function dtache-dtach-command "dtache")
-(declare-function dtache--session-host "dtache")
-(declare-function dtache--determine-session-state "dtache")
-(declare-function dtache-completing-read "dtache")
-
-(defvar dtache-session-origin)
-(defvar dtache--dtach-detach-character)
-(defvar dtache-session-action)
-(defvar dtache-session-mode)
+(require 'dtache)
 
 (declare-function vterm-send-C-a "vterm")
 (declare-function vterm-send-C-k "vterm")
 (declare-function vterm-send-C-e "vterm")
 (declare-function vterm-send-return "vterm")
+(declare-function vterm-end-of-line "vterm")
 
 (defvar vterm--process)
-(declare-function vterm-end-of-line "vterm")
 
 ;;;; Functions
 
