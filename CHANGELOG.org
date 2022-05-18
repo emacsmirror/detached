@@ -3,51 +3,52 @@
 #+language: en
 
 *   Development
-- Introduce =detached-init.el= and move integration of other packages there. The integration now becomes even simpler for users of =detached=.
-- Rewrite =detached= to enable the package to lazy load and not force users to load it when starting Emacs.
+- Rename =dtache= to =detached.el=
+- Introduce =dtache-init.el= and move integration of other packages there. The integration now becomes even simpler for users of =dtache=.
+- Rewrite =dtache= to enable the package to lazy load and not force users to load it when starting Emacs.
 - Make completion of sessions adapt to the current dtache sessions. All of the sessions will be used to determine an an appropriate width for the command width as well as each individual annotation. Format has updated in =dtache-annotation-format= and a =dtache-command-format= has been added, this supersedes the =dtache-max-command-lenght=.
 - Improvements to =dtache-env=. The package will now control which mode =dtache-env= should be run in. The mode is either =plain-text= or =terminal-data=. The latter is enabled by default and allows =dtache= to capture control sequences for e.g. colored output. This update will require users to update their =dtache-env= scripts.
 - Add integration with =dired= through =dired-do-shell-command=
-- Add option to show a session's output when attaching to a it. This feature is enabled with =detached-show-output-on-attach=.
+- Add option to show a session's output when attaching to a it. This feature is enabled with =dtache-show-output-on-attach=.
 
 * Version 0.6 (2022-05-01)
 
-- Eshell integration has been updated. The package now supports expansion of =eshell= aliases. However =detached= will no longer run if commands are =elisp= functions.
-- Example configuration for =detached= integration with =vterm= added.
-- The package now uses =ansi-color= to handle ANSI escape sequences. This feature is enabled by default but can be turned of if =detached-filter-ansi-sequences= is set to nil.
+- Eshell integration has been updated. The package now supports expansion of =eshell= aliases. However =dtache= will no longer run if commands are =elisp= functions.
+- Example configuration for =dtache= integration with =vterm= added.
+- The package now uses =ansi-color= to handle ANSI escape sequences. This feature is enabled by default but can be turned of if =dtache-filter-ansi-sequences= is set to nil.
 
 * Version 0.5 (2022-02-02)
 
-- Add support for =org= through the =detached-org= extension. This makes it possible to use =detached= with =org-babel= (shell) source code blocks.
-- Support for multiple Emacs sessions. When a =detached= session is created, it will now become visible in all active Emacs sessions.
+- Add support for =org= through the =dtache-org= extension. This makes it possible to use =dtache= with =org-babel= (shell) source code blocks.
+- Support for multiple Emacs sessions. When a =dtache= session is created, it will now become visible in all active Emacs sessions.
 
 * Version 0.4 (2022-01-22)
 
-- =detached= takes care of setting up the keybindings for its users. The detach key can be customized through =detached-detach-key=
-- =detached= now has full on macOS. The previous issue of not being able to utilize =filenotify= has been resolved.
-- =detached= now uses =notifications= library to issue notifications by default.
-- =detached= now uses =filenotify= for notifications except on local macOS hosts.
+- =dtache= takes care of setting up the keybindings for its users. The detach key can be customized through =dtache-detach-key=
+- =dtache= now has full on macOS. The previous issue of not being able to utilize =filenotify= has been resolved.
+- =dtache= now uses =notifications= library to issue notifications by default.
+- =dtache= now uses =filenotify= for notifications except on local macOS hosts.
 
 * Version 0.3 (2022-01-15)
 
-- =detached= now uses =filenotify= for both local and remote sessions. If run on =macOS= timers are used both for local as well as remote sessions.
-- Add version for =detached-session= objects. This makes detached not break whenever non-backwards compatible changes are made to the detached-session object.
-- The commands for launching sessions are now renamed to resemble the non detached commands. The commands are =detached-shell-command=, =detached-shell-send-input=, =detached-eshell-send-input=, =detached-compile=.
-- Add action value to a session. This value is set to detached-session-action which is a property list optionally specifying attach, view and run properties. These properties are then used in dwim commands to improve their functionality.
-- Add a generic detach command, =detached-detach-session=. This command is supposed to be used to detach from sessions in all supported modes.
-- Add =detached-compile.el=. This library provides commands =detached-compile= and =detached-compile-recompile= which are supposed to be used instead of =compile=/=recompile=.
-- Improve =detached-shell-command=, the command is now very similar to =async-shell-command= and can be considered a replacement of the latter.
-- Add integration with the =consult= package through =detached-consult.el=.
-- Add support for =eshell= through the =detached-eshell= package.
+- =dtache= now uses =filenotify= for both local and remote sessions. If run on =macOS= timers are used both for local as well as remote sessions.
+- Add version for =dtache-session= objects. This makes dtache not break whenever non-backwards compatible changes are made to the dtache-session object.
+- The commands for launching sessions are now renamed to resemble the non dtache commands. The commands are =dtache-shell-command=, =dtache-shell-send-input=, =dtache-eshell-send-input=, =dtache-compile=.
+- Add action value to a session. This value is set to dtache-session-action which is a property list optionally specifying attach, view and run properties. These properties are then used in dwim commands to improve their functionality.
+- Add a generic detach command, =dtache-detach-session=. This command is supposed to be used to detach from sessions in all supported modes.
+- Add =dtache-compile.el=. This library provides commands =dtache-compile= and =dtache-compile-recompile= which are supposed to be used instead of =compile=/=recompile=.
+- Improve =dtache-shell-command=, the command is now very similar to =async-shell-command= and can be considered a replacement of the latter.
+- Add integration with the =consult= package through =dtache-consult.el=.
+- Add support for =eshell= through the =dtache-eshell= package.
 - macOS (monitor) support is added to the package.
 
 * Version 0.2 (2021-12-23)
 
-- With the recent improvements to =detached-open-session=, the package is ready to harmonize the user interface. This means deprecating =detached-list-sessions=.
+- With the recent improvements to =dtache-open-session=, the package is ready to harmonize the user interface. This means deprecating =dtache-list-sessions=.
 - Remove external dependency to =embark=. The package now implements an action map that can be used with/without embark.
 - Remove external dependency to =marginalia=. The package now provides annotations for all users.
-- Fix error in =detached-env= usage. The integration wasn't correct which resulted in =detached= failing to execute some commands properly
-- Make =detached-env= optional rather than required. =Detached= should be fine without it, just that automatic status labeling will not be run
+- Fix error in =dtache-env= usage. The integration wasn't correct which resulted in =dtache= failing to execute some commands properly
+- Make =dtache-env= optional rather than required. =Dtache= should be fine without it, just that automatic status labeling will not be run
 
 * Version 0.1 (2021-12-15)
 
