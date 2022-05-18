@@ -47,13 +47,13 @@
 ;;;; Variables
 
 (defvar dtache-init-package-integration '((compile . dtache-init-compile)
-                                     (dired . dtache-init-dired)
-                                     (dired-rsync . dtache-init-dired-rsync)
-                                     (eshell . dtache-init-eshell)
-                                     (org . dtache-init-org)
-                                     (projectile . dtache-init-projectile)
-                                     (shell . dtache-init-shell)
-                                     (vterm . dtache-init-vterm))
+                                          (dired . dtache-init-dired)
+                                          (dired-rsync . dtache-init-dired-rsync)
+                                          (eshell . dtache-init-eshell)
+                                          (org . dtache-init-org)
+                                          (projectile . dtache-init-projectile)
+                                          (shell . dtache-init-shell)
+                                          (vterm . dtache-init-vterm))
   "Alist which contain names of packages and their initialization function.")
 
 (defun dtache-init (&optional block-packages)
@@ -110,7 +110,6 @@ being integrated with `dtache'."
   "Initialize integration with `vterm'."
   (when (functionp #'vterm)
     (add-hook 'vterm-mode-hook #'dtache-vterm-mode)))
-
 
 (provide 'dtache-init)
 
