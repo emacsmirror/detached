@@ -3,6 +3,7 @@
 #+language: en
 
 *   Development
+- Introduce =dtache-init.el= and move integration of other packages there. The integration now becomes even simpler for users of =dtache=.
 - Rewrite =dtache= to enable the package to lazy load and not force users to load it when starting Emacs.
 - Make completion of sessions adapt to the current dtache sessions. All of the sessions will be used to determine an an appropriate width for the command width as well as each individual annotation. Format has updated in =dtache-annotation-format= and a =dtache-command-format= has been added, this supersedes the =dtache-max-command-lenght=.
 - Improvements to =dtache-env=. The package will now control which mode =dtache-env= should be run in. The mode is either =plain-text= or =terminal-data=. The latter is enabled by default and allows =dtache= to capture control sequences for e.g. colored output. This update will require users to update their =dtache-env= scripts.
