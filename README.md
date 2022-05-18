@@ -22,7 +22,7 @@ The package supports integration with multiple packages, here is a list of the b
 
 # Features
 
-Since a `detached-session` contain all the output of the process as well as data such as, `what` command was run, `which` directory the process was launched etc, it opens up the possibility for the following features:
+Since a `detached-session` contain all the output of the process as well as data such as, `what command` was run, `which directory` the process was launched etc, it opens up the possibility for the following features:
 
 - `Unlimited scrollback:` All the output from a `detached-session` is always accessible
 - `Remote support:` Full support for running on remote hosts. See `Remote support` section of the README
