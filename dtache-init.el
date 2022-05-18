@@ -46,32 +46,45 @@
 
 ;;;; Variables
 
-(defvar dtache-init-package-integration '((compile . dtache-init-compile)
-                                          (dired . dtache-init-dired)
-                                          (dired-rsync . dtache-init-dired-rsync)
-                                          (eshell . dtache-init-eshell)
-                                          (org . dtache-init-org)
-                                          (projectile . dtache-init-projectile)
-                                          (shell . dtache-init-shell)
-                                          (vterm . dtache-init-vterm))
+(defcustom dtache-init-block-list nil
+  "A list of blocked packages."
+  :group 'dtache
+  :type 'list)
+
+(defcustom dtache-init-allow-list
+  '(compile dired dired-rsync eshell org projectile shell vterm)
+  "A list of allowed packages."
+  :group 'dtache
+  :type 'list)
+
+(defvar dtache-init--package-integration '((compile . dtache-init-compile)
+                                           (dired . dtache-init-dired)
+                                           (dired-rsync . dtache-init-dired-rsync)
+                                           (eshell . dtache-init-eshell)
+                                           (org . dtache-init-org)
+                                           (projectile . dtache-init-projectile)
+                                           (shell . dtache-init-shell)
+                                           (vterm . dtache-init-vterm))
   "Alist which contain names of packages and their initialization function.")
 
-(defun dtache-init (&optional block-packages)
-  "Initialize `dtache' integration with all packages.
+;;;; Functions
 
-Optionally provide a list of BLOCK-PACKAGES that should be blocked from
-being integrated with `dtache'."
+;;;###autoload
+(defun dtache-init ()
+  "Initialize `dtache' integration with all packages."
 
   ;; Required for `dtache-shell-command' which is always provided
   (add-hook 'shell-mode-hook #'dtache-shell-mode)
 
-  (let ((packages
-         (thread-last dtache-init-package-integration
+  (let ((init-functions
+         (thread-last dtache-init--package-integration
+                      (seq-filter (lambda (it)
+                                    (member (car it) dtache-init-allow-list)))
                       (seq-remove (lambda (it)
-                                    (member (car it) block-packages)))
-                      (seq-map #'car))))
-    (dolist (package packages)
-            (funcall (alist-get package dtache-init-package-integration)))))
+                                    (member (car it) dtache-init-block-list)))
+                      (seq-map #'cdr))))
+    (dolist (init-function init-functions)
+            (funcall init-function))))
 
 (defun dtache-init-shell ()
   "Initialize integration with `shell'."
