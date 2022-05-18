@@ -111,7 +111,7 @@
   :group 'dtache)
 
 (defcustom dtache-command-format
-  '(:width 50 :padding 4 :function dtache--command-str)
+  '(:width 90 :padding 4 :function dtache-command-str)
   "The format for displaying the command."
   :type 'integer
   :group 'dtache)
@@ -893,6 +893,13 @@ Optionally CONCAT the command return command into a string."
          (cand (completing-read "Select session: " collection nil t)))
     (dtache--decode-session cand)))
 
+(defun dtache-command-str (session max-length)
+  "Return SESSION's command as a string restrict it to MAX-LENGTH."
+  (let ((command (dtache--session-command session)))
+    (if (<= (length command) max-length)
+        command
+      (concat (substring (dtache--session-command session) 0 (- max-length 3)) "..."))))
+
 ;;;; Support functions
 
 ;;;;; Session
@@ -1278,13 +1285,6 @@ If event is cased by an update to the `dtache' database, re-initialize
                                     (min width)))))
 
 ;;;;; UI
-
-(defun dtache--command-str (session max-length)
-  "Return SESSION's command as a string restrict it to MAX-LENGTH."
-  (let ((command (dtache--session-command session)))
-    (if (<= (length command) max-length)
-        command
-      (concat (substring (dtache--session-command session) 0 (- max-length 3)) "..."))))
 
 (defun dtache--metadata-str (session)
   "Return SESSION's metadata as a string."
