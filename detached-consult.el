@@ -57,139 +57,139 @@ See `consult-multi' for a description of the source values."
 
 (defvar detached-consult--source-session
   `(:category detached
-    :annotate detached-session-annotation
-    :action (lambda (x) (detached-open-session (detached--decode-session x)))
-    :items
-    ,(lambda ()
-       (mapcar #'car
-               (seq-remove
-                (lambda (x)
-                  (seq-find (lambda (predicate)
-                              (apply predicate `(,(cdr x))))
-                         detached-consult-hidden-predicates))
-                (detached-session-candidates (detached-get-sessions))))))
+              :annotate detached-session-annotation
+              :action (lambda (x) (detached-open-session (detached--decode-session x)))
+              :items
+              ,(lambda ()
+                 (mapcar #'car
+                         (seq-remove
+                          (lambda (x)
+                            (seq-find (lambda (predicate)
+                                        (apply predicate `(,(cdr x))))
+                                      detached-consult-hidden-predicates))
+                          (detached-session-candidates (detached-get-sessions))))))
   "All `detached' sessions as a source for `consult'.")
 
 (defvar detached-consult--source-hidden-session
   `(:narrow (?\s . "Hidden")
-    :hidden t
-    :category detached
-    :annotate detached-session-annotation
-    :action (lambda (x) (detached-open-session (detached--decode-session x)))
-    :items
-    ,(lambda ()
-       (mapcar #'car
-               (seq-filter
-                (lambda (x)
-                  (seq-find (lambda (predicate)
-                              (apply predicate `(,(cdr x))))
-                         detached-consult-hidden-predicates))
-                (detached-session-candidates (detached-get-sessions))))))
+            :hidden t
+            :category detached
+            :annotate detached-session-annotation
+            :action (lambda (x) (detached-open-session (detached--decode-session x)))
+            :items
+            ,(lambda ()
+               (mapcar #'car
+                       (seq-filter
+                        (lambda (x)
+                          (seq-find (lambda (predicate)
+                                      (apply predicate `(,(cdr x))))
+                                    detached-consult-hidden-predicates))
+                        (detached-session-candidates (detached-get-sessions))))))
   "Active `detached' sessions as a source for `consult'.")
 
 (defvar detached-consult--source-active-session
   `(:narrow (?a . "Active")
-    :hidden t
-    :category detached
-    :annotate detached-session-annotation
-    :action (lambda (x) (detached-open-session (detached--decode-session x)))
-    :items
-    ,(lambda ()
-       (mapcar #'car
-               (seq-filter
-                (lambda (x)
-                  (eq 'active (detached--session-state (cdr x))))
-                (detached-session-candidates (detached-get-sessions))))))
+            :hidden t
+            :category detached
+            :annotate detached-session-annotation
+            :action (lambda (x) (detached-open-session (detached--decode-session x)))
+            :items
+            ,(lambda ()
+               (mapcar #'car
+                       (seq-filter
+                        (lambda (x)
+                          (eq 'active (detached--session-state (cdr x))))
+                        (detached-session-candidates (detached-get-sessions))))))
   "Active `detached' sessions as a source for `consult'.")
 
 (defvar detached-consult--source-inactive-session
   `(:narrow (?i . "Inactive")
-    :hidden t
-    :category detached
-    :annotate detached-session-annotation
-    :action (lambda (x) (detached-open-session (detached--decode-session x)))
-    :items
-    ,(lambda ()
-       (mapcar #'car
-               (seq-filter
-                (lambda (x)
-                  (eq 'inactive (detached--session-state (cdr x))))
-                (detached-session-candidates (detached-get-sessions))))))
+            :hidden t
+            :category detached
+            :annotate detached-session-annotation
+            :action (lambda (x) (detached-open-session (detached--decode-session x)))
+            :items
+            ,(lambda ()
+               (mapcar #'car
+                       (seq-filter
+                        (lambda (x)
+                          (eq 'inactive (detached--session-state (cdr x))))
+                        (detached-session-candidates (detached-get-sessions))))))
   "Inactive `detached' sessions as a source for `consult'.")
 
 (defvar detached-consult--source-failure-session
   `(:narrow (?f . "Failure")
-    :hidden t
-    :category detached
-    :annotate detached-session-annotation
-    :action (lambda (x) (detached-open-session (detached--decode-session x)))
-    :items
-    ,(lambda ()
-       (mapcar #'car
-               (seq-filter
-                (lambda (x)
-                  (eq 'failure (car (detached--session-status (cdr x)))))
-                (detached-session-candidates (detached-get-sessions))))))
+            :hidden t
+            :category detached
+            :annotate detached-session-annotation
+            :action (lambda (x) (detached-open-session (detached--decode-session x)))
+            :items
+            ,(lambda ()
+               (mapcar #'car
+                       (seq-filter
+                        (lambda (x)
+                          (eq 'failure (car (detached--session-status (cdr x)))))
+                        (detached-session-candidates (detached-get-sessions))))))
   "Failed `detached' sessions as a source for `consult'.")
 
 (defvar detached-consult--source-success-session
   `(:narrow (?s . "Success")
-    :hidden t
-    :category detached
-    :annotate detached-session-annotation
-    :action (lambda (x) (detached-open-session (detached--decode-session x)))
-    :items
-    ,(lambda ()
-       (mapcar #'car
-               (seq-filter
-                (lambda (x)
-                  (eq 'success (car (detached--session-status (cdr x)))))
-                (detached-session-candidates (detached-get-sessions))))))
+            :hidden t
+            :category detached
+            :annotate detached-session-annotation
+            :action (lambda (x) (detached-open-session (detached--decode-session x)))
+            :items
+            ,(lambda ()
+               (mapcar #'car
+                       (seq-filter
+                        (lambda (x)
+                          (eq 'success (car (detached--session-status (cdr x)))))
+                        (detached-session-candidates (detached-get-sessions))))))
   "Successful `detached' sessions as a source for `consult'.")
 
 (defvar detached-consult--source-local-session
   `(:narrow (?l . "Local Host")
-    :hidden t
-    :category detached
-    :annotate detached-session-annotation
-    :action (lambda (x) (detached-open-session (detached--decode-session x)))
-    :items
-    ,(lambda ()
-       (mapcar #'car
-               (seq-filter
-                (lambda (x)
-                  (eq 'local (cdr (detached--session-host (cdr x)))))
-                (detached-session-candidates (detached-get-sessions)))))
-    "Local host `detached' sessions as a source for `consult'."))
+            :hidden t
+            :category detached
+            :annotate detached-session-annotation
+            :action (lambda (x) (detached-open-session (detached--decode-session x)))
+            :items
+            ,(lambda ()
+               (mapcar #'car
+                       (seq-filter
+                        (lambda (x)
+                          (eq 'local (cdr (detached--session-host (cdr x)))))
+                        (detached-session-candidates (detached-get-sessions)))))
+            "Local host `detached' sessions as a source for `consult'."))
 
 (defvar detached-consult--source-remote-session
   `(:narrow (?r . "Remote Host")
-    :hidden t
-    :category detached
-    :annotate detached-session-annotation
-    :action (lambda (x) (detached-open-session (detached--decode-session x)))
-    :items
-    ,(lambda ()
-       (mapcar #'car
-               (seq-filter
-                (lambda (x)
-                  (eq 'remote (cdr (detached--session-host (cdr x)))))
-                (detached-session-candidates (detached-get-sessions))))))
+            :hidden t
+            :category detached
+            :annotate detached-session-annotation
+            :action (lambda (x) (detached-open-session (detached--decode-session x)))
+            :items
+            ,(lambda ()
+               (mapcar #'car
+                       (seq-filter
+                        (lambda (x)
+                          (eq 'remote (cdr (detached--session-host (cdr x)))))
+                        (detached-session-candidates (detached-get-sessions))))))
   "Remote host `detached' sessions as a source for `consult'.")
 
 (defvar detached-consult--source-current-session
   `(:narrow (?c . "Current Host")
-    :hidden t
-    :category detached
-    :annotate detached-session-annotation
-    :action (lambda (x) (detached-open-session (detached--decode-session x)))
-    :items
-    ,(lambda ()
-       (let ((host-name (car (detached--host))))
-         (mapcar #'car (seq-filter
-                        (lambda (x)
-                          (string= (car (detached--session-host (cdr x))) host-name))
-                        (detached-session-candidates (detached-get-sessions)))))))
+            :hidden t
+            :category detached
+            :annotate detached-session-annotation
+            :action (lambda (x) (detached-open-session (detached--decode-session x)))
+            :items
+            ,(lambda ()
+               (let ((host-name (car (detached--host))))
+                 (mapcar #'car (seq-filter
+                                (lambda (x)
+                                  (string= (car (detached--session-host (cdr x))) host-name))
+                                (detached-session-candidates (detached-get-sessions)))))))
   "Current host `detached' sessions as a source for `consult'.")
 
 ;;;; Commands

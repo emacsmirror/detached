@@ -35,7 +35,9 @@
 
 ;;;###autoload
 (defun detached-extra-projectile-run-compilation (cmd &optional use-comint-mode)
-  "If CMD is a string execute it with `detached-compile', optionally USE-COMINT-MODE."
+  "If CMD is a string execute it with `detached-compile'.
+
+Optionally USE-COMINT-MODE"
   (if (functionp cmd)
       (funcall cmd)
     (let ((detached-session-origin 'projectile))
@@ -43,10 +45,10 @@
 
 ;;;###autoload
 (defun detached-extra-dired-rsync (command _details)
-    "Run COMMAND with `detached'."
-    (let ((detached-local-session t)
-          (detached-session-origin 'rsync))
-      (detached-start-session command t)))
+  "Run COMMAND with `detached'."
+  (let ((detached-local-session t)
+        (detached-session-origin 'rsync))
+    (detached-start-session command t)))
 
 (provide 'detached-extra)
 

@@ -56,7 +56,7 @@ Optionally enable COMINT if prefix-argument is provided."
   (let* ((detached-enabled t)
          (detached-session-origin (or detached-session-origin 'compile))
          (detached-session-action (or detached-session-action
-                                    detached-compile-session-action))
+                                      detached-compile-session-action))
          (detached-session-mode 'create-and-attach))
     (compile command comint)))
 
@@ -121,7 +121,7 @@ Optionally EDIT-COMMAND."
             (detached-start-session command t)
           (cl-letf* ((name-function (lambda (_) buffer-name))
                      (detached--current-session (or detached--current-session
-                                                  (detached-create-session command))))
+                                                    (detached-create-session command))))
             (apply compilation-start `(,(detached-dtach-command detached--current-session t)
                                        ,(or mode 'detached-compilation-mode)
                                        ,name-function

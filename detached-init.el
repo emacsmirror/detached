@@ -90,14 +90,14 @@
 ;;;; Support functions
 
 (defvar detached-init--package-integration '((compile . detached-init-compile)
-                                           (dired . detached-init-dired)
-                                           (dired-rsync . detached-init-dired-rsync)
-                                           (embark . detached-init-embark)
-                                           (eshell . detached-init-eshell)
-                                           (org . detached-init-org)
-                                           (projectile . detached-init-projectile)
-                                           (shell . detached-init-shell)
-                                           (vterm . detached-init-vterm))
+                                             (dired . detached-init-dired)
+                                             (dired-rsync . detached-init-dired-rsync)
+                                             (embark . detached-init-embark)
+                                             (eshell . detached-init-eshell)
+                                             (org . detached-init-org)
+                                             (projectile . detached-init-projectile)
+                                             (shell . detached-init-shell)
+                                             (vterm . detached-init-vterm))
   "Alist which contain names of packages and their initialization function.")
 
 ;;;; Functions
@@ -117,7 +117,7 @@
                                     (member (car it) detached-init-block-list)))
                       (seq-map #'cdr))))
     (dolist (init-function init-functions)
-            (funcall init-function))))
+      (funcall init-function))))
 
 (defun detached-init-shell ()
   "Initialize integration with `shell'."
