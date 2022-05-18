@@ -25,6 +25,8 @@
 
 ;;;; Requirements
 
+(require 'subr-x)
+
 (declare-function dtache-shell-mode "dtache")
 (declare-function dtache-compile-start "dtache-compile")
 (declare-function dtache-dired-do-shell-command "dtache-dired")
@@ -44,7 +46,7 @@
 
 ;;;; Variables
 
-(defvar dtache-package-integration '((compile . dtache-init-compile)
+(defvar dtache-init-package-integration '((compile . dtache-init-compile)
                                      (dired . dtache-init-dired)
                                      (dired-rsync . dtache-init-dired-rsync)
                                      (eshell . dtache-init-eshell)
@@ -54,19 +56,22 @@
                                      (vterm . dtache-init-vterm))
   "Alist which contain names of packages and their initialization function.")
 
-(defun dtache-init (&optional packages)
+(defun dtache-init (&optional block-packages)
   "Initialize `dtache' integration with all packages.
 
-Optionally provide a list of PACKAGES to enable integration for."
+Optionally provide a list of BLOCK-PACKAGES that should be blocked from
+being integrated with `dtache'."
 
   ;; Required for `dtache-shell-command' which is always provided
   (add-hook 'shell-mode-hook #'dtache-shell-mode)
 
   (let ((packages
-         (or packages
-             (seq-map #'car dtache-package-integration))))
+         (thread-last dtache-init-package-integration
+                      (seq-remove (lambda (it)
+                                    (member (car it) block-packages)))
+                      (seq-map #'car))))
     (dolist (package packages)
-            (funcall (alist-get package dtache-package-integration)))))
+            (funcall (alist-get package dtache-init-package-integration)))))
 
 (defun dtache-init-shell ()
   "Initialize integration with `shell'."
