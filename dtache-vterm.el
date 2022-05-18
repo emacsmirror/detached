@@ -51,7 +51,7 @@
 ;;;; Functions
 
 ;;;###autoload
-(defun dtache-extra-vterm-send-input (&optional detach)
+(defun dtache-vterm-send-input (&optional detach)
   "Create a `dtache' session.
 
 Optionally DETACH from it."
@@ -71,7 +71,7 @@ Optionally DETACH from it."
     (vterm-send-return)))
 
 ;;;###autoload
-(defun dtache-extra-vterm-attach (session)
+(defun dtache-vterm-attach (session)
   "Attach to an active `dtache' SESSION."
   (interactive
    (list
@@ -87,7 +87,7 @@ Optionally DETACH from it."
     (vterm-send-return)))
 
 ;;;###autoload
-(defun dtache-extra-vterm-detach ()
+(defun dtache-vterm-detach ()
   "Detach from a `dtache' session."
   (interactive)
   (process-send-string vterm--process dtache--dtach-detach-character))
