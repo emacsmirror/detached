@@ -610,6 +610,7 @@ nil before closing."
      (dtache--watch-session-directory (dtache--session-directory session))
      session)))
 
+;;;###autoload
 (defun dtache-start-session (command &optional suppress-output)
   "Start a `dtache' session running COMMAND.
 

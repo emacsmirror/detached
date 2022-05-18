@@ -71,6 +71,7 @@ If prefix-argument directly DETACH from the session."
          (dtache-session-mode (if detach 'create 'create-and-attach))
          (dtache-enabled t)
          (dtache--current-session nil))
+    (advice-add #'eshell-external-command :around #'dtache-eshell-external-command)
     (call-interactively #'eshell-send-input)))
 
 ;;;###autoload
@@ -99,20 +100,20 @@ If prefix-argument directly DETACH from the session."
 
 ;;;; Support functions
 
-(defun dtache-eshell--external-command (orig-fun &rest args)
+;;;###autoload
+(defun dtache-eshell-external-command (orig-fun &rest args)
   "Advice `eshell-external-command' to optionally use `dtache'."
-  (if dtache-enabled
-      (let* ((dtache-session-action dtache-eshell-session-action)
-             (command (string-trim-right
-                       (mapconcat #'identity
-                                  (flatten-list args)
-                                  " ")))
-             (session (dtache-create-session command))
-             (command (dtache-dtach-command session)))
-        (setq dtache--buffer-session session)
-        (setq dtache-enabled nil)
-        (apply orig-fun `(,(seq-first command) ,(seq-rest command))))
-    (apply orig-fun args)))
+  (let* ((dtache-session-action dtache-eshell-session-action)
+         (command (string-trim-right
+                   (mapconcat #'identity
+                              (flatten-list args)
+                              " ")))
+         (session (dtache-create-session command))
+         (command (dtache-dtach-command session)))
+    (advice-remove #'eshell-external-command #'dtache-eshell-external-command)
+    (setq dtache--buffer-session session)
+    (setq dtache-enabled nil)
+    (apply orig-fun `(,(seq-first command) ,(seq-rest command)))))
 
 ;;;; Minor mode
 
@@ -138,8 +139,6 @@ If prefix-argument directly DETACH from the session."
         (add-hook 'eshell-preoutput-filter-functions #'dtache--dtach-eof-message-filter))
     (remove-hook 'eshell-preoutput-filter-functions #'dtache--dtache-env-message-filter)
     (remove-hook 'eshell-preoutput-filter-functions #'dtache--dtach-eof-message-filter)))
-
-(advice-add #'eshell-external-command :around #'dtache-eshell--external-command)
 
 (provide 'dtache-eshell)
 

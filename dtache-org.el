@@ -41,6 +41,7 @@
 
 ;;;; Functions
 
+;;;###autoload
 (defun dtache-org-babel-sh (org-babel-sh-evaluate-fun &rest args)
   "Modify ARGS before calling ORG-BABEL-SH-EVALUATE-FUN.
 

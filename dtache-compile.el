@@ -90,6 +90,7 @@ Optionally EDIT-COMMAND."
         (dtache-compile-attach session)
       (dtache-compile-session session))))
 
+;;;###autoload
 (defun dtache-compile-start (_)
   "Run in `compilation-start-hook' if `dtache-enabled'."
   (when dtache-enabled

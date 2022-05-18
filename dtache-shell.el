@@ -122,6 +122,7 @@ cluttering the comint-history with dtach commands."
               dtache-shell-history-file)))
        (comint-write-input-ring)))))
 
+;;;###autoload
 (defun dtache-shell-override-history (orig-fun &rest args)
   "Override history to read `dtache-shell-history-file' in ORIG-FUN with ARGS.
 
@@ -130,6 +131,7 @@ This function also makes sure that the HISTFILE is disabled for local shells."
     (advice-add 'comint-read-input-ring :around #'dtache-shell--comint-read-input-ring-advice)
     (apply orig-fun args)))
 
+;;;###autoload
 (defun dtache-shell-save-history-on-kill ()
   "Add hook to save history when killing `shell' buffer."
   (add-hook 'kill-buffer-hook #'dtache-shell--save-history 0 t))
