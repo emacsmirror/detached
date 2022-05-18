@@ -681,8 +681,9 @@ Optionally SUPPRESS-OUTPUT."
                            ))))
      "")))
 
-(defun dtache-setup ()
-  "Initialize `dtache'."
+;;;###autoload
+(defun dtache-initialize-sessions ()
+  "Initialize `dtache' sessions from the database."
 
   ;; Initialize sessions
   (unless dtache--sessions-initialized
@@ -786,7 +787,7 @@ This function uses the `notifications' library."
 
 (defun dtache-get-sessions ()
   "Return validated sessions."
-  (dtache-setup)
+  (dtache-initialize-sessions)
   (dtache--validate-unknown-sessions)
   (dtache--db-get-sessions))
 
