@@ -77,7 +77,7 @@
   :type 'string
   :group 'dtache)
 
-(defcustom dtache-show-output-on-attach t
+(defcustom dtache-show-output-on-attach nil
   "If set to t show the session output when attaching to it."
   :type 'bool
   :group 'dtache)
