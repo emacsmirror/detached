@@ -506,11 +506,17 @@ Optionally DELETE the session if prefix-argument is provided."
       (with-current-buffer (get-buffer-create buffer1)
         (erase-buffer)
         (insert (dtache--session-header session1))
-        (insert (dtache--session-output session1)))
+        (insert (dtache--session-output session1))
+        (when (eq 'terminal-data (dtache--session-env-mode session1))
+          ;; Enable `dtache-log-mode' to parse ansi-escape sequences
+          (dtache-log-mode)))
       (with-current-buffer (get-buffer-create buffer2)
         (erase-buffer)
         (insert (dtache--session-header session2))
-        (insert (dtache--session-output session2)))
+        (insert (dtache--session-output session2))
+        (when (eq 'terminal-data (dtache--session-env-mode session2))
+          ;; Enable `dtache-log-mode' to parse ansi-escape sequences
+          (dtache-log-mode)))
       (ediff-buffers buffer1 buffer2))))
 
 ;;;###autoload
