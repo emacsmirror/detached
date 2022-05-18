@@ -198,21 +198,6 @@ Valid values are: create, new and attach")
   "The version of `dtache-session'.
 This version is encoded as [package-version].[revision].")
 
-(defvar dtache-action-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map "a" #'dtache-attach-session)
-    (define-key map "c" #'dtache-compile-session)
-    (define-key map "d" #'dtache-delete-session)
-    (define-key map "i" #'dtache-insert-session-command)
-    (define-key map "k" #'dtache-kill-session)
-    (define-key map "r" #'dtache-rerun-session)
-    (define-key map "t" #'dtache-tail-session)
-    (define-key map "v" #'dtache-view-session)
-    (define-key map "w" #'dtache-copy-session-command)
-    (define-key map "W" #'dtache-copy-session)
-    (define-key map "=" #'dtache-diff-session)
-    map))
-
 ;;;;; Faces
 
 (defgroup dtache-faces nil

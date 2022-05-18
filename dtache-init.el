@@ -27,6 +27,18 @@
 
 (require 'subr-x)
 
+(declare-function dtache-attach-session "dtache")
+(declare-function dtache-compile-session "dtache")
+(declare-function dtache-delete-session "dtache")
+(declare-function dtache-insert-session-command "dtache")
+(declare-function dtache-kill-session "dtache")
+(declare-function dtache-rerun-session "dtache")
+(declare-function dtache-tail-session "dtache")
+(declare-function dtache-view-session "dtache")
+(declare-function dtache-copy-session-command "dtache")
+(declare-function dtache-copy-session "dtache")
+(declare-function dtache-diff-session "dtache")
+
 (declare-function dtache-shell-mode "dtache")
 (declare-function dtache-compile-start "dtache-compile")
 (declare-function dtache-dired-do-shell-command "dtache-dired")
@@ -44,6 +56,9 @@
 (declare-function projectile "projectile")
 (declare-function vterm "vterm")
 
+(defvar embark-general-map)
+(defvar embark-keymap-alist)
+
 ;;;; Variables
 
 (defcustom dtache-init-block-list nil
@@ -52,14 +67,32 @@
   :type 'list)
 
 (defcustom dtache-init-allow-list
-  '(compile dired dired-rsync eshell org projectile shell vterm)
+  '(compile dired dired-rsync embark eshell org projectile shell vterm)
   "A list of allowed packages."
   :group 'dtache
   :type 'list)
 
+(defvar dtache-action-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "a" #'dtache-attach-session)
+    (define-key map "c" #'dtache-compile-session)
+    (define-key map "d" #'dtache-delete-session)
+    (define-key map "i" #'dtache-insert-session-command)
+    (define-key map "k" #'dtache-kill-session)
+    (define-key map "r" #'dtache-rerun-session)
+    (define-key map "t" #'dtache-tail-session)
+    (define-key map "v" #'dtache-view-session)
+    (define-key map "w" #'dtache-copy-session-command)
+    (define-key map "W" #'dtache-copy-session)
+    (define-key map "=" #'dtache-diff-session)
+    map))
+
+;;;; Support functions
+
 (defvar dtache-init--package-integration '((compile . dtache-init-compile)
                                            (dired . dtache-init-dired)
                                            (dired-rsync . dtache-init-dired-rsync)
+                                           (embark . dtache-init-embark)
                                            (eshell . dtache-init-eshell)
                                            (org . dtache-init-org)
                                            (projectile . dtache-init-projectile)
@@ -123,6 +156,12 @@
   "Initialize integration with `vterm'."
   (when (functionp #'vterm)
     (add-hook 'vterm-mode-hook #'dtache-vterm-mode)))
+
+(defun dtache-init-embark ()
+  "Initialize integration with `embark'."
+  (with-eval-after-load 'embark
+    (defvar embark-dtache-map (make-composed-keymap dtache-action-map embark-general-map))
+    (add-to-list 'embark-keymap-alist '(dtache . embark-dtache-map))))
 
 (provide 'dtache-init)
 
