@@ -35,7 +35,7 @@
 
 (defvar vterm--process)
 
-;;;; Functions
+;;;; Commands
 
 ;;;###autoload
 (defun dtache-vterm-send-input (&optional detach)
@@ -78,6 +78,23 @@ Optionally DETACH from it."
   "Detach from a `dtache' session."
   (interactive)
   (process-send-string vterm--process dtache--dtach-detach-character))
+
+;;;; Minor mode
+
+(defvar dtache-vterm-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "<S-return>") #'dtache-vterm-send-input)
+    (define-key map (kbd "<C-return>") #'dtache-vterm-attach)
+    (define-key map (kbd dtache-detach-key) #'dtache-vterm-detach)
+    map)
+  "Keymap for `dtache-vterm-mode'.")
+
+;;;###autoload
+(define-minor-mode dtache-vterm-mode
+  "Integrate `dtache' in `vterm'."
+  :lighter " dtache-vterm"
+  :keymap (let ((map (make-sparse-keymap)))
+            map))
 
 (provide 'dtache-vterm)
 

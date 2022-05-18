@@ -34,11 +34,13 @@
 (declare-function dtache-org-babel-sh "dtache-org")
 (declare-function dtache-shell-override-history "dtache-shell")
 (declare-function dtache-shell-save-history-on-kill "dtache-shell")
+(declare-function dtache-vterm-mode "dtache-vterm")
 
 (declare-function org-babel-sh-evaluate "ob-shell")
 (declare-function dired-rsync--do-run "dired-rsync")
 (declare-function dired-rsync "dired-rsync")
 (declare-function projectile "projectile")
+(declare-function vterm "vterm")
 
 ;;;; Variables
 
@@ -97,6 +99,12 @@ Optionally provide a list of PACKAGES to enable integration for."
   (when (functionp #'projectile)
     (advice-add 'projectile-run-compilation
                 :override #'dtache-extra-projectile-run-compilation)))
+
+(defun dtache-init-vterm ()
+  "Initialize integration with `vterm'."
+  (when (functionp #'vterm)
+    (add-hook 'vterm-mode-hook #'dtache-vterm-mode)))
+
 
 (provide 'dtache-init)
 
