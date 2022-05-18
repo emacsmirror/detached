@@ -80,7 +80,15 @@ Optionally EDIT-COMMAND."
     (let* ((dtache-enabled t)
            (dtache-session-mode 'attach)
            (dtache--current-session session))
-      (compilation-start (dtache--session-command session)))))
+      (compilation-start (dtache--session-command session))
+      (when dtache-show-output-on-attach
+        ;; HACK: When attaching to a detached process and
+        ;; `dtache-show-output-on-attach' is non-nil we need to switch
+        ;; to the compile buffer and go to the end. Otherwise it won't
+        ;; properly update when new output is coming
+        (other-window 1)
+        (end-of-buffer)
+        (other-window 1)))))
 
 ;;;###autoload
 (defun dtache-compile-open (session)
