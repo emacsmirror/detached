@@ -82,7 +82,7 @@ Optionally EDIT-COMMAND."
            (detached--current-session session))
       (compilation-start (detached--session-command session))
       (when detached-show-output-on-attach
-        ;; HACK: When attaching to a detached process and
+        ;; HACK: When attaching to a detached session and
         ;; `detached-show-output-on-attach' is non-nil we need to switch
         ;; to the compile buffer and go to the end. Otherwise it won't
         ;; properly update when new output is coming
