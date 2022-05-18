@@ -121,6 +121,11 @@
   :type 'integer
   :group 'dtache)
 
+(defcustom dtache-open-active-session-action 'attach
+  "How to open an active session, allowed values are `attach' and `tail'."
+  :type 'symbol
+  :group 'dtache)
+
 (defcustom dtache-shell-command-session-action
   '(:attach dtache-shell-command-attach-session
             :view dtache-view-dwim
@@ -341,7 +346,10 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
    (list (dtache-completing-read (dtache-get-sessions))))
   (when (dtache-valid-session session)
     (if (eq 'active (dtache--session-state session))
-        (dtache-attach-session session)
+        (pcase dtache-open-active-session-action
+          ('attach (dtache-attach-session session))
+          ('tail (dtache-tail-session session))
+          (_ (message "`dtache-open-active-session-action' has an incorrect value")))
       (if-let ((view-fun (plist-get (dtache--session-action session) :view)))
           (funcall view-fun session)
         (dtache-view-dwim session)))))
