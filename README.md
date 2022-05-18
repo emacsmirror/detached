@@ -278,9 +278,9 @@ Next add the annotation function to the `detached-metadata-annotators-alist` tog
 
 ## Nonattachable commands
 
-To be able to both attach to a dtach session as well as logging its output `detached` relies on the usage of `tee`. However it is possible that the user tries to run a command which involves a program that doesn't integrate well with tee. In those situations the output could be delayed until the session ends, which is not preferable.
+To be able to both attach to a dtach session as well as logging its output `detached.el` relies on the usage of `tee`. However it is possible that the user tries to run a command which involves a program that doesn't integrate well with tee. In those situations the output could be delayed until the session ends, which is not preferable.
 
-For these situations `detached` provides the `detached-nonattachable-commands` variable. This is a list of regular expressions. Any command that matches any of the strings will be getting the property `attachable` set to false.
+For these situations `detached.el` provides the `detached-nonattachable-commands` variable. This is a list of regular expressions. Any command that matches any of the strings will be getting the property `attachable` set to false.
 ``` emacs-lisp
 (setq detached-nonattachable-commands '("^ls"))
 ```
