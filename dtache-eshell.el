@@ -134,7 +134,6 @@ If prefix-argument directly DETACH from the session."
   (make-local-variable 'eshell-preoutput-filter-functions)
   (if dtache-eshell-mode
       (progn
-        (dtache-setup)
         (add-hook 'eshell-preoutput-filter-functions #'dtache--dtache-env-message-filter)
         (add-hook 'eshell-preoutput-filter-functions #'dtache--dtach-eof-message-filter))
     (remove-hook 'eshell-preoutput-filter-functions #'dtache--dtache-env-message-filter)
