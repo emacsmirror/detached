@@ -1,4 +1,4 @@
-;;; dtache-test.el --- Tests for dtache.el -*- lexical-binding: t; -*-
+;;; detached-test.el --- Tests for detached.el -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2020-2022  Free Software Foundation, Inc.
 
@@ -17,286 +17,286 @@
 
 ;;; Commentary:
 
-;; Tests for `dtache'.
+;; Tests for `detached'.
 
 ;;; Code:
 
 ;;;; Requirements
 
 (require 'ert)
-(require 'dtache)
+(require 'detached)
 
 ;;;; Support
 
-(defmacro dtache-test--with-temp-database (&rest body)
-  "Initialize a dtache database and evaluate BODY."
-  `(let* ((temp-directory (make-temp-file "dtache" t))
-          (dtache-db-directory (expand-file-name "dtache.db" temp-directory))
-          (dtache-session-directory (expand-file-name "sessions" temp-directory))
-          (dtache--sessions)
-          (dtache--sessions-initialized)
-          (dtache--remote-session-timer))
+(defmacro detached-test--with-temp-database (&rest body)
+  "Initialize a detached database and evaluate BODY."
+  `(let* ((temp-directory (make-temp-file "detached" t))
+          (detached-db-directory (expand-file-name "detached.db" temp-directory))
+          (detached-session-directory (expand-file-name "sessions" temp-directory))
+          (detached--sessions)
+          (detached--sessions-initialized)
+          (detached--remote-session-timer))
      (unwind-protect
          (progn
-           (dtache-initialize-sessions)
+           (detached-initialize-sessions)
            ,@body)
        (delete-directory temp-directory t))))
 
-(cl-defun dtache-test--create-session (&key command host)
+(cl-defun detached-test--create-session (&key command host)
   "Create session with COMMAND running on HOST."
-  (cl-letf* (((symbol-function #'dtache--host) (lambda () host))
-             ((symbol-function #'dtache-metadata) (lambda () nil))
-             ((symbol-function #'dtache--watch-session-directory) #'ignore)
-             (session (dtache-create-session command)))
-    (dtache-test--change-session-state session 'activate)
+  (cl-letf* (((symbol-function #'detached--host) (lambda () host))
+             ((symbol-function #'detached-metadata) (lambda () nil))
+             ((symbol-function #'detached--watch-session-directory) #'ignore)
+             (session (detached-create-session command)))
+    (detached-test--change-session-state session 'activate)
     session))
 
-(defun dtache-test--change-session-state (session state)
+(defun detached-test--change-session-state (session state)
   "Set STATE of SESSION."
   (pcase state
     ('activate
      (dolist (type `(socket log))
-       (with-temp-file (dtache--session-file session type))))
+       (with-temp-file (detached--session-file session type))))
     ('deactivate
-     (delete-file (dtache--session-file session 'socket)))
+     (delete-file (detached--session-file session 'socket)))
     ('kill
-     (delete-file (dtache--session-file session 'socket))
-     (delete-file (dtache--session-file session 'log)))))
+     (delete-file (detached--session-file session 'socket))
+     (delete-file (detached--session-file session 'log)))))
 
 ;;;; Tests
 
-(ert-deftest dtache-test-dtach-command ()
-  (dtache-test--with-temp-database
-   (cl-letf* ((dtache-dtach-program "dtach")
-              (dtache-env "dtache-env")
-              (dtache-shell-program "bash")
-              (session (dtache-create-session "ls -la"))
-              (dtache-show-output-on-attach t)
-              (dtache-show-output-command "/bin/cat")
-              ((symbol-function #'dtache-create-session)
+(ert-deftest detached-test-dtach-command ()
+  (detached-test--with-temp-database
+   (cl-letf* ((detached-dtach-program "dtach")
+              (detached-env "detached-env")
+              (detached-shell-program "bash")
+              (session (detached-create-session "ls -la"))
+              (detached-show-output-on-attach t)
+              (detached-show-output-command "/bin/cat")
+              ((symbol-function #'detached-create-session)
                (lambda (_)
                  session)))
-     (let* ((dtache-session-mode 'create-and-attach)
-            (expected `(,dtache-dtach-program
-                        "-c" ,(dtache--session-file session 'socket t)
-                        "-z" ,dtache-shell-program
+     (let* ((detached-session-mode 'create-and-attach)
+            (expected `(,detached-dtach-program
+                        "-c" ,(detached--session-file session 'socket t)
+                        "-z" ,detached-shell-program
                         "-c"
-                        ,(format "{ dtache-env terminal-data ls\\ -la; } 2>&1 | tee %s"
-                                 (dtache--session-file session 'log t))))
+                        ,(format "{ detached-env terminal-data ls\\ -la; } 2>&1 | tee %s"
+                                 (detached--session-file session 'log t))))
             (expected-concat (format "%s -c %s -z %s -c %s"
-                                     dtache-dtach-program
-                                     (dtache--session-file session 'socket t)
-                                     dtache-shell-program
+                                     detached-dtach-program
+                                     (detached--session-file session 'socket t)
+                                     detached-shell-program
                                      (shell-quote-argument
-                                      (format "{ dtache-env terminal-data ls\\ -la; } 2>&1 | tee %s"
-                                              (dtache--session-file session 'log t))))))
-       (should (equal expected (dtache-dtach-command session)))
-       (should (equal expected-concat (dtache-dtach-command session t))))
-     (let* ((dtache-session-mode 'attach)
-            (expected `(,dtache-show-output-command
-                        ,(format "%s;" (dtache--session-file session 'log t))
-                        ,dtache-dtach-program "-a" ,(dtache--session-file session 'socket t) "-r" "none"))
+                                      (format "{ detached-env terminal-data ls\\ -la; } 2>&1 | tee %s"
+                                              (detached--session-file session 'log t))))))
+       (should (equal expected (detached-dtach-command session)))
+       (should (equal expected-concat (detached-dtach-command session t))))
+     (let* ((detached-session-mode 'attach)
+            (expected `(,detached-show-output-command
+                        ,(format "%s;" (detached--session-file session 'log t))
+                        ,detached-dtach-program "-a" ,(detached--session-file session 'socket t) "-r" "none"))
             (expected-concat (format "%s %s; %s -a %s -r none"
-                                     dtache-show-output-command
-                                     (dtache--session-file session 'log t)
-                                     dtache-dtach-program
-                                     (dtache--session-file session 'socket t))))
-       (should (equal expected (dtache-dtach-command session)))
-       (should (equal expected-concat (dtache-dtach-command session t)))))))
+                                     detached-show-output-command
+                                     (detached--session-file session 'log t)
+                                     detached-dtach-program
+                                     (detached--session-file session 'socket t))))
+       (should (equal expected (detached-dtach-command session)))
+       (should (equal expected-concat (detached-dtach-command session t)))))))
 
-(ert-deftest dtache-test-metadata ()
+(ert-deftest detached-test-metadata ()
   ;; No annotators
-  (let ((dtache-metadata-annotators-alist '()))
-    (should (not (dtache-metadata))))
+  (let ((detached-metadata-annotators-alist '()))
+    (should (not (detached-metadata))))
 
   ;; Two annotators
-  (let ((dtache-metadata-annotators-alist
+  (let ((detached-metadata-annotators-alist
          '((git-branch . (lambda () "foo"))
            (username . (lambda () "bar"))))
         (expected '((username . "bar")
                     (git-branch . "foo"))))
-    (should (equal (dtache-metadata) expected))))
+    (should (equal (detached-metadata) expected))))
 
-(ert-deftest dtache-test-session-file ()
+(ert-deftest detached-test-session-file ()
   ;; Local files
   (cl-letf* (((symbol-function #'expand-file-name) (lambda (file directory) (concat directory file)))
              ((symbol-function #'file-remote-p) (lambda (_directory _localname) "/home/user/tmp"))
-             (session (dtache--session-create :id 's12345 :directory "/home/user/tmp/")))
-    (should (string= "/home/user/tmp/s12345.log" (dtache--session-file session 'log)))
-    (should (string= "/home/user/tmp/s12345.socket" (dtache--session-file session 'socket))))
+             (session (detached--session-create :id 's12345 :directory "/home/user/tmp/")))
+    (should (string= "/home/user/tmp/s12345.log" (detached--session-file session 'log)))
+    (should (string= "/home/user/tmp/s12345.socket" (detached--session-file session 'socket))))
 
   ;; Remote files
   (cl-letf* (((symbol-function #'expand-file-name) (lambda (file directory) (concat directory file)))
              ((symbol-function #'file-remote-p) (lambda (_directory _localname) "/ssh:foo:/home/user/tmp/"))
-             (session (dtache--session-create :id 's12345 :directory "/ssh:foo:/home/user/tmp/")))
-    (should (string= "/ssh:foo:/home/user/tmp/s12345.log" (dtache--session-file session 'log)))
-    (should (string= "/ssh:foo:/home/user/tmp/s12345.socket" (dtache--session-file session 'socket)))))
+             (session (detached--session-create :id 's12345 :directory "/ssh:foo:/home/user/tmp/")))
+    (should (string= "/ssh:foo:/home/user/tmp/s12345.log" (detached--session-file session 'log)))
+    (should (string= "/ssh:foo:/home/user/tmp/s12345.socket" (detached--session-file session 'socket)))))
 
-(ert-deftest dtache-test-host ()
+(ert-deftest detached-test-host ()
   (cl-letf (((symbol-function #'system-name) (lambda () "localhost")))
-    (should (equal '("localhost" . local) (dtache--host))))
+    (should (equal '("localhost" . local) (detached--host))))
   (let ((default-directory "/ssh:remotehost:/home/user/git"))
-    (should (equal '("remotehost" . remote) (dtache--host)))))
+    (should (equal '("remotehost" . remote) (detached--host)))))
 
-(ert-deftest dtache-test-session-active-p ()
-  (dtache-test--with-temp-database
-   (let ((session (dtache-test--create-session :command "foo" :host '("bar" . local))))
-     (should (eq 'active (dtache--determine-session-state session)))
-     (dtache-test--change-session-state session 'deactivate)
-     (should (eq 'inactive (dtache--determine-session-state session))))))
+(ert-deftest detached-test-session-active-p ()
+  (detached-test--with-temp-database
+   (let ((session (detached-test--create-session :command "foo" :host '("bar" . local))))
+     (should (eq 'active (detached--determine-session-state session)))
+     (detached-test--change-session-state session 'deactivate)
+     (should (eq 'inactive (detached--determine-session-state session))))))
 
-(ert-deftest dtache-test-session-dead-p ()
-  (dtache-test--with-temp-database
-   (let ((session (dtache-test--create-session :command "foo" :host '("bar" . local))))
-     (should (not (dtache--session-missing-p session)))
-     (dtache-test--change-session-state session 'deactivate)
-     (should (not (dtache--session-missing-p session)))
-     (dtache-test--change-session-state session 'kill)
-     (should (dtache--session-missing-p session)))))
+(ert-deftest detached-test-session-dead-p ()
+  (detached-test--with-temp-database
+   (let ((session (detached-test--create-session :command "foo" :host '("bar" . local))))
+     (should (not (detached--session-missing-p session)))
+     (detached-test--change-session-state session 'deactivate)
+     (should (not (detached--session-missing-p session)))
+     (detached-test--change-session-state session 'kill)
+     (should (detached--session-missing-p session)))))
 
-(ert-deftest dtache-test-cleanup-host-sessions ()
-  (dtache-test--with-temp-database
-   (cl-letf* ((session1 (dtache-test--create-session :command "foo" :host '("remotehost" . remote)))
-              (session2 (dtache-test--create-session :command "bar" :host '("localhost" . local)))
-              (session3 (dtache-test--create-session :command "baz" :host '("localhost" . local)))
+(ert-deftest detached-test-cleanup-host-sessions ()
+  (detached-test--with-temp-database
+   (cl-letf* ((session1 (detached-test--create-session :command "foo" :host '("remotehost" . remote)))
+              (session2 (detached-test--create-session :command "bar" :host '("localhost" . local)))
+              (session3 (detached-test--create-session :command "baz" :host '("localhost" . local)))
               (host '("localhost" . local))
-              ((symbol-function #'dtache--host) (lambda () host)))
+              ((symbol-function #'detached--host) (lambda () host)))
      ;; One inactive, one missing, one active
-     (dtache-test--change-session-state session1 'deactivate)
-     (dtache-test--change-session-state session2 'kill)
-     (dtache--cleanup-host-sessions host)
-     (dtache--db-get-sessions)
+     (detached-test--change-session-state session1 'deactivate)
+     (detached-test--change-session-state session2 'kill)
+     (detached--cleanup-host-sessions host)
+     (detached--db-get-sessions)
      (should (seq-set-equal-p
-              (dtache--db-get-sessions)
+              (detached--db-get-sessions)
               `(,session1 ,session3))))))
 
-(ert-deftest dtache-test-dtach-arg ()
-  (let ((dtache-session-mode 'create))
-    (should (string= "-n" (dtache--dtach-arg))))
-  (let ((dtache-session-mode 'create-and-attach))
-    (should (string= "-c" (dtache--dtach-arg))))
-  (let ((dtache-session-mode 'attach))
-    (should (string= "-a" (dtache--dtach-arg))))
-  (let ((dtache-session-mode nil))
-    (should-error (dtache--dtach-arg))))
+(ert-deftest detached-test-dtach-arg ()
+  (let ((detached-session-mode 'create))
+    (should (string= "-n" (detached--dtach-arg))))
+  (let ((detached-session-mode 'create-and-attach))
+    (should (string= "-c" (detached--dtach-arg))))
+  (let ((detached-session-mode 'attach))
+    (should (string= "-a" (detached--dtach-arg))))
+  (let ((detached-session-mode nil))
+    (should-error (detached--dtach-arg))))
 
 ;;;;; Database
 
-(ert-deftest dtache-test-db-insert-session ()
-  (dtache-test--with-temp-database
-   (let* ((session (dtache-test--create-session :command "foo" :host '("localhost" . local))))
-     (should (equal (dtache--db-get-sessions) `(,session))))))
+(ert-deftest detached-test-db-insert-session ()
+  (detached-test--with-temp-database
+   (let* ((session (detached-test--create-session :command "foo" :host '("localhost" . local))))
+     (should (equal (detached--db-get-sessions) `(,session))))))
 
-(ert-deftest dtache-test-db-remove-session ()
-  (dtache-test--with-temp-database
+(ert-deftest detached-test-db-remove-session ()
+  (detached-test--with-temp-database
    (let* ((host '(:type local :name "host"))
-          (session1 (dtache-test--create-session :command "foo" :host '("host" . local)))
-          (session2 (dtache-test--create-session :command "bar" :host '("host" . local))))
-     (should (seq-set-equal-p `(,session1 ,session2) (dtache--db-get-sessions)))
-     (dtache--db-remove-entry session1)
-     (should (seq-set-equal-p `(,session2) (dtache--db-get-sessions))))))
+          (session1 (detached-test--create-session :command "foo" :host '("host" . local)))
+          (session2 (detached-test--create-session :command "bar" :host '("host" . local))))
+     (should (seq-set-equal-p `(,session1 ,session2) (detached--db-get-sessions)))
+     (detached--db-remove-entry session1)
+     (should (seq-set-equal-p `(,session2) (detached--db-get-sessions))))))
 
-(ert-deftest dtache-test-db-update-session ()
-  (dtache-test--with-temp-database
-   (let* ((session (dtache-test--create-session :command "foo" :host '("host" . local)))
-          (id (dtache--session-id session))
+(ert-deftest detached-test-db-update-session ()
+  (detached-test--with-temp-database
+   (let* ((session (detached-test--create-session :command "foo" :host '("host" . local)))
+          (id (detached--session-id session))
           (copy))
-     (setq copy (copy-dtache-session session))
-     (setf (dtache--session-state copy) nil)
-     (should (not (equal copy (dtache--db-get-session id))))
-     (dtache--db-update-entry copy t)
-     (should (equal copy (car (dtache--db-get-sessions)))))))
+     (setq copy (copy-detached-session session))
+     (setf (detached--session-state copy) nil)
+     (should (not (equal copy (detached--db-get-session id))))
+     (detached--db-update-entry copy t)
+     (should (equal copy (car (detached--db-get-sessions)))))))
 
-(ert-deftest dtache-test-dtache-command ()
-  (let ((attachable-session (dtache--session-create :directory "/tmp/dtache/"
+(ert-deftest detached-test-detached-command ()
+  (let ((attachable-session (detached--session-create :directory "/tmp/detached/"
                                                 :working-directory "/home/user/"
                                                 :command "ls -la"
                                                 :attachable t
                                                 :env-mode 'terminal-data
                                                 :id 'foo123))
-        (nonattachable-session (dtache--session-create :directory "/tmp/dtache/"
+        (nonattachable-session (detached--session-create :directory "/tmp/detached/"
                                                 :working-directory "/home/user/"
                                                 :command "ls -la"
                                                 :attachable nil
                                                 :env-mode 'plain-text
                                                 :id 'foo123)))
-    ;; With dtache-env
-    (let ((dtache-env "dtache-env"))
-      (should (string= "{ dtache-env terminal-data ls\\ -la; } 2>&1 | tee /tmp/dtache/foo123.log"
-                       (dtache--dtache-command attachable-session)))
-      (should (string= "{ dtache-env plain-text ls\\ -la; } &> /tmp/dtache/foo123.log"
-                       (dtache--dtache-command nonattachable-session))))
+    ;; With detached-env
+    (let ((detached-env "detached-env"))
+      (should (string= "{ detached-env terminal-data ls\\ -la; } 2>&1 | tee /tmp/detached/foo123.log"
+                       (detached--detached-command attachable-session)))
+      (should (string= "{ detached-env plain-text ls\\ -la; } &> /tmp/detached/foo123.log"
+                       (detached--detached-command nonattachable-session))))
 
-    ;; Without dtache-env
-    (let ((dtache-env nil)
-          (dtache-shell-program "bash"))
-      (should (string= "{ bash -c ls\\ -la; } 2>&1 | tee /tmp/dtache/foo123.log"
-                       (dtache--dtache-command attachable-session)))
-      (should (string= "{ bash -c ls\\ -la; } &> /tmp/dtache/foo123.log"
-                       (dtache--dtache-command nonattachable-session))))))
+    ;; Without detached-env
+    (let ((detached-env nil)
+          (detached-shell-program "bash"))
+      (should (string= "{ bash -c ls\\ -la; } 2>&1 | tee /tmp/detached/foo123.log"
+                       (detached--detached-command attachable-session)))
+      (should (string= "{ bash -c ls\\ -la; } &> /tmp/detached/foo123.log"
+                       (detached--detached-command nonattachable-session))))))
 
-(ert-deftest dtache-test-attachable-command-p ()
-  (let ((dtache-nonattachable-commands '("ls")))
-    (should (dtache-attachable-command-p "cd"))
-    (should (not (dtache-attachable-command-p "ls -la")))))
+(ert-deftest detached-test-attachable-command-p ()
+  (let ((detached-nonattachable-commands '("ls")))
+    (should (detached-attachable-command-p "cd"))
+    (should (not (detached-attachable-command-p "ls -la")))))
 
 ;;;;; String representations
 
-(ert-deftest dtache-test-duration-str ()
-  (should (string= "1s" (dtache--duration-str (dtache--session-create :time '(:duration 1)))))
-  (should (string= "1m 1s" (dtache--duration-str (dtache--session-create :time '(:duration 61)))))
-  (should (string= "1h 1m 1s" (dtache--duration-str (dtache--session-create :time '(:duration 3661))))))
+(ert-deftest detached-test-duration-str ()
+  (should (string= "1s" (detached--duration-str (detached--session-create :time '(:duration 1)))))
+  (should (string= "1m 1s" (detached--duration-str (detached--session-create :time '(:duration 61)))))
+  (should (string= "1h 1m 1s" (detached--duration-str (detached--session-create :time '(:duration 3661))))))
 
-(ert-deftest dtache-test-creation-str ()
+(ert-deftest detached-test-creation-str ()
   ;; Make sure to set the TIMEZONE before executing the test to avoid
   ;; differences between machines
   (cl-letf* (((getenv "TZ") "UTC0")
-             (session (dtache--session-create :time `(:start 1620463748.7636228))))
-    (should (string= "May 08 08:49" (dtache--creation-str session)))))
+             (session (detached--session-create :time `(:start 1620463748.7636228))))
+    (should (string= "May 08 08:49" (detached--creation-str session)))))
 
-(ert-deftest dtache-test-size-str ()
-  (should (string= "100" (dtache--size-str (dtache--session-create :size 100 :state 'inactive))))
-  (should (string= "1k" (dtache--size-str (dtache--session-create :size 1024 :state 'inactive)))))
+(ert-deftest detached-test-size-str ()
+  (should (string= "100" (detached--size-str (detached--session-create :size 100 :state 'inactive))))
+  (should (string= "1k" (detached--size-str (detached--session-create :size 1024 :state 'inactive)))))
 
-(ert-deftest dtache-test-status-str ()
-  (should (string= "!" (dtache--status-str (dtache--session-create :status '(failure . 127)))))
-  (should (string= "" (dtache--status-str (dtache--session-create :status '(success . 0)))))
-  (should (string= "" (dtache--status-str (dtache--session-create :status '(unknown . 0))))))
+(ert-deftest detached-test-status-str ()
+  (should (string= "!" (detached--status-str (detached--session-create :status '(failure . 127)))))
+  (should (string= "" (detached--status-str (detached--session-create :status '(success . 0)))))
+  (should (string= "" (detached--status-str (detached--session-create :status '(unknown . 0))))))
 
-(ert-deftest dtache-test-state-str ()
-  (should (string= "*" (dtache--state-str (dtache--session-create :state 'active))))
-  (should (string= "" (dtache--state-str (dtache--session-create :state 'inactive)))))
+(ert-deftest detached-test-state-str ()
+  (should (string= "*" (detached--state-str (detached--session-create :state 'active))))
+  (should (string= "" (detached--state-str (detached--session-create :state 'inactive)))))
 
-(ert-deftest dtache-test-working-dir-str ()
+(ert-deftest detached-test-working-dir-str ()
   (should
    (string= "/home/user/repo"
-            (dtache--working-dir-str
-             (dtache--session-create :working-directory "/ssh:remote:/home/user/repo"))))
+            (detached--working-dir-str
+             (detached--session-create :working-directory "/ssh:remote:/home/user/repo"))))
   (should
    (string= "~/repo"
-            (dtache--working-dir-str
-             (dtache--session-create :working-directory "~/repo")))))
+            (detached--working-dir-str
+             (detached--session-create :working-directory "~/repo")))))
 
 ;;;;; Output filters
 
-(ert-deftest dtache-test-dtach-eof-message-filter ()
+(ert-deftest detached-test-dtach-eof-message-filter ()
   (let ((str "
 [EOF - dtach terminating]
 user@machine "))
     (should (string= "user@machine " (dtache--dtach-eof-message-filter str)))))
 
-(ert-deftest dtache-test-dtach-detached-message-filter ()
+(ert-deftest detached-test-dtach-detached-message-filter ()
   (let ((str "
 [detached]
 user@machine "))
     (should (string= "user@machine " (dtache--dtach-detached-message-filter str)))))
 
-(ert-deftest dtache-test-dtache-env-message-filter ()
-  (let ((str "output\n\nDtache session exited abnormally with code 127"))
-    (should (string= "output\n" (dtache--dtache-env-message-filter str))))
-  (let ((str "output\n\nDtache session finished"))
-    (should (string= "output\n" (dtache--dtache-env-message-filter str)))))
+(ert-deftest detached-test-detached-env-message-filter ()
+  (let ((str "output\n\nDetached session exited abnormally with code 127"))
+    (should (string= "output\n" (detached--detached-env-message-filter str))))
+  (let ((str "output\n\nDetached session finished"))
+    (should (string= "output\n" (detached--detached-env-message-filter str)))))
 
-(provide 'dtache-test)
+(provide 'detached-test)
 
-;;; dtache-test.el ends here
+;;; detached-test.el ends here

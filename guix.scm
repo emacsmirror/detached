@@ -17,18 +17,18 @@
 (define %git-commit
   (read-string (open-pipe "git show HEAD | head -1 | cut -d ' ' -f2" OPEN_READ)))
 
-(define-public emacs-dtache
+(define-public emacs-detached
   (let ((branch "remote")
         (commit "220f93dfa710474b4f9c9db0349a6082374f80c0")
         (revision "0"))
     (package
-     (name "emacs-dtache")
+     (name "emacs-detached")
      (version (git-version "0.0" revision commit))
      (source
       (origin
        (method git-fetch)
        (uri (git-reference
-             (url "https://gitlab.com/niklaseklund/dtache")
+             (url "https://gitlab.com/niklaseklund/detached")
              (commit commit)))
        (sha256
         (base32
@@ -41,15 +41,15 @@
      (arguments
       `(#:tests? #t
         #:test-command '("ert-runner")))
-     (home-page "https://gitlab.com/niklaseklund/dtache")
+     (home-page "https://gitlab.com/niklaseklund/detached")
      (synopsis "Dtach Emacs")
-     (description "Dtache allows a program to be seamlessly executed
+     (description "Detached allows a program to be seamlessly executed
 in an environment that is isolated from Emacs.")
      (license license:gpl3+))))
 
 (package
-  (inherit emacs-dtache)
-  (name "emacs-dtache-git")
-  (version (git-version (package-version emacs-dtache) "HEAD" %git-commit))
+  (inherit emacs-detached)
+  (name "emacs-detached-git")
+  (version (git-version (package-version emacs-detached) "HEAD" %git-commit))
   (source (local-file %source-dir
                       #:recursive? #t)))

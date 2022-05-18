@@ -1,4 +1,4 @@
-;;; dtache-org.el --- Dtache integration for org -*- lexical-binding: t -*-
+;;; detached-org.el --- Detached integration for org -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2022  Free Software Foundation, Inc.
 
@@ -19,52 +19,52 @@
 
 ;;; Commentary:
 
-;; This package integrates `dtache' with `org'.  In particular it
+;; This package integrates `detached' with `org'.  In particular it
 ;; integrates with `ob-shell' in order to detach babel src blocks.
 
 ;;; Code:
 
 ;;;; Requirements
 
-(require 'dtache)
+(require 'detached)
 (require 'ob-shell)
 
 ;;;; Variables
 
-(defcustom dtache-org-session-action
-  '(:attach dtache-shell-command-attach-session
-            :view dtache-view-dwim
-            :run dtache-shell-command)
-  "Actions for a session created with `dtache-org'."
-  :group 'dtache
+(defcustom detached-org-session-action
+  '(:attach detached-shell-command-attach-session
+            :view detached-view-dwim
+            :run detached-shell-command)
+  "Actions for a session created with `detached-org'."
+  :group 'detached
   :type 'plist)
 
 ;;;; Functions
 
 ;;;###autoload
-(defun dtache-org-babel-sh (org-babel-sh-evaluate-fun &rest args)
+(defun detached-org-babel-sh (org-babel-sh-evaluate-fun &rest args)
   "Modify ARGS before calling ORG-BABEL-SH-EVALUATE-FUN.
 
 This function modifies the full-body in ARGS and replaces it with a
-`dtache' command.  The functionality is enabled by setting a header
-property of :dtache t in the org babel src block."
+`detached' command.  The functionality is enabled by setting a header
+property of :detached t in the org babel src block."
   (pcase-let* ((`(,session ,full-body ,params ,stdin ,cmdline) args))
-    (if (alist-get :dtache params)
-        (cl-letf* ((dtache-session-origin 'org)
-                   (dtache-session-action dtache-org-session-action)
-                   (dtache-session-mode 'create)
+    (if (alist-get :detached params)
+        (cl-letf* ((detached-session-origin 'org)
+                   (detached-session-action detached-org-session-action)
+                   (detached-session-mode 'create)
                    (new-command (replace-regexp-in-string "\n" " && " full-body))
                    (dtach-command
                     (if (string= "none" (alist-get :session params))
-                        (dtache-dtach-command new-command t)
-                      (format "%s\necho \"[detached]\"" (dtache-dtach-command new-command t))))
+                        (detached-dtach-command new-command t)
+                      (format "%s\necho \"[detached]\"" (detached-dtach-command new-command t))))
                    ((symbol-function #'org-babel-eval)
                     (lambda (_ command)
-                      (start-file-process-shell-command "dtache-org" nil command)
+                      (start-file-process-shell-command "detached-org" nil command)
                       "[detached]")))
           (apply org-babel-sh-evaluate-fun `(,session ,dtach-command ,params ,stdin ,cmdline)))
       (apply org-babel-sh-evaluate-fun args))))
 
-(provide 'dtache-org)
+(provide 'detached-org)
 
-;;; dtache-org.el ends here
+;;; detached-org.el ends here

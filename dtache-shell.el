@@ -1,4 +1,4 @@
-;;; dtache-shell.el --- Dtache integration for shell -*- lexical-binding: t -*-
+;;; detached-shell.el --- Detached integration for shell -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2020-2022  Free Software Foundation, Inc.
 
@@ -19,130 +19,130 @@
 
 ;;; Commentary:
 
-;; This is a `dtache' extension which provides integration for `shell'.
+;; This is a `detached' extension which provides integration for `shell'.
 
 ;;; Code:
 
 ;;;; Requirements
 
-(require 'dtache)
+(require 'detached)
 
 ;;;; Variables
 
-(defcustom dtache-shell-session-action
-  '(:attach dtache-shell-command-attach-session
-            :view dtache-view-dwim
-            :run dtache-shell-command)
-  "Actions for a session created with `dtache-shell'."
-  :group 'dtache
+(defcustom detached-shell-session-action
+  '(:attach detached-shell-command-attach-session
+            :view detached-view-dwim
+            :run detached-shell-command)
+  "Actions for a session created with `detached-shell'."
+  :group 'detached
   :type 'plist)
 
-(defcustom dtache-shell-history-file nil
+(defcustom detached-shell-history-file nil
   "File to store history."
   :type 'string
-  :group 'dtache)
+  :group 'detached)
 
 ;;;; Functions
 
-(defun dtache-shell-select-session ()
+(defun detached-shell-select-session ()
   "Return selected session."
-  (let* ((host-name (car (dtache--host)))
+  (let* ((host-name (car (detached--host)))
          (sessions
-          (thread-last (dtache-get-sessions)
+          (thread-last (detached-get-sessions)
                        (seq-filter (lambda (it)
-                                     (string= (car (dtache--session-host it)) host-name)))
-                       (seq-filter (lambda (it) (eq 'active (dtache--determine-session-state it)))))))
-    (dtache-completing-read sessions)))
+                                     (string= (car (detached--session-host it)) host-name)))
+                       (seq-filter (lambda (it) (eq 'active (detached--determine-session-state it)))))))
+    (detached-completing-read sessions)))
 
 ;;;; Commands
 
 ;;;###autoload
-(defun dtache-shell-send-input (&optional detach)
+(defun detached-shell-send-input (&optional detach)
   "Create a session and attach to it unless DETACH."
   (interactive "P")
-  (let* ((dtache-session-origin 'shell)
-         (dtache-session-action dtache-shell-session-action)
-         (dtache-session-mode (if detach 'create 'create-and-attach))
-         (comint-input-sender #'dtache-shell--create-input-sender))
+  (let* ((detached-session-origin 'shell)
+         (detached-session-action detached-shell-session-action)
+         (detached-session-mode (if detach 'create 'create-and-attach))
+         (comint-input-sender #'detached-shell--create-input-sender))
     (comint-send-input)))
 
 ;;;###autoload
-(defun dtache-shell-attach-session (session)
+(defun detached-shell-attach-session (session)
   "Attach to SESSION.
 
 `comint-add-to-input-history' is temporarily disabled to avoid
 cluttering the comint-history with dtach commands."
   (interactive
-   (list (dtache-shell-select-session)))
-  (when (dtache-valid-session session)
-    (if (and (eq 'active (dtache--determine-session-state session))
-             (dtache--session-attachable session))
-        (cl-letf ((dtache--current-session session)
-                  (comint-input-sender #'dtache-shell--attach-input-sender)
+   (list (detached-shell-select-session)))
+  (when (detached-valid-session session)
+    (if (and (eq 'active (detached--determine-session-state session))
+             (detached--session-attachable session))
+        (cl-letf ((detached--current-session session)
+                  (comint-input-sender #'detached-shell--attach-input-sender)
                   ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
-          (setq dtache--buffer-session session)
+          (setq detached--buffer-session session)
           (comint-kill-input)
           (insert "[attached]")
           (comint-send-input))
-      (dtache-open-session session))))
+      (detached-open-session session))))
 
 ;;;; Support functions
 
-(defun dtache-shell--attach-input-sender (proc _string)
-  "Attach to `dtache--session' and send the attach command to PROC."
-  (let* ((dtache-session-mode 'attach)
+(defun detached-shell--attach-input-sender (proc _string)
+  "Attach to `detached--session' and send the attach command to PROC."
+  (let* ((detached-session-mode 'attach)
          (input
-          (dtache-dtach-command dtache--current-session t)))
+          (detached-dtach-command detached--current-session t)))
     (comint-simple-send proc input)))
 
-(defun dtache-shell--create-input-sender (proc string)
-  "Create a dtache session based on STRING and send to PROC."
+(defun detached-shell--create-input-sender (proc string)
+  "Create a detached session based on STRING and send to PROC."
   (with-connection-local-variables
    (let* ((command (substring-no-properties string))
-          (dtach-command (dtache-dtach-command command t)))
+          (dtach-command (detached-dtach-command command t)))
      (comint-simple-send proc dtach-command))))
 
-(defun dtache-shell--comint-read-input-ring-advice (orig-fun &rest args)
+(defun detached-shell--comint-read-input-ring-advice (orig-fun &rest args)
   "Set `comint-input-ring-file-name' before calling ORIG-FUN with ARGS."
   (with-connection-local-variables
    (let ((comint-input-ring-file-name
           (concat
            (file-remote-p default-directory)
-           dtache-shell-history-file)))
+           detached-shell-history-file)))
      (apply orig-fun args)
-     (advice-remove 'comint-read-input-ring #'dtache-shell--comint-read-input-ring-advice))))
+     (advice-remove 'comint-read-input-ring #'detached-shell--comint-read-input-ring-advice))))
 
-(defun dtache-shell--save-history ()
+(defun detached-shell--save-history ()
   "Save `shell' history."
   (with-connection-local-variables
-   (unless (string-prefix-p dtache--shell-command-buffer (buffer-name))
+   (unless (string-prefix-p detached--shell-command-buffer (buffer-name))
      (let* ((inhibit-message t)
             (comint-input-ring-file-name
              (concat
               (file-remote-p default-directory)
-              dtache-shell-history-file)))
+              detached-shell-history-file)))
        (comint-write-input-ring)))))
 
 ;;;###autoload
-(defun dtache-shell-override-history (orig-fun &rest args)
-  "Override history to read `dtache-shell-history-file' in ORIG-FUN with ARGS.
+(defun detached-shell-override-history (orig-fun &rest args)
+  "Override history to read `detached-shell-history-file' in ORIG-FUN with ARGS.
 
 This function also makes sure that the HISTFILE is disabled for local shells."
   (cl-letf (((getenv "HISTFILE") ""))
-    (advice-add 'comint-read-input-ring :around #'dtache-shell--comint-read-input-ring-advice)
+    (advice-add 'comint-read-input-ring :around #'detached-shell--comint-read-input-ring-advice)
     (apply orig-fun args)))
 
 ;;;###autoload
-(defun dtache-shell-save-history-on-kill ()
+(defun detached-shell-save-history-on-kill ()
   "Add hook to save history when killing `shell' buffer."
-  (add-hook 'kill-buffer-hook #'dtache-shell--save-history 0 t))
+  (add-hook 'kill-buffer-hook #'detached-shell--save-history 0 t))
 
 ;;;; Minor mode
 
-(let ((map dtache-shell-mode-map))
-  (define-key map (kbd "<S-return>") #'dtache-shell-send-input)
-  (define-key map (kbd "<C-return>") #'dtache-shell-attach-session))
+(let ((map detached-shell-mode-map))
+  (define-key map (kbd "<S-return>") #'detached-shell-send-input)
+  (define-key map (kbd "<C-return>") #'detached-shell-attach-session))
 
-(provide 'dtache-shell)
+(provide 'detached-shell)
 
-;;; dtache-shell.el ends here
+;;; detached-shell.el ends here
