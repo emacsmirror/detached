@@ -43,6 +43,7 @@
   '(dtache-consult--source-session
     dtache-consult--source-active-session
     dtache-consult--source-inactive-session
+    dtache-consult--source-hidden-session
     dtache-consult--source-success-session
     dtache-consult--source-failure-session
     dtache-consult--source-local-session
