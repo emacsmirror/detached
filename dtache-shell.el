@@ -82,6 +82,7 @@ cluttering the comint-history with dtach commands."
                   ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
           (setq dtache--buffer-session session)
           (comint-kill-input)
+          (insert "[attached]")
           (comint-send-input))
       (dtache-open-session session))))
 

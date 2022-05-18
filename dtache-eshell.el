@@ -93,6 +93,7 @@ If prefix-argument directly DETACH from the session."
             (insert input)
             (setq end (point))
             (overlay-put (make-overlay begin end) 'invisible t)
+            (overlay-put (make-overlay end end) 'before-string "[attached]")
             (insert " "))
           (setq dtache--buffer-session session)
           (call-interactively #'eshell-send-input))
