@@ -50,7 +50,8 @@
                                      (eshell . dtache-init-eshell)
                                      (org . dtache-init-org)
                                      (projectile . dtache-init-projectile)
-                                     (shell . dtache-init-shell))
+                                     (shell . dtache-init-shell)
+                                     (vterm . dtache-init-vterm))
   "Alist which contain names of packages and their initialization function.")
 
 (defun dtache-init (&optional packages)
