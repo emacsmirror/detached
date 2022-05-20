@@ -80,15 +80,7 @@ Optionally EDIT-COMMAND."
     (let* ((detached-enabled t)
            (detached-session-mode 'attach)
            (detached--current-session session))
-      (compilation-start (detached--session-command session))
-      (when detached-show-output-on-attach
-        ;; HACK: When attaching to a detached session and
-        ;; `detached-show-output-on-attach' is non-nil we need to switch
-        ;; to the compile buffer and go to the end. Otherwise it won't
-        ;; properly update when new output is coming
-        (other-window 1)
-        (end-of-buffer)
-        (other-window 1)))))
+      (compilation-start (detached--session-command session)))))
 
 ;;;###autoload
 (defun detached-compile-open (session)
