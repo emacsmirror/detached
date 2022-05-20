@@ -104,7 +104,7 @@ Optionally EDIT-COMMAND."
 ;;;;; Support functions
 
 (defun detached-compile--compilation-start (compilation-start &rest args)
-  "Optionally create a `detached' session before running COMPILATION-START with ARGS."
+  "Create a `detached' session before running COMPILATION-START with ARGS."
   (if detached-enabled
       (pcase-let ((`(,command ,mode ,_ ,highlight-regexp) args)
                   (buffer-name "*detached-compilation*"))
