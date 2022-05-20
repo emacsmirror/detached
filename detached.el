@@ -4,7 +4,7 @@
 
 ;; Author: Niklas Eklund <niklas.eklund@posteo.net>
 ;; Maintainer: Niklas Eklund <niklas.eklund@posteo.net>
-;; URL: https://www.gitlab.com/niklaseklund/detached.git
+;; URL: https://sr.ht/~niklaseklund/detached.el/
 ;; Version: 0.6
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: convenience processes

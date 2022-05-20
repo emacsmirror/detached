@@ -3,7 +3,7 @@ packages:
 - emacs-ert-runner
 - dtach
 environment:
-  project: dtache
+  project: detached.el
 tasks:
 - guix: |
     cd $project
