@@ -897,7 +897,10 @@ Optionally CONCAT the command return command into a string."
   "Return SESSION's command as a string restrict it to MAX-LENGTH."
   (let ((command (detached--session-command session)))
     (if (<= (length command) max-length)
-        command
+        (truncate-string-to-width
+         command
+         max-length
+         0 ?\s)
       (concat (substring (detached--session-command session) 0 (- max-length 3)) "..."))))
 
 ;;;; Support functions
