@@ -1,10 +1,10 @@
 # detached.el
 
-<a href="http://elpa.gnu.org/packages/dtache.html"><img alt="GNU ELPA" src="https://elpa.gnu.org/packages/dtache.svg"/></a>
-<a href="http://elpa.gnu.org/devel/dtache.html"><img alt="GNU-devel ELPA" src="https://elpa.gnu.org/devel/dtache.svg"/></a>
-<a href="https://melpa.org/#/dtache"><img alt="MELPA" src="https://melpa.org/packages/dtache-badge.svg"/></a>
-<a href="https://stable.melpa.org/#/dtache"><img alt="MELPA Stable" src="https://stable.melpa.org/packages/dtache-badge.svg"/></a>
-<a href="https://builds.sr.ht/~niklaseklund/detached.el/commits/main/.build.yml"><img alt="Build" src="https://builds.sr.ht/~niklaseklund/detached.el/commits/main/.build.yml.svg"/></a>
+[![GNU ELPA](https://elpa.gnu.org/detached.svg)](http://elpa.gnu.org/detached.html)
+[![GNU-devel ELPA](https://elpa.gnu.org/devel/detached.svg)](http://elpa.gnu.org/devel/detached.html)
+[![MELPA](https://melpa.org/packages/detached-badge.svg)](https://melpa.org/#/detached)
+[![MELPA Stable](https://stable.melpa.org/packages/detached-badge.svg)](https://stable.melpa.org/#/detached)
+[![builds.sr.ht status](https://builds.sr.ht/~niklaseklund/detached.el/commits/main/.build.yml.svg)](https://builds.sr.ht/~niklaseklund/detached.el/commits/main/.build.yml?)
 
 # Introduction
 
