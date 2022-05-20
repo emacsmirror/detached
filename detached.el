@@ -786,7 +786,6 @@ This function uses the `notifications' library."
 
 (defun detached-get-sessions ()
   "Return validated sessions."
-  (detached-initialize-sessions)
   (detached--validate-unknown-sessions)
   (detached--db-get-sessions))
 
@@ -1068,36 +1067,42 @@ Optionally make the path LOCAL to host."
     (string-match regexp header)
     (match-string 1 header)))
 
-(defun detached--db-insert-entry (session)
+(defun detaced--db-insert-entry (session)
   "Insert SESSION into `detached--sessions' and update database."
+  (detached-initialize-sessions)
   (push `(,(detached--session-id session) . ,session) detached--sessions)
   (detached--db-update-sessions))
 
 (defun detached--db-remove-entry (session)
   "Remove SESSION from `detached--sessions', delete log and update database."
+  (detached-initialize-sessions)
   (let ((log (detached--session-file session 'log)))
     (when (file-exists-p log)
       (delete-file log)))
   (setq detached--sessions
-        (assq-delete-all (detached--session-id session) detached--sessions ))
+        (assq-delete-all (detached--session-id session) detached--sessions))
   (detached--db-update-sessions))
 
 (defun detached--db-update-entry (session &optional update)
   "Update SESSION in `detached--sessions' optionally UPDATE database."
+  (detached-initialize-sessions)
   (setf (alist-get (detached--session-id session) detached--sessions) session)
   (when update
     (detached--db-update-sessions)))
 
 (defun detached--db-get-session (id)
   "Return session with ID."
+  (detached-initialize-sessions)
   (alist-get id detached--sessions))
 
 (defun detached--db-get-sessions ()
   "Return all sessions stored in the database."
+  (detached-initialize-sessions)
   (seq-map #'cdr detached--sessions))
 
 (defun detached--db-update-sessions ()
   "Write `detached--sessions' to database."
+  (detached-initialize-sessions)
   (let ((db (expand-file-name "detached.db" detached-db-directory)))
     (with-temp-file db
       (insert (format ";; Detached Session Version: %s\n\n" detached-session-version))
