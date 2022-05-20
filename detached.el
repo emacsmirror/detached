@@ -1,4 +1,4 @@
-;;; detached.el --- Run and interact with detached shell commands -*- lexical-binding: t -*-
+;;; detached.el --- A package to launch, and manage, detached processes -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2020-2022  Free Software Foundation, Inc.
 
