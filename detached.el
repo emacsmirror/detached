@@ -1067,7 +1067,7 @@ Optionally make the path LOCAL to host."
     (string-match regexp header)
     (match-string 1 header)))
 
-(defun detaced--db-insert-entry (session)
+(defun detached--db-insert-entry (session)
   "Insert SESSION into `detached--sessions' and update database."
   (detached-initialize-sessions)
   (push `(,(detached--session-id session) . ,session) detached--sessions)
