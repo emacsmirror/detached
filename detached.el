@@ -5,7 +5,7 @@
 ;; Author: Niklas Eklund <niklas.eklund@posteo.net>
 ;; Maintainer: Niklas Eklund <niklas.eklund@posteo.net>
 ;; URL: https://sr.ht/~niklaseklund/detached.el/
-;; Version: 0.6
+;; Version: 0.7
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: convenience processes
 
@@ -194,7 +194,7 @@ Valid values are: create, new and attach")
 (defvar detached-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst detached-session-version "0.6.1"
+(defconst detached-session-version "0.7.0"
   "The version of `detached-session'.
 This version is encoded as [package-version].[revision].")
 

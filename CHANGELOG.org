@@ -2,8 +2,8 @@
 #+author: Niklas Eklund
 #+language: en
 
-*   Development
-- Rename =dtache= to =detached.el=
+*   Version 0.7 (2022-05-21)
+- Rename =dtache= to =detached.el=, source code has been moved to https://git.sr.ht/~niklaseklund/detached.el
 - Introduce =dtache-init.el= and move integration of other packages there. The integration now becomes even simpler for users of =dtache=.
 - Rewrite =dtache= to enable the package to lazy load and not force users to load it when starting Emacs.
 - Make completion of sessions adapt to the current dtache sessions. All of the sessions will be used to determine an an appropriate width for the command width as well as each individual annotation. Format has updated in =dtache-annotation-format= and a =dtache-command-format= has been added, this supersedes the =dtache-max-command-lenght=.
