@@ -1,6 +1,6 @@
 # detached.el
 
-[![GNU ELPA](https://elpa.gnu.org/detached.svg)](http://elpa.gnu.org/detached.html)
+[![GNU ELPA](https://elpa.gnu.org/packages/detached.svg)](https://elpa.gnu.org/packages/detached.html)
 [![GNU-devel ELPA](https://elpa.gnu.org/devel/detached.svg)](http://elpa.gnu.org/devel/detached.html)
 [![MELPA](https://melpa.org/packages/detached-badge.svg)](https://melpa.org/#/detached)
 [![MELPA Stable](https://stable.melpa.org/packages/detached-badge.svg)](https://stable.melpa.org/#/detached)
