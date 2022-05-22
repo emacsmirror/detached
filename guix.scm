@@ -18,34 +18,47 @@
   (read-string (open-pipe "git show HEAD | head -1 | cut -d ' ' -f2" OPEN_READ)))
 
 (define-public emacs-detached
-  (let ((branch "remote")
-        (commit "220f93dfa710474b4f9c9db0349a6082374f80c0")
-        (revision "0"))
-    (package
-     (name "emacs-detached")
-     (version (git-version "0.0" revision commit))
-     (source
-      (origin
-       (method git-fetch)
-       (uri (git-reference
-             (url "https://gitlab.com/niklaseklund/detached")
-             (commit commit)))
-       (sha256
-        (base32
-         "0yvkygdqghrp8xn7nfgfq3x5y913r6kasqndxy3fr2dqpxxb941a"))
-       (file-name (git-file-name name version))))
-     (build-system emacs-build-system)
-     (native-inputs
-      `(("emacs-ert-runner" ,emacs-ert-runner)))
-     (inputs `(("dtach" ,dtach)))
-     (arguments
-      `(#:tests? #t
-        #:test-command '("ert-runner")))
-     (home-page "https://gitlab.com/niklaseklund/detached")
-     (synopsis "Dtach Emacs")
-     (description "Detached allows a program to be seamlessly executed
-in an environment that is isolated from Emacs.")
-     (license license:gpl3+))))
+  (package
+    (name "emacs-detached")
+    (version "0.7")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://git.sr.ht/~niklaseklund/detached.el")
+                    (commit version)))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "160h60vrpxslw6y290ndc065cc75dab58aq7kjqash94vkifnii2"))))
+    (arguments
+     (list
+      #:tests? #t
+      #:test-command #~(list "ert-runner")
+      #:phases
+      #~(modify-phases %standard-phases
+          (add-before 'install 'install-detached-env
+            (lambda _
+              (install-file "detached-env" (string-append #$output "/bin"))))
+          (add-after 'unpack 'configure
+            (lambda* (#:key inputs #:allow-other-keys)
+              (make-file-writable "detached.el")
+              (emacs-substitute-variables "detached.el"
+                ("detached-env"
+                 (string-append #$output "/bin/detached-env"))
+                ("detached-dtach-program"
+                 (search-input-file inputs "/bin/dtach"))
+                ("detached-shell-program"
+                 (search-input-file inputs "/bin/bash"))))))))
+    (build-system emacs-build-system)
+    (native-inputs (list emacs-ert-runner))
+    (inputs (list dtach))
+    (home-page "https://git.sr.ht/~niklaseklund/detached.el")
+    (synopsis "A package to launch, and manage, detached processes")
+    (description
+     "The detached package allows users to run processes
+detached from Emacs.  It provides integration with multiple built-in modes, as
+well as providing an interface to attach and interact with the processes.")
+    (license license:gpl3+)))
 
 (package
   (inherit emacs-detached)
