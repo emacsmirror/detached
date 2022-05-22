@@ -27,6 +27,11 @@
 
 (declare-function detached-compile "detached")
 (declare-function detached-start-session "detached")
+(declare-function detached--session-status "detached")
+(declare-function detached--session-host "detached")
+(declare-function detached--session-command "detached")
+
+(declare-function alert "alert")
 
 (defvar detached-session-origin)
 (defvar detached-local-session)
@@ -49,6 +54,19 @@ Optionally USE-COMINT-MODE"
   (let ((detached-local-session t)
         (detached-session-origin 'rsync))
     (detached-start-session command t)))
+
+;;;###autoload
+(defun detached-extra-alert-notification (session)
+  "Send an `alert' notification when SESSION becomes inactive."
+  (let ((status (car (detached--session-status session)))
+        (host (car (detached--session-host session))))
+    (alert (detached--session-command session)
+           :title (pcase status
+                    ('success (format "Detached finished [%s]" host))
+                    ('failure (format "Detached failed [%s]" host)))
+           :severity (pcase status
+                       ('success 'moderate)
+                       ('failure 'high)))))
 
 (provide 'detached-extra)
 
