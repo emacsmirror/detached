@@ -33,22 +33,7 @@
     (arguments
      (list
       #:tests? #t
-      #:test-command #~(list "ert-runner")
-      #:phases
-      #~(modify-phases %standard-phases
-          (add-before 'install 'install-detached-env
-            (lambda _
-              (install-file "detached-env" (string-append #$output "/bin"))))
-          (add-after 'unpack 'configure
-            (lambda* (#:key inputs #:allow-other-keys)
-              (make-file-writable "detached.el")
-              (emacs-substitute-variables "detached.el"
-                ("detached-env"
-                 (string-append #$output "/bin/detached-env"))
-                ("detached-dtach-program"
-                 (search-input-file inputs "/bin/dtach"))
-                ("detached-shell-program"
-                 (search-input-file inputs "/bin/bash"))))))))
+      #:test-command #~(list "ert-runner")))
     (build-system emacs-build-system)
     (native-inputs (list emacs-ert-runner))
     (inputs (list dtach))
