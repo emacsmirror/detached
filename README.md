@@ -257,23 +257,12 @@ Users are encouraged to define the `detached-env` variable. It should point to t
 
 ## Metadata annotators
 
-The user can configure any number of annotators to run upon creation of a session. Here is an example of an annotator which captures the git branch name, if the session is started in a git repository.
+The user can configure any number of annotators to run upon creation of a session. The package comes with a function which captures the git branch name, if the session is started in a git repository.
+
+This function can be added as an annotation function to the `detached-metadata-annotators-alist` together with a symbol describing the property.
 
 ``` emacs-lisp
-(defun my/detached--session-git-branch ()
-  "Return current git branch."
-  (let ((git-directory (locate-dominating-file "." ".git")))
-    (when git-directory
-      (let ((args '("name-rev" "--name-only" "HEAD")))
-        (with-temp-buffer
-          (apply #'process-file `("git" nil t nil ,@args))
-          (string-trim (buffer-string)))))))
-```
-
-Next add the annotation function to the `detached-metadata-annotators-alist` together with a symbol describing the property.
-
-``` emacs-lisp
-(setq detached-metadata-annotators-alist '((branch . my/detached--session-git-branch))
+(setq detached-metadata-annotators-alist '((branch . detached--metadata-git-branch)))
 ```
 
 ## Nonattachable commands

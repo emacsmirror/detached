@@ -1292,6 +1292,15 @@ If event is cased by an update to the `detached' database, re-initialize
                                     (seq-max)
                                     (min width)))))
 
+(defun detached--metadata-git-branch ()
+  "Return current git branch."
+  (let ((args '("symbolic-ref" "HEAD" "--short")))
+    (with-temp-buffer
+      (apply #'process-file `("git" nil t nil ,@args))
+      (unless (bobp)
+        (goto-char (point-min))
+        (buffer-substring-no-properties (point) (line-end-position))))))
+
 ;;;;; UI
 
 (defun detached--metadata-str (session)
