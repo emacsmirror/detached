@@ -86,7 +86,8 @@ If prefix-argument directly DETACH from the session."
                    (input
                     (detached-dtach-command session t))
                    ((symbol-function #'eshell-add-to-history) #'ignore))
-          (eshell-kill-input)
+          (let ((kill-ring nil))
+            (eshell-kill-input))
           ;; Hide the input from the user
           (let ((begin (point))
                 (end))
