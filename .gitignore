@@ -1,0 +1,3 @@
+*.elc
+/detached-autoloads.el
+/detached-pkg.el
