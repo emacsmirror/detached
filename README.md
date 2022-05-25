@@ -255,6 +255,14 @@ Users are encouraged to define the `detached-env` variable. It should point to t
 (setq detached-env "/path/to/repo/detached-env")
 ```
 
+## Show session output when attaching
+
+By default the `detached-show-output-on-attach` is set to nil. However if the user enables this feature it means that all the output from a session will be shown when attaching to a session. To be able to do this the `detached-show-output-command` is used. This is set to use `cat` to display the output. Many times with long sessions showing all the output might not be necessary, or desireable. A good alternative is then to use `tail` as the command. For example by showing the last 50 lines of the session:
+
+``` emacs-lisp
+(setq detached-show-output-command "tail --lines=50")
+```
+
 ## Metadata annotators
 
 The user can configure any number of annotators to run upon creation of a session. The package comes with a function which captures the git branch name, if the session is started in a git repository.
