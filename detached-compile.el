@@ -124,7 +124,7 @@ Optionally EDIT-COMMAND."
   "Replace the modsetter inserted by `compilation-start'."
   (save-excursion
     (let ((kill-ring nil)
-          (buffer-read-only nil)
+          (inhibit-read-only t)
           (regexp (rx (regexp "^dtach ") (or "-c" "-a") (regexp ".*\.socket.*$"))))
       (goto-char (point-min))
       (when (re-search-forward regexp nil t)
