@@ -131,7 +131,10 @@ cluttering the comint-history with dtach commands."
 This function also makes sure that the HISTFILE is disabled for local shells."
   (cl-letf (((getenv "HISTFILE") ""))
     (advice-add 'comint-read-input-ring :around #'detached-shell--comint-read-input-ring-advice)
-    (apply orig-fun args)))
+    (apply (if (called-interactively-p 'any)
+               #'funcall-interactively #'funcall)
+           orig-fun
+           args)))
 
 ;;;###autoload
 (defun detached-shell-save-history-on-kill ()
