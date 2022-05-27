@@ -184,6 +184,8 @@ Valid values are: create, new and attach")
   "Variable to specify the origin of the session.")
 (defvar detached-session-action nil
   "A property list of actions for a session.")
+;; TODO Consider removing `detached-shell-command-history' if the new
+;; history override solution works.
 (defvar detached-shell-command-history nil
   "History of commands run with `detached-shell-command'.")
 (defvar detached-local-session nil

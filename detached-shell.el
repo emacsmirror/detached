@@ -106,10 +106,16 @@ cluttering the comint-history with dtach commands."
 (defun detached-shell--comint-read-input-ring-advice (orig-fun &rest args)
   "Set `comint-input-ring-file-name' before calling ORIG-FUN with ARGS."
   (with-connection-local-variables
-   (let ((comint-input-ring-file-name
-          (concat
-           (file-remote-p default-directory)
-           detached-shell-history-file)))
+   (let* ((history-file (cond ((string= shell--start-prog "bash") "~/.bash_history")
+                              ((string= shell--start-prog "ksh") "~/.sh_history")
+                              ((string= shell--start-prog "zsh") "~/.zsh_history")
+                              (t nil)))
+          (comint-input-ring-file-name
+           (if history-file
+               (concat
+                (file-remote-p default-directory)
+                history-file)
+             comint-input-ring-file-name)))
      (apply orig-fun args)
      (advice-remove 'comint-read-input-ring #'detached-shell--comint-read-input-ring-advice))))
 
