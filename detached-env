@@ -5,7 +5,6 @@
 
 detached_command="$*"
 
-TERM="eterm-color"
 if eval "$detached_command"; then
     echo -e "\nDetached session finished"
 else
