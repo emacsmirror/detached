@@ -1173,9 +1173,10 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
             (format "&> %s" log)))
          (env (if detached-env detached-env (format "%s -c" detached-shell-program)))
          (command
-          (if detached-env
-              (concat (format "%s " (detached--session-env-mode session))
-                      (shell-quote-argument (detached--session-command session)))
+          (if (eq 'terminal-data (detached--session-env-mode session))
+              (shell-quote-argument
+               (format "script --quiet --flush --return --command \"%s\" /dev/null"
+                       (detached--session-command session)))
             (shell-quote-argument (detached--session-command session)))))
     (format "%s %s %s; %s %s" begin-shell-group env command end-shell-group redirect)))
 

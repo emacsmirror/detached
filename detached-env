@@ -3,8 +3,8 @@
 # detached-env is a script which purpose is to run a detached command, and
 # issue to stdout, based on the exit code.
 
-mode="$1"
-shift
+# mode="$1"
+# shift
 detached_command="$*"
 
 # detached-env features two different modes:
@@ -14,17 +14,9 @@ detached_command="$*"
 #    environmental variable is set to eterm-color in order to enabled
 #    colored outputs from the detached_command
 
-if [ "$mode" = "plain-text" ]; then
-    if eval "$detached_command"; then
-        echo -e "\nDetached session finished"
-    else
-        echo -e "\nDetached session exited abnormally with code $?"
-    fi
-elif [ "$mode" = "terminal-data" ]; then
-    TERM="eterm-color"
-    if eval script --quiet --flush --return --command "\"$detached_command\"" /dev/null; then
-        echo -e "\nDetached session finished"
-    else
-        echo -e "\nDetached session exited abnormally with code $?"
-    fi
+TERM="eterm-color"
+if eval "$detached_command"; then
+    echo -e "\nDetached session finished"
+else
+    echo -e "\nDetached session exited abnormally with code $?"
 fi
