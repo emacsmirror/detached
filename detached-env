@@ -3,16 +3,7 @@
 # detached-env is a script which purpose is to run a detached command, and
 # issue to stdout, based on the exit code.
 
-# mode="$1"
-# shift
 detached_command="$*"
-
-# detached-env features two different modes:
-# 1) Plain-text: where plain text data will be logged in the sessions output
-# 2) Terminal-data: the script command is used to record the terminal
-#    data in raw format, this includes ansi escape sequences. The TERM
-#    environmental variable is set to eterm-color in order to enabled
-#    colored outputs from the detached_command
 
 TERM="eterm-color"
 if eval "$detached_command"; then
