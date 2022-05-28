@@ -1178,8 +1178,9 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
          (command
           (if (eq 'terminal-data (detached--session-env-mode session))
               (shell-quote-argument
-               (format "TERM=eterm-color script --quiet --flush --return --command \"%s\" /dev/null"
-                       (detached--session-command session)))
+               (format "if %s; then echo Success; else echo \"Fail $?\"; fi"
+                       (format "TERM=eterm-color script --quiet --flush --return --command \"%s\" /dev/null"
+                               (detached--session-command session))))
             (shell-quote-argument (detached--session-command session)))))
     (format "%s %s %s; %s %s" begin-shell-group env command end-shell-group redirect)))
 
