@@ -87,8 +87,8 @@
   :type 'string
   :group 'detached)
 
-(defcustom detached-env nil
-  "The name of, or path to, the `detached' environment script."
+(defcustom detached-terminal-data-command "script --quiet --flush --return --command \"%s\" /dev/null"
+  "The command for the tool script, which is used to record terminal data."
   :type 'string
   :group 'detached)
 
@@ -1165,8 +1165,9 @@ If SESSION is non-attachable fallback to a command that doesn't rely on tee."
           (shell-quote-argument
            (format "if %s; then true; else echo \"[detached-exit-code: $?]\"; fi"
                    (if (eq 'terminal-data (detached--session-env-mode session))
-                       (format "TERM=eterm-color script --quiet --flush --return --command \"%s\" /dev/null"
-                               (detached--session-command session))
+                       (format "TERM=eterm-color %s"
+                               (format detached-terminal-data-command
+                                       (detached--session-command session)))
                      (detached--session-command session))))))
     (format "%s %s %s; %s %s" begin-shell-group env command end-shell-group redirect)))
 
