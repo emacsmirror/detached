@@ -3,6 +3,7 @@
 #+language: en
 
 * Development
+- Add command to open a session's log file in =dired=.
 - Remove the need for =detached-shell-history-file=, the advice is updated to figure out the history file based on the shell program.
 - Remove the need for external =detached-env= script, the logic of the script is moved into the package instead.
 - Add =detached-terminal-data-command= which makes it possible for users to tweak the command used to run =script=.
