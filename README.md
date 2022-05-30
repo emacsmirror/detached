@@ -27,7 +27,7 @@ Since a `detached-session` contain all the output of the process as well as data
 - `Unlimited scrollback:` All the output from a `detached-session` is always accessible
 - `Remote support:` Full support for running on remote hosts. See `Remote support` section of the README
 - `Notifications:` The package will monitor all detached sessions and notify when a session has finished
-- `Post compilation`: If the package has been configured to use `detached-env` it will know the exit status of a session. That enables the package to post compile the output of a session to enable Emacs's built-in functionality of navigating between errors in the output.
+- `Post compilation`: The package will know the exit status of a session, which enables the package to post compile the output of a session to enable Emacs's built-in functionality of navigating between errors in the output.
 - `Annotations:` When selecting a session all are presented with a rich set of annotations
 - `Actions:` The package provides actions to act on a session:
   + `kill` a an active session
@@ -58,9 +58,7 @@ A minimal `use-package` configuration.
          ([remap recompile] . detached-compile-recompile)
          ;; Replace built in completion of sessions with `consult'
          ([remap detached-open-session] . detached-consult-session))
-  :custom ((detached-env "<path_to_detached-env>")
-           (detached-show-output-on-attach t)
-           (detached-shell-history-file "~/.bash_history")))
+  :custom ((detached-show-output-on-attach t)))
 ```
 
 The users are required to call `detached-init`. This function orchestrates the integration with all other internal and external packages that `detached.el` supports. These are:
@@ -192,7 +190,6 @@ The package provides the following customizable variables.
 | detached-dtach-program               | Name or path to the `dtach` program                                              |
 | detached-shell-program               | Name or path to the `shell` that `detached.el` should use                        |
 | detached-timer-configuration         | Configuration of the timer that runs on remote hosts                             |
-| detached-env                         | Name or path to the `detached-env` script                                        |
 | detached-annotation-format           | A list of annotations that should be present in completion                       |
 | detached-command-format              | A configuration for displaying a session command                                 |
 | detached-tail-interval               | How often `detached.el` should refresh the output when tailing                   |
@@ -220,9 +217,7 @@ The `detached.el` supports [Connection Local Variables](https://www.gnu.org/soft
 ``` emacs-lisp
 (connection-local-set-profile-variables
  'remote-detached
- '((detached-env . "~/bin/detached-env")
-   (detached-shell-program . "/bin/bash")
-   (detached-shell-history-file . "~/.bash_history")
+ '((detached-shell-program . "/bin/bash")
    (detached-session-directory . "~/tmp")
    (detached-dtach-program . "/home/user/.local/bin/dtach")))
 
@@ -247,17 +242,9 @@ Users can customize the appearance of annotations in `detached-open-session` by 
   "The format of the annotations.")
 ```
 
-## Status deduction
-
-Users are encouraged to define the `detached-env` variable. It should point to the `detached-env` script, which is provided in the repository. This script allows sessions to communicate the status of a session when it transitions to inactive. When configured properly `detached.el` will be able to set the status of a session to either `success` or `failure`.
-
-``` emacs-lisp
-(setq detached-env "/path/to/repo/detached-env")
-```
-
 ## Show session output when attaching
 
-By default the `detached-show-output-on-attach` is set to nil. However if the user enables this feature it means that all the output from a session will be shown when attaching to a session. To be able to do this the `detached-show-output-command` is used. This is set to use `cat` to display the output. Many times with long sessions showing all the output might not be necessary, or desireable. A good alternative is then to use `tail` as the command. For example by showing the last 50 lines of the session:
+By default the `detached-show-output-on-attach` is set to nil. However if the user enables this feature it means that all the output from a session will be shown when attaching to a session. To be able to do this the `detached-show-output-command` is used. This is set to use `cat` to display the output. Many times with long sessions showing all the output might not be necessary, or desirable. A good alternative is then to use `tail` as the command. For example by showing the last 50 lines of the session:
 
 ``` emacs-lisp
 (setq detached-show-output-command "tail --lines=50")
@@ -273,7 +260,7 @@ This function can be added as an annotation function to the `detached-metadata-a
 (setq detached-metadata-annotators-alist '((branch . detached--metadata-git-branch)))
 ```
 
-## Nonattachable commands
+## Non-attachable commands
 
 To be able to both attach to a dtach session as well as logging its output `detached.el` relies on the usage of `tee`. However it is possible that the user tries to run a command which involves a program that doesn't integrate well with tee. In those situations the output could be delayed until the session ends, which is not preferable.
 
@@ -282,13 +269,21 @@ For these situations `detached.el` provides the `detached-nonattachable-commands
 (setq detached-nonattachable-commands '("^ls"))
 ```
 
-Here a command beginning with `ls` would from now on be considered nonattachable.
+Here a command beginning with `ls` would from now on be considered non-attachable.
 
 ## Colors in sessions
 
-The package needs to use a trick to get programs programs such as `git` or `grep` to show color in their outputs. This is because these commands only use colors and ansi sequences if they are being run in a terminal, as opposed to a pipe. The `detached-env` therefore has two different modes. The mode can be either `plain-text` or `terminal-data`, the latter is now the default. The `detached-env` program then uses the `script` command to make programs run in `detached.el` think they are inside of a full-featured terminal, and therefore can log their raw terminal data.
+The package needs to use a trick to get programs programs such as `git` or `grep` to show color in their outputs. This is because these commands only use colors and ansi sequences if they are being run in a terminal, as opposed to a pipe. The package therefore has two different modes, either `plain-text` or `terminal-data`. The latter is now the default for all sessions. When in `terminal-data` mode the `script` tool is used to make programs run by `detached.el` think they are inside of a full-featured terminal, and therefore can log their raw terminal data.
 
-The drawback is that there can be commands which generates escape sequences that the package supports and will therefore mess up the output for some commands. If you detect such an incompatible command you can add a regexp that matches that command to the list `detached-env-plain-text-commands`. By doing so `detached.el` will instruct `detached-env` to run those commands in plain-text mode.
+The drawback is that there can be commands which generates escape sequences that the package supports and will therefore mess up the output for some commands. If you detect such an incompatible command you can add a regexp that matches that command to the list `detached-env-plain-text-commands`. By doing so `detached.el` will be instructed to run those commands in plain-text mode.
+
+The tool `script` can have different options depending on version and operating system. If you are having trouble with the default settings you should update the `detached-terminal-data-command`. Its default is:
+
+``` emacs-lisp
+(setq detached-terminal-data-command "script --quiet --flush --return --command \"%s\" /dev/null")
+```
+
+Which is compatible with the options described in [script(1) - Linux manual page](https://man7.org/linux/man-pages/man1/script.1.html).
 
 # Tips & Tricks
 
@@ -322,6 +317,7 @@ This package wouldn't have been were it is today without these contributors.
 
 - [rosetail](https://gitlab.com/rosetail)
 - [protesilaos](https://lists.sr.ht/~protesilaos)
+- [Stefan Monnier](https://www.iro.umontreal.ca/~monnier/)
 
 ## Idea contributors
 
