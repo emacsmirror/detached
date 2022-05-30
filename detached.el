@@ -1396,6 +1396,8 @@ If event is cased by an update to the `detached' database, re-initialize
 (defvar detached-log-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd detached-detach-key) #'detached-detach-session)
+    ;; TODO(Niklas Eklund, 20220530): Add refresh command (g), good
+    ;; for manual tailing
     map)
   "Keymap for `detached-log-mode'.")
 
