@@ -275,7 +275,7 @@ Here a command beginning with `ls` would from now on be considered non-attachabl
 
 The package needs to use a trick to get programs programs such as `git` or `grep` to show color in their outputs. This is because these commands only use colors and ansi sequences if they are being run in a terminal, as opposed to a pipe. The package therefore has two different modes, either `plain-text` or `terminal-data`. The latter is now the default for all sessions. When in `terminal-data` mode the `script` tool is used to make programs run by `detached.el` think they are inside of a full-featured terminal, and therefore can log their raw terminal data.
 
-The drawback is that there can be commands which generates escape sequences that the package supports and will therefore mess up the output for some commands. If you detect such an incompatible command you can add a regexp that matches that command to the list `detached-env-plain-text-commands`. By doing so `detached.el` will be instructed to run those commands in plain-text mode.
+The drawback is that there can be commands which generates escape sequences that the package supports and will therefore mess up the output for some commands. If you detect such an incompatible command you can add a regexp that matches that command to the list `detached-plain-text-commands`. By doing so `detached.el` will be instructed to run those commands in plain-text mode.
 
 The tool `script` can have different options depending on version and operating system. If you are having trouble with the default settings you should update the `detached-terminal-data-command`. Its default is:
 

@@ -212,14 +212,14 @@
                                    :working-directory "/home/user/"
                                    :command "ls -la"
                                    :attachable t
-                                   :env-mode 'terminal-data
+                                   :env 'terminal-data
                                    :id 'foo123))
         (nonattachable-plain-text-session
          (detached--session-create :directory "/tmp/detached/"
                                    :working-directory "/home/user/"
                                    :command "ls -la"
                                    :attachable nil
-                                   :env-mode 'plain-text
+                                   :env 'plain-text
                                    :id 'foo123)))
     (should (string= "{ bash -c if\\ TERM\\=eterm-color\\ script\\ --quiet\\ --flush\\ --return\\ --command\\ \\\"ls\\ -la\\\"\\ /dev/null\\;\\ then\\ true\\;\\ else\\ echo\\ \\\"\\[detached-exit-code\\:\\ \\$\\?\\]\\\"\\;\\ fi; } 2>&1 | tee /tmp/detached/foo123.log"
                      (detached--detached-command attachable-terminal-data-session)))
@@ -282,11 +282,11 @@ user@machine "))
 user@machine "))
     (should (string= "user@machine " (detached--dtach-detached-message-filter str)))))
 
-(ert-deftest detached-test-detached-env-message-filter ()
+(ert-deftest detached-test-env-message-filter ()
   (let ((str "output\n\nDetached session exited abnormally with code 127"))
-    (should (string= "output\n" (detached--detached-env-message-filter str))))
+    (should (string= "output\n" (detached--env-message-filter str))))
   (let ((str "output\n\nDetached session finished"))
-    (should (string= "output\n" (detached--detached-env-message-filter str)))))
+    (should (string= "output\n" (detached--env-message-filter str)))))
 
 (provide 'detached-test)
 

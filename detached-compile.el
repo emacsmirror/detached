@@ -98,7 +98,7 @@ Optionally EDIT-COMMAND."
     (detached-compile--replace-modesetter)
     (when detached-filter-ansi-sequences
       (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter 0 t))
-    (add-hook 'comint-preoutput-filter-functions #'detached--detached-env-message-filter 0 t)
+    (add-hook 'comint-preoutput-filter-functions #'detached--env-message-filter 0 t)
     (add-hook 'comint-preoutput-filter-functions #'detached--dtach-eof-message-filter 0 t)))
 
 ;;;;; Support functions

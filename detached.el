@@ -92,7 +92,7 @@
   :type 'string
   :group 'detached)
 
-(defcustom detached-env-plain-text-commands nil
+(defcustom detached-plain-text-commands nil
   "A list of regexps for commands to run in plain-text mode."
   :type 'list
   :group 'detached)
@@ -168,7 +168,7 @@ If set to a non nil value the latest entry to
   :group 'detached)
 
 (defcustom detached-shell-mode-filter-functions
-  '(detached--detached-env-message-filter
+  '(detached--env-message-filter
     detached--dtach-eof-message-filter)
   "A list of filter functions that are run in `detached-shell-mode'."
   :type 'list
@@ -194,7 +194,7 @@ Valid values are: create, new and attach")
 (defvar detached-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst detached-session-version "0.7.0"
+(defconst detached-session-version "0.7.1"
   "The version of `detached-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -282,7 +282,7 @@ This version is encoded as [package-version].[revision].")
   (metadata nil :read-only t)
   (host nil :read-only t)
   (attachable nil :read-only t)
-  (env-mode nil :read-only t)
+  (env nil :read-only t)
   (action nil :read-only t)
   (time nil)
   (status nil)
@@ -407,7 +407,7 @@ The session is compiled by opening its output and enabling
   (when (detached-valid-session session)
     (with-temp-buffer
       (insert (detached--session-output session))
-      (when (eq 'terminal-data (detached--session-env-mode session))
+      (when (eq 'terminal-data (detached--session-env session))
         ;; Enable `detached-log-mode' to parse ansi-escape sequences
         (detached-log-mode))
       (kill-new (buffer-string)))))
@@ -508,14 +508,14 @@ Optionally DELETE the session if prefix-argument is provided."
         (erase-buffer)
         (insert (detached--session-header session1))
         (insert (detached--session-output session1))
-        (when (eq 'terminal-data (detached--session-env-mode session1))
+        (when (eq 'terminal-data (detached--session-env session1))
           ;; Enable `detached-log-mode' to parse ansi-escape sequences
           (detached-log-mode)))
       (with-current-buffer (get-buffer-create buffer2)
         (erase-buffer)
         (insert (detached--session-header session2))
         (insert (detached--session-output session2))
-        (when (eq 'terminal-data (detached--session-env-mode session2))
+        (when (eq 'terminal-data (detached--session-env session2))
           ;; Enable `detached-log-mode' to parse ansi-escape sequences
           (detached-log-mode)))
       (ediff-buffers buffer1 buffer2))))
@@ -602,7 +602,7 @@ nil before closing."
                                   :size 0
                                   :directory (if detached-local-session detached-session-directory
                                                (concat (file-remote-p default-directory) detached-session-directory))
-                                  :env-mode (detached--env-mode command)
+                                  :env (detached--env command)
                                   :host (detached--host)
                                   :metadata (detached-metadata)
                                   :state 'unknown)))
@@ -1160,22 +1160,22 @@ If SESSION is non-attachable fallback to a command that doesn't rely on tee."
           (if (detached--session-attachable session)
               (format "2>&1 | tee %s" log)
             (format "&> %s" log)))
-         (env (format "%s -c" detached-shell-program))
+         (shell (format "%s -c" detached-shell-program))
          (command
           (shell-quote-argument
            (format "if %s; then true; else echo \"[detached-exit-code: $?]\"; fi"
-                   (if (eq 'terminal-data (detached--session-env-mode session))
+                   (if (eq 'terminal-data (detached--session-env session))
                        (format "TERM=eterm-color %s"
                                (format detached-terminal-data-command
                                        (detached--session-command session)))
                      (detached--session-command session))))))
-    (format "%s %s %s; %s %s" begin-shell-group env command end-shell-group redirect)))
+    (format "%s %s %s; %s %s" begin-shell-group shell command end-shell-group redirect)))
 
-(defun detached--env-mode (command)
-  "Return mode to run in `detached-env' based on COMMAND."
+(defun detached--env (command)
+  "Return the environment to run in COMMAND in."
   (if (seq-find (lambda (regexp)
                   (string-match-p regexp command))
-                detached-env-plain-text-commands)
+                detached-plain-text-commands)
       'plain-text
     'terminal-data))
 
@@ -1210,7 +1210,7 @@ log to deduce the end time."
   (let ((current-time (current-time-string)))
     (secure-hash 'md5 (concat command current-time))))
 
-(defun detached--detached-env-message-filter (str)
+(defun detached--env-message-filter (str)
   "Remove `detached-env' message in STR."
   (replace-regexp-in-string "\n?.*detached-exit-code:.*\n?" "" str))
 

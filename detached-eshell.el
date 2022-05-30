@@ -136,9 +136,9 @@ If prefix-argument directly DETACH from the session."
   (make-local-variable 'eshell-preoutput-filter-functions)
   (if detached-eshell-mode
       (progn
-        (add-hook 'eshell-preoutput-filter-functions #'detached--detached-env-message-filter)
+        (add-hook 'eshell-preoutput-filter-functions #'detached--env-message-filter)
         (add-hook 'eshell-preoutput-filter-functions #'detached--dtach-eof-message-filter))
-    (remove-hook 'eshell-preoutput-filter-functions #'detached--detached-env-message-filter)
+    (remove-hook 'eshell-preoutput-filter-functions #'detached--env-message-filter)
     (remove-hook 'eshell-preoutput-filter-functions #'detached--dtach-eof-message-filter)))
 
 (provide 'detached-eshell)
