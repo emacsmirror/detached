@@ -1212,7 +1212,7 @@ log to deduce the end time."
 
 (defun detached--detached-env-message-filter (str)
   "Remove `detached-env' message in STR."
-  (replace-regexp-in-string "\n?Detached session.*\n?" "" str))
+  (replace-regexp-in-string "\n?.*detached-exit-code:.*\n?" "" str))
 
 (defun detached--dtach-eof-message-filter (str)
   "Remove `detached--dtach-eof-message' in STR."
