@@ -521,6 +521,17 @@ Optionally DELETE the session if prefix-argument is provided."
       (ediff-buffers buffer1 buffer2))))
 
 ;;;###autoload
+(defun detached-open-session-directory (session)
+  "Open SESSION's log directory."
+  (interactive
+   (list (detached-completing-read (detached-get-sessions))))
+  (let* ((file-path
+          (detached--session-file session 'log))
+         (tramp-verbose 1))
+    (when (file-exists-p file-path)
+      (dired-jump-other-window file-path))))
+
+;;;###autoload
 (defun detached-detach-session ()
   "Detach from session in current buffer.
 
