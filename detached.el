@@ -701,6 +701,7 @@ Optionally SUPPRESS-OUTPUT."
     (unless (file-exists-p detached-db-directory)
       (make-directory detached-db-directory t))
     (detached--db-initialize)
+    (detached--register-detached-emacs )
     (setq detached--db-watch
       (file-notify-add-watch detached-db-directory
                              '(change attribute-change)
@@ -982,7 +983,7 @@ Optionally CONCAT the command return command into a string."
     (seq-reverse reverse-sessions)))
 
 (defun detached--decode-session (item)
-  "Return the session assicated with ITEM."
+  "Return the session associated with ITEM."
   (cdr (assoc item detached--session-candidates)))
 
 (defun detached--validate-unknown-sessions ()
@@ -1110,6 +1111,42 @@ Optionally make the path LOCAL to host."
     (with-temp-file db
       (insert (format ";; Detached Session Version: %s\n\n" detached-session-version))
       (prin1 detached--sessions (current-buffer)))))
+
+(defun detached--read-detached-emacsen ()
+  "Read the PIDs of detached Emacsen."
+  (let ((file (expand-file-name "detached-emacsen" detached-db-directory)))
+    (when (file-exists-p file)
+      (with-temp-buffer
+        (insert-file-contents file)
+        (cl-assert (bobp))
+        (read (current-buffer))))))
+
+(defun detached--register-detached-emacs ()
+  "Register Emacs PID."
+  (let* ((file (expand-file-name "detached-emacsen" detached-db-directory))
+         (emacsen
+          (seq-uniq (append (detached--read-detached-emacsen)
+                            `(,(emacs-pid))))))
+    (with-temp-file file
+      (insert (format ";; Detached Emacsen\n\n"))
+      (prin1 emacsen (current-buffer)))))
+
+(defun detached--primary-detached-emacs-p ()
+  "Return t if `(emacs-pid)' is the primary detached Emacs."
+  (let ((emacsen (detached--read-detached-emacsen))
+        (system-processes (list-system-processes)))
+    (thread-last emacsen
+                 (seq-find (lambda (emacs-pid) (member emacs-pid system-processes)))
+                 (= (emacs-pid)))))
+
+(defun detached--remove-detached-emacsen ()
+  "Remove terminated Emacsen from the list."
+  (let* ((system-processes (list-system-processes))
+         (emacses (thread-last (detached--read-detached-emacsen)
+                               (seq-filter (lambda (it) (member it system-processes))))))
+    (with-temp-file (expand-file-name "detached-emacsen" detached-db-directory)
+      (insert (format ";; Detached Emacsen\n\n"))
+      (prin1 emacses (current-buffer)))))
 
 ;;;;; Other
 
@@ -1254,10 +1291,13 @@ session and trigger a state transition."
                (string= "socket" (file-name-extension file)))
       (when-let* ((id (intern (file-name-base file)))
                   (session (detached--db-get-session id))
-                  (session-directory (detached--session-directory session)))
-
+                  (session-directory (detached--session-directory session))
+                  (is-primary (detached--primary-detached-emacs-p)))
         ;; Update session
         (detached--session-state-transition-update session)
+
+        ;; Update Emacsen
+        (detached--remove-detached-emacsen)
 
         ;; Remove session directory from `detached--watch-session-directory'
         ;; if there is no active session associated with the directory
@@ -1282,7 +1322,14 @@ If event is cased by an update to the `detached' database, re-initialize
                                       (or (eq 'attribute-changed action)
                                           (eq 'changed action)))))
     (when database-updated
-      (detached--db-initialize))))
+      ;; Re-initialize the sessions
+      (detached--db-initialize)
+      ;; Make sure to watch session directories
+      (thread-last (detached--db-get-sessions)
+                   (seq-filter (lambda (it) (eq 'active (detached--session-state it))))
+                   (seq-map #'detached--session-directory)
+                   (seq-uniq)
+                   (seq-do #'detached--watch-session-directory)))))
 
 (defun detached--annotation-widths (sessions annotation-format)
   "Return widths for ANNOTATION-FORMAT based on SESSIONS."
