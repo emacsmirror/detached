@@ -2,6 +2,14 @@
 #+author: Niklas Eklund
 #+language: en
 
+* Development
+- Remove the need for =detached-shell-history-file=, the advice is updated to figure out the history file based on the shell program.
+- Remove the need for =detached-env=, the logic of the script is moved into the package instead.
+- Add =detached-terminal-data-command= which makes it possible for users to tweak the command used to run =script=.
+- Bug fix: Since the inception of the package there had been a bug which only occurred on remote hosts, and which was caused by =shell= not properly handling being adviced.
+- The package makes sure to let-bind the kill-ring before killing input in different modes, previously the killed text unintentionally ended up in users kill-ring.
+- Notification using the =alert= package is now present in the =detached-extra.el= and therefore doesn't need to be manually added by users
+
 *   Version 0.7 (2022-05-21)
 - Rename =dtache= to =detached.el=, source code has been moved to https://git.sr.ht/~niklaseklund/detached.el
 - Introduce =dtache-init.el= and move integration of other packages there. The integration now becomes even simpler for users of =dtache=.
