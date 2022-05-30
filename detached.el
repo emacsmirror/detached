@@ -1159,7 +1159,7 @@ Optionally make the path LOCAL to host."
 (defun detached--detached-command (session)
   "Return the detached command for SESSION.
 
-If SESSION is nonattachable fallback to a command that doesn't rely on tee."
+If SESSION is non-attachable fallback to a command that doesn't rely on tee."
   (let* ((log (detached--session-file session 'log t))
          (begin-shell-group (if (string= "fish" (file-name-nondirectory detached-shell-program))
                                 "begin;"
@@ -1171,14 +1171,11 @@ If SESSION is nonattachable fallback to a command that doesn't rely on tee."
           (if (detached--session-attachable session)
               (format "2>&1 | tee %s" log)
             (format "&> %s" log)))
-         ;; With detached-env
-         (env (if detached-env detached-env (format "%s -c" detached-shell-program)))
-         ;; Without detached-env
          (env (format "%s -c" detached-shell-program))
          (command
           (if (eq 'terminal-data (detached--session-env-mode session))
               (shell-quote-argument
-               (format "if %s; then echo Success; else echo \"Fail $?\"; fi"
+               (format "if %s; then true; else echo \"[detached-exit-code: $?]\"; fi"
                        (format "TERM=eterm-color script --quiet --flush --return --command \"%s\" /dev/null"
                                (detached--session-command session))))
             (shell-quote-argument (detached--session-command session)))))
