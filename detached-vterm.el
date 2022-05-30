@@ -19,7 +19,7 @@
 
 ;;; Commentary:
 
-;; This package integrates `detached' with `vterm'
+;; This package integrates `detached' with `vterm'.
 
 ;;; Code:
 

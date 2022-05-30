@@ -168,11 +168,12 @@ The package implements the commands `detached-compile` and `detached-compile-rec
 The command `detached-consult-session` is a replacement for `detached-open-session` using the [consult](https://github.com/minad/consult) package. The difference is that the consult command provides multiple session sources, which is defined in the `detached-consult-sources` variable. Users can customize which sources to use, as well as use individual sources in other `consult` commands, such as `consult-buffer`. The users can also narrow the list of sessions by entering a key. The list of supported keys are:
 
 | Type                  | Key |
-|-----------------------+-----|
+|-----------------------|-----|
 | Active sessions       | a   |
 | Inactive sessions     | i   |
 | Successful sessions   | s   |
 | Failed sessions       | f   |
+| Hidden sessions       | SPC |
 | Local host sessions   | l   |
 | Remote host sessions  | r   |
 | Current host sessions | c   |

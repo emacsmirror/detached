@@ -116,10 +116,9 @@ cluttering the comint-history with dtach commands."
 
 (defun detached-shell--save-history ()
   "Save `shell' history."
-  (with-connection-local-variables
-   (unless (string-prefix-p detached--shell-command-buffer (buffer-name))
-     (let* ((inhibit-message t))
-       (comint-write-input-ring)))))
+  (unless (string-prefix-p detached--shell-command-buffer (buffer-name))
+    (let* ((inhibit-message t))
+      (comint-write-input-ring))))
 
 ;;;###autoload
 (defun detached-shell-override-history (orig-fun &rest args)
