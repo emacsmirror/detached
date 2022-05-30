@@ -37,11 +37,6 @@
   :group 'detached
   :type 'plist)
 
-(defcustom detached-shell-history-file nil
-  "File to store history."
-  :type 'string
-  :group 'detached)
-
 ;;;; Functions
 
 (defun detached-shell-select-session ()
@@ -109,13 +104,13 @@ cluttering the comint-history with dtach commands."
    (let* ((history-file (cond ((string= shell--start-prog "bash") "~/.bash_history")
                               ((string= shell--start-prog "ksh") "~/.sh_history")
                               ((string= shell--start-prog "zsh") "~/.zsh_history")
-                              (t nil)))
-          (comint-input-ring-file-name
+                              (t nil))))
+     (setq comint-input-ring-file-name
            (if history-file
                (concat
                 (file-remote-p default-directory)
                 history-file)
-             comint-input-ring-file-name)))
+             comint-input-ring-file-name))
      (apply orig-fun args)
      (advice-remove 'comint-read-input-ring #'detached-shell--comint-read-input-ring-advice))))
 
@@ -123,16 +118,12 @@ cluttering the comint-history with dtach commands."
   "Save `shell' history."
   (with-connection-local-variables
    (unless (string-prefix-p detached--shell-command-buffer (buffer-name))
-     (let* ((inhibit-message t)
-            (comint-input-ring-file-name
-             (concat
-              (file-remote-p default-directory)
-              detached-shell-history-file)))
+     (let* ((inhibit-message t))
        (comint-write-input-ring)))))
 
 ;;;###autoload
 (defun detached-shell-override-history (orig-fun &rest args)
-  "Override history to read `detached-shell-history-file' in ORIG-FUN with ARGS.
+  "Override history in ORIG-FUN with ARGS.
 
 This function also makes sure that the HISTFILE is disabled for local shells."
   (cl-letf (((getenv "HISTFILE") ""))
