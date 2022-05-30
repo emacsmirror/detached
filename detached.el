@@ -1278,10 +1278,11 @@ session and trigger a state transition."
 If event is cased by an update to the `detached' database, re-initialize
 `detached--sessions'."
   (pcase-let* ((`(,_descriptor ,action ,file) event)
-               (database-updated  (and (string= "detached.db" file)
-                                       (eq 'attribute-changed action))))
-    (when database-updated)
-    (detached--db-initialize)))
+               (database-updated (and (string-match "detached.db$" file)
+                                      (or (eq 'attribute-changed action)
+                                          (eq 'changed action)))))
+    (when database-updated
+      (detached--db-initialize))))
 
 (defun detached--annotation-widths (sessions annotation-format)
   "Return widths for ANNOTATION-FORMAT based on SESSIONS."
