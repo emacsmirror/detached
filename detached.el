@@ -1055,7 +1055,7 @@ Optionally make the path LOCAL to host."
 
 (defun detached--db-initialize ()
   "Return all sessions stored in database."
-  (let ((db (expand-file-name "detached.db" detached-db-directory)))
+  (let ((db (expand-file-name "detached-sessions.db" detached-db-directory)))
     (when (file-exists-p db)
       (with-temp-buffer
         (insert-file-contents db)
@@ -1107,7 +1107,7 @@ Optionally make the path LOCAL to host."
 (defun detached--db-update-sessions ()
   "Write `detached--sessions' to database."
   (detached-initialize-sessions)
-  (let ((db (expand-file-name "detached.db" detached-db-directory)))
+  (let ((db (expand-file-name "detached-sessions.db" detached-db-directory)))
     (with-temp-file db
       (insert (format ";; Detached Session Version: %s\n\n" detached-session-version))
       (prin1 detached--sessions (current-buffer)))))
@@ -1318,7 +1318,7 @@ session and trigger a state transition."
 If event is cased by an update to the `detached' database, re-initialize
 `detached--sessions'."
   (pcase-let* ((`(,_descriptor ,action ,file) event)
-               (database-updated (and (string-match "detached.db$" file)
+               (database-updated (and (string-match "detached-sessions.db$" file)
                                       (or (eq 'attribute-changed action)
                                           (eq 'changed action)))))
     (when database-updated

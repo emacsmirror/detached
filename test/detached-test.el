@@ -31,7 +31,7 @@
 (defmacro detached-test--with-temp-database (&rest body)
   "Initialize a detached database and evaluate BODY."
   `(let* ((temp-directory (make-temp-file "detached" t))
-          (detached-db-directory (expand-file-name "detached.db" temp-directory))
+          (detached-db-directory (expand-file-name "detached-sessions.db" temp-directory))
           (detached-session-directory (expand-file-name "sessions" temp-directory))
           (detached--sessions)
           (detached--sessions-initialized))
