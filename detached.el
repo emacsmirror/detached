@@ -116,16 +116,6 @@
   :type 'integer
   :group 'detached)
 
-(defcustom detached-tail-interval 2
-  "Interval in seconds for the update rate when tailing a session."
-  :type 'integer
-  :group 'detached)
-
-(defcustom detached-open-active-session-action 'attach
-  "How to open an active session, allowed values are `attach' and `tail'."
-  :type 'symbol
-  :group 'detached)
-
 (defcustom detached-shell-command-session-action
   '(:attach detached-shell-command-attach-session
             :view detached-view-dwim
@@ -331,10 +321,7 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
    (list (detached-completing-read (detached-get-sessions))))
   (when (detached-valid-session session)
     (if (eq 'active (detached--session-state session))
-        (pcase detached-open-active-session-action
-          ('attach (detached-attach-session session))
-          ('tail (detached-tail-session session))
-          (_ (message "`detached-open-active-session-action' has an incorrect value")))
+        (detached-attach-session session)
       (if-let ((view-fun (plist-get (detached--session-action session) :view)))
           (funcall view-fun session)
         (detached-view-dwim session)))))
@@ -477,23 +464,6 @@ Optionally DELETE the session if prefix-argument is provided."
         (message "Detached can't find file: %s" file-path)))))
 
 ;;;###autoload
-(defun detached-tail-session (session)
-  "Tail the SESSION."
-  (interactive
-   (list (detached-completing-read (detached-get-sessions))))
-  (when (detached-valid-session session)
-    (if (eq 'active (detached--determine-session-state session))
-        (let* ((file-path
-                (detached--session-file session 'log))
-               (tramp-verbose 1))
-          (when (file-exists-p file-path)
-            (find-file-other-window file-path)
-            (setq detached--buffer-session session)
-            (detached-tail-mode)
-            (goto-char (point-max))))
-      (detached-view-session session))))
-
-;;;###autoload
 (defun detached-diff-session (session1 session2)
   "Diff SESSION1 with SESSION2."
   (interactive
@@ -540,33 +510,30 @@ active session.  For sessions created with `detached-compile' or
 `detached-shell-command', the command will also kill the window."
   (interactive)
   (if (detached-session-p detached--buffer-session)
-      (if (eq major-mode 'detached-tail-mode)
-          (detached-quit-tail-session)
-          (if-let ((command-or-compile
-                    (cond ((string-match detached--shell-command-buffer (buffer-name)) t)
-                          ((string-match "\*detached-compilation" (buffer-name)) t)
-                          ((eq major-mode 'detached-log-mode) t)
-                          ((eq major-mode 'detached-tail-mode) t)
-                          (t nil))))
-              ;; `detached-shell-command' or `detached-compile'
-              (let ((kill-buffer-query-functions nil))
-                (when-let ((process (get-buffer-process (current-buffer))))
-                  (comint-simple-send process detached--dtach-detach-character)
-                  (message "[detached]"))
-                (setq detached--buffer-session nil)
-                (kill-buffer-and-window))
-            (if (eq 'active (detached--determine-session-state detached--buffer-session))
-                ;; `detached-eshell'
-                (if-let ((process (and (eq major-mode 'eshell-mode)
-                                       (detached-eshell-get-dtach-process))))
-                    (progn
-                      (setq detached--buffer-session nil)
-                      (process-send-string process detached--dtach-detach-character))
-                  ;; `detached-shell'
-                  (let ((process (get-buffer-process (current-buffer))))
-                    (comint-simple-send process detached--dtach-detach-character)
-                    (setq detached--buffer-session nil)))
-              (message "No active detached-session found in buffer."))))
+      (if-let ((command-or-compile
+                (cond ((string-match detached--shell-command-buffer (buffer-name)) t)
+                      ((string-match "\*detached-compilation" (buffer-name)) t)
+                      ((eq major-mode 'detached-log-mode) t)
+                      (t nil))))
+          ;; `detached-shell-command' or `detached-compile'
+          (let ((kill-buffer-query-functions nil))
+            (when-let ((process (get-buffer-process (current-buffer))))
+              (comint-simple-send process detached--dtach-detach-character)
+              (message "[detached]"))
+            (setq detached--buffer-session nil)
+            (kill-buffer-and-window))
+        (if (eq 'active (detached--determine-session-state detached--buffer-session))
+            ;; `detached-eshell'
+            (if-let ((process (and (eq major-mode 'eshell-mode)
+                                   (detached-eshell-get-dtach-process))))
+                (progn
+                  (setq detached--buffer-session nil)
+                  (process-send-string process detached--dtach-detach-character))
+              ;; `detached-shell'
+              (let ((process (get-buffer-process (current-buffer))))
+                (comint-simple-send process detached--dtach-detach-character)
+                (setq detached--buffer-session nil)))
+          (message "No active detached-session found in buffer.")))
     (message "No detached-session found in buffer.")))
 
 ;;;###autoload
@@ -580,18 +547,6 @@ active session.  For sessions created with `detached-compile' or
                                    (string= (car (detached--session-host it)) host-name))
                                  (detached-get-sessions)))))
     (seq-do #'detached--db-remove-entry sessions)))
-
-;;;###autoload
-(defun detached-quit-tail-session ()
-  "Quit `detached' tail session.
-
-The log can have been updated, but that is not done by the user but
-rather the tail mode.  To avoid a promtp `buffer-modified-p' is set to
-nil before closing."
-  (interactive)
-  (set-buffer-modified-p nil)
-  (setq detached--buffer-session nil)
-  (kill-buffer-and-window))
 
 ;;;; Functions
 
@@ -799,7 +754,7 @@ This function uses the `notifications' library."
          (detached-session-mode 'attach)
          (inhibit-message t))
     (if (not (detached--session-attachable session))
-        (detached-tail-session session)
+        (detached-view-session session)
       (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
                  (buffer (get-buffer-create detached--shell-command-buffer))
                  (default-directory (detached--session-working-directory session))
@@ -1232,11 +1187,6 @@ If SESSION is non-attachable fallback to a command that doesn't rely on tee."
   (let ((remote (file-remote-p default-directory)))
     `(,(if remote (file-remote-p default-directory 'host) (system-name)) . ,(if remote 'remote 'local))))
 
-(defun detached--ansi-color-tail ()
-  "Apply `ansi-color' on tail output."
-  (let ((inhibit-read-only t))
-    (ansi-color-apply-on-region auto-revert-tail-pos (point-max))))
-
 (defun detached--update-session-time (session &optional approximate)
   "Update SESSION's time property.
 
@@ -1455,30 +1405,6 @@ If event is cased by an update to the `detached' database, re-initialize
   (when detached-filter-ansi-sequences
     (comint-carriage-motion (point-min) (point-max))
     (set-buffer-modified-p nil)
-    (ansi-color-apply-on-region (point-min) (point-max)))
-  (read-only-mode t))
-
-(defvar detached-tail-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd detached-detach-key) #'detached-detach-session)
-    map)
-  "Keymap for `detached-tail-mode'.")
-
-;;;###autoload
-(define-derived-mode detached-tail-mode auto-revert-tail-mode "Detached Tail"
-  "Major mode to tail `detached' logs."
-  (setq-local auto-revert-interval detached-tail-interval)
-  (setq-local tramp-verbose 1)
-  (setq-local auto-revert-remote-files t)
-  (defvar revert-buffer-preserve-modes)
-  (setq-local revert-buffer-preserve-modes nil)
-  (auto-revert-set-timer)
-  (setq-local auto-revert-verbose nil)
-  (auto-revert-tail-mode)
-  (when detached-filter-ansi-sequences
-    (comint-carriage-motion (point-min) (point-max))
-    (set-buffer-modified-p nil)
-    (add-hook 'after-revert-hook #'detached--ansi-color-tail nil t)
     (ansi-color-apply-on-region (point-min) (point-max)))
   (read-only-mode t))
 

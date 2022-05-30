@@ -159,7 +159,7 @@ Optionally EDIT-COMMAND."
 
 ;;;###autoload
 (define-derived-mode detached-compilation-mode compilation-mode "Detached Compilation"
-  "Major mode for tailing `detached' logs."
+  "Major mode for `detached' compilation."
   (add-hook 'compilation-filter-hook #'detached-compile--compilation-eof-filter 0 t)
   (add-hook 'compilation-filter-hook #'detached-compile--compilation-detached-filter 0 t))
 

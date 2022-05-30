@@ -103,7 +103,6 @@ The package also provides additional commands to interact with a session.
 |-------------------------------------|---------------------------------------------|
 | detached-view-session (v)           | View a session's output                     |
 | detached-attach-session (a)         | Attach to a session                         |
-| detached-tail-session  (t)          | Tail the output of an active session        |
 | detached-diff-session (=)           | Diff a session with another session         |
 | detached-compile-session (c)        | Open the session output in compilation mode |
 | detached-rerun-session (r)          | Rerun a session                             |
@@ -193,7 +192,6 @@ The package provides the following customizable variables.
 | detached-timer-configuration         | Configuration of the timer that runs on remote hosts                             |
 | detached-annotation-format           | A list of annotations that should be present in completion                       |
 | detached-command-format              | A configuration for displaying a session command                                 |
-| detached-tail-interval               | How often `detached.el` should refresh the output when tailing                   |
 | detached-nonattachable-commands      | A list of commands that should be considered nonattachable                       |
 | detached-notification-function       | Specifies which function to issue notifications with                             |
 | detached-detach-key                  | Specifies which keybinding to use to detach from a session                       |
