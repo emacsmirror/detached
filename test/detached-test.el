@@ -34,8 +34,7 @@
           (detached-db-directory (expand-file-name "detached.db" temp-directory))
           (detached-session-directory (expand-file-name "sessions" temp-directory))
           (detached--sessions)
-          (detached--sessions-initialized)
-          (detached--remote-session-timer))
+          (detached--sessions-initialized))
      (unwind-protect
          (progn
            (detached-initialize-sessions)
@@ -68,28 +67,27 @@
 (ert-deftest detached-test-dtach-command ()
   (detached-test--with-temp-database
    (cl-letf* ((detached-dtach-program "dtach")
-              (detached-env "detached-env")
               (detached-shell-program "bash")
               (session (detached-create-session "ls -la"))
               (detached-show-output-on-attach t)
               (detached-show-output-command "/bin/cat")
               ((symbol-function #'detached-create-session)
                (lambda (_)
-                 session)))
+                 session))
+              ((symbol-function #'detached--detached-command)
+               (lambda (_)
+                 (format "{ detached-command }"))))
      (let* ((detached-session-mode 'create-and-attach)
             (expected `(,detached-dtach-program
                         "-c" ,(detached--session-file session 'socket t)
                         "-z" ,detached-shell-program
                         "-c"
-                        ,(format "{ detached-env terminal-data ls\\ -la; } 2>&1 | tee %s"
-                                 (detached--session-file session 'log t))))
+                        "{ detached-command }"))
             (expected-concat (format "%s -c %s -z %s -c %s"
                                      detached-dtach-program
                                      (detached--session-file session 'socket t)
                                      detached-shell-program
-                                     (shell-quote-argument
-                                      (format "{ detached-env terminal-data ls\\ -la; } 2>&1 | tee %s"
-                                              (detached--session-file session 'log t))))))
+                                     "\\{\\ detached-command\\ \\}")))
        (should (equal expected (detached-dtach-command session)))
        (should (equal expected-concat (detached-dtach-command session t))))
      (let* ((detached-session-mode 'attach)
@@ -189,8 +187,7 @@
 
 (ert-deftest detached-test-db-remove-session ()
   (detached-test--with-temp-database
-   (let* ((host '(:type local :name "host"))
-          (session1 (detached-test--create-session :command "foo" :host '("host" . local)))
+   (let* ((session1 (detached-test--create-session :command "foo" :host '("host" . local)))
           (session2 (detached-test--create-session :command "bar" :host '("host" . local))))
      (should (seq-set-equal-p `(,session1 ,session2) (detached--db-get-sessions)))
      (detached--db-remove-entry session1)
@@ -208,32 +205,25 @@
      (should (equal copy (car (detached--db-get-sessions)))))))
 
 (ert-deftest detached-test-detached-command ()
-  (let ((attachable-session (detached--session-create :directory "/tmp/detached/"
-                                                :working-directory "/home/user/"
-                                                :command "ls -la"
-                                                :attachable t
-                                                :env-mode 'terminal-data
-                                                :id 'foo123))
-        (nonattachable-session (detached--session-create :directory "/tmp/detached/"
-                                                :working-directory "/home/user/"
-                                                :command "ls -la"
-                                                :attachable nil
-                                                :env-mode 'plain-text
-                                                :id 'foo123)))
-    ;; With detached-env
-    (let ((detached-env "detached-env"))
-      (should (string= "{ detached-env terminal-data ls\\ -la; } 2>&1 | tee /tmp/detached/foo123.log"
-                       (detached--detached-command attachable-session)))
-      (should (string= "{ detached-env plain-text ls\\ -la; } &> /tmp/detached/foo123.log"
-                       (detached--detached-command nonattachable-session))))
-
-    ;; Without detached-env
-    (let ((detached-env nil)
-          (detached-shell-program "bash"))
-      (should (string= "{ bash -c ls\\ -la; } 2>&1 | tee /tmp/detached/foo123.log"
-                       (detached--detached-command attachable-session)))
-      (should (string= "{ bash -c ls\\ -la; } &> /tmp/detached/foo123.log"
-                       (detached--detached-command nonattachable-session))))))
+  (let ((detached-shell-program "bash")
+        (attachable-terminal-data-session
+         (detached--session-create :directory "/tmp/detached/"
+                                   :working-directory "/home/user/"
+                                   :command "ls -la"
+                                   :attachable t
+                                   :env-mode 'terminal-data
+                                   :id 'foo123))
+        (nonattachable-plain-text-session
+         (detached--session-create :directory "/tmp/detached/"
+                                   :working-directory "/home/user/"
+                                   :command "ls -la"
+                                   :attachable nil
+                                   :env-mode 'plain-text
+                                   :id 'foo123)))
+    (should (string= "{ bash -c if\\ TERM\\=eterm-color\\ script\\ --quiet\\ --flush\\ --return\\ --command\\ \\\"ls\\ -la\\\"\\ /dev/null\\;\\ then\\ true\\;\\ else\\ echo\\ \\\"\\[detached-exit-code\\:\\ \\$\\?\\]\\\"\\;\\ fi; } 2>&1 | tee /tmp/detached/foo123.log"
+                     (detached--detached-command attachable-terminal-data-session)))
+    (should (string= "{ bash -c if\\ ls\\ -la\\;\\ then\\ true\\;\\ else\\ echo\\ \\\"\\[detached-exit-code\\:\\ \\$\\?\\]\\\"\\;\\ fi; } &> /tmp/detached/foo123.log"
+                     (detached--detached-command nonattachable-plain-text-session)))))
 
 (ert-deftest detached-test-attachable-command-p ()
   (let ((detached-nonattachable-commands '("ls")))

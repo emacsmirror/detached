@@ -1162,12 +1162,12 @@ If SESSION is non-attachable fallback to a command that doesn't rely on tee."
             (format "&> %s" log)))
          (env (format "%s -c" detached-shell-program))
          (command
-          (if (eq 'terminal-data (detached--session-env-mode session))
-              (shell-quote-argument
-               (format "if %s; then true; else echo \"[detached-exit-code: $?]\"; fi"
+          (shell-quote-argument
+           (format "if %s; then true; else echo \"[detached-exit-code: $?]\"; fi"
+                   (if (eq 'terminal-data (detached--session-env-mode session))
                        (format "TERM=eterm-color script --quiet --flush --return --command \"%s\" /dev/null"
-                               (detached--session-command session))))
-            (shell-quote-argument (detached--session-command session)))))
+                               (detached--session-command session))
+                     (detached--session-command session))))))
     (format "%s %s %s; %s %s" begin-shell-group env command end-shell-group redirect)))
 
 (defun detached--env-mode (command)
