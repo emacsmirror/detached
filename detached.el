@@ -731,33 +731,28 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
     (if (not (detached--session-missing-p session))
         t
       (let ((host (detached--session-host session)))
-        (message "Session does not exist. Initiate sesion cleanup on host %s" (car host))
+        (message "Session does not exist. Initiate session cleanup on host %s" (car host))
         (detached--cleanup-host-sessions host)
         nil))))
 
 (defun detached-session-exit-code-status (session)
   "Return status based on exit-code in SESSION."
-  (if (null detached-env)
-      `(unknown . 0)
-    (let ((detached-env-message
-           (with-temp-buffer
-             (insert-file-contents (detached--session-file session 'log))
-             (goto-char (point-max))
-             (thing-at-point 'line t)))
-          (success-message "Detached session finished")
-          (failure-message (rx "Detached session exited abnormally with code " (group (one-or-more digit)))))
-      (cond ((string-match success-message detached-env-message) `(success . 0))
-            ((string-match failure-message detached-env-message)
-             `(failure . ,(string-to-number (match-string 1 detached-env-message))))
-            (t `(unknown . 0))))))
+  (let ((detached-env-message
+         (with-temp-buffer
+           (insert-file-contents (detached--session-file session 'log))
+           (goto-char (point-max))
+           (thing-at-point 'line t)))
+        (failure-message (rx "detached-exit-code: " (group (one-or-more digit)))))
+    (cond ((string-match failure-message detached-env-message)
+           `(failure . ,(string-to-number (match-string 1 detached-env-message))))
+          (t `(success . 0)))))
 
 (defun detached-state-transitionion-echo-message (session)
   "Issue a notification when SESSION transitions from active to inactive.
 This function uses the echo area."
   (let ((status (pcase (car (detached--session-status session))
                   ('success "Detached finished")
-                  ('failure "Detached failed")
-                  ('unknown "Detached finished"))))
+                  ('failure "Detached failed"))))
     (message "%s [%s]: %s" status (car (detached--session-host session)) (detached--session-command session))))
 
 (defun detached-state-transition-notifications-message (session)
@@ -768,13 +763,11 @@ This function uses the `notifications' library."
     (notifications-notify
      :title (pcase status
               ('success (format "Detached finished [%s]" host))
-              ('failure (format "Detached failed [%s]" host))
-              ('unknown (format "Detached finished [%s]" host)))
+              ('failure (format "Detached failed [%s]" host)))
      :body (detached--session-command session)
      :urgency (pcase status
                 ('success 'normal)
-                ('failure 'critical)
-                ('unknown 'normal)))))
+                ('failure 'critical)))))
 
 (defun detached-view-dwim (session)
   "View SESSION in a do what I mean fashion."
@@ -783,8 +776,6 @@ This function uses the `notifications' library."
            (detached-view-session session))
           ((eq 'failure status)
            (detached-compile-session session))
-          ((eq 'unknown status)
-           (detached-view-session session))
           (t (message "Detached session is in an unexpected state.")))))
 
 (defun detached-get-sessions ()
@@ -1023,7 +1014,7 @@ Optionally make the path LOCAL to host."
 (defun detached--session-output (session)
   "Return content of SESSION's output."
   (let* ((filename (detached--session-file session 'log))
-         (detached-message (rx (regexp "\n?\nDetached session ") (or "finished" "exited"))))
+         (detached-message (rx (regexp "\n.detached-exit-code:.*"))))
     (with-temp-buffer
       (insert-file-contents filename)
       (goto-char (point-min))
