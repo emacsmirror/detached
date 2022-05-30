@@ -283,10 +283,8 @@ user@machine "))
     (should (string= "user@machine " (detached--dtach-detached-message-filter str)))))
 
 (ert-deftest detached-test-env-message-filter ()
-  (let ((str "output\n\nDetached session exited abnormally with code 127"))
-    (should (string= "output\n" (detached--env-message-filter str))))
-  (let ((str "output\n\nDetached session finished"))
-    (should (string= "output\n" (detached--env-message-filter str)))))
+  (let ((str "output\n[detached-exit-code: 127]\n"))
+    (should (string= "output" (detached--env-message-filter str)))))
 
 (provide 'detached-test)
 
