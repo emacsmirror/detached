@@ -764,6 +764,18 @@ This function uses the `notifications' library."
         (funcall #'async-shell-command dtach-command buffer)
         (with-current-buffer buffer (setq detached--buffer-session detached--current-session))))))
 
+(defun detached-session-exit-code (session)
+  "Return exit code for SESSION."
+  (pcase-let ((`(,_status . ,exit-code)
+               (detached--session-status session)))
+    exit-code))
+
+(defun detached-session-status (session)
+  "Return status for SESSION."
+  (pcase-let ((`(,status . ,_exit-code)
+               (detached--session-status session)))
+    status))
+
 ;;;;; Other
 
 (cl-defgeneric detached-dtach-command (entity &optional concat)

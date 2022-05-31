@@ -284,6 +284,27 @@ The tool `script` can have different options depending on version and operating 
 
 Which is compatible with the options described in [script(1) - Linux manual page](https://man7.org/linux/man-pages/man1/script.1.html).
 
+## Chained commands
+
+With `detached` there exists the possibility to enable callback for a session. With this functionality its possible to create a new session once a session is finished. Here is an example which essentially provides `sleep 1 && ls && ls -la` but every step in the chain is run in isolation.
+
+``` emacs-lisp
+(let* ((default-directory "/tmp")
+       (detached-session-action
+        `(,@detached-shell-command-session-action
+          :callback (lambda (session1)
+                      (when (eq 'success (detached-session-status session1))
+                        (let ((default-directory (detached--session-working-directory session1))
+                              (detached-session-action
+                               `(,@detached-shell-command-session-action
+                                 :callback (lambda (session2)
+                                             (when (eq 'success (detached-session-status session2))
+                                               (let ((default-directory (detached--session-working-directory session2)))
+                                                 (detached-start-session "ls -la" t)))))))
+                          (detached-start-session "ls" t)))))))
+  (detached-start-session "sleep 1" t))
+```
+
 # Tips & Tricks
 
 The `detached.el` package integrates with core Emacs packages as well as 3rd party packages. Integration is orchestrated in the `detached-init.el`. In this section you can find tips for integrations that are not supported in the package itself.
