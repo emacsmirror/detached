@@ -464,6 +464,20 @@ Optionally DELETE the session if prefix-argument is provided."
         (message "Detached can't find file: %s" file-path)))))
 
 ;;;###autoload
+(defun detached-refresh-session-log ()
+  "Refresh log content of session in current buffer."
+  (interactive)
+  (let* ((session detached--buffer-session)
+         (inhibit-read-only t))
+    (if (not (eq 'active (detached--session-state session)))
+        (message "Session is inactive")
+      (erase-buffer)
+      (insert (detached--session-output session))
+      (detached-log-mode)
+      (setq detached--buffer-session session)
+      (goto-char (point-max)))))
+
+;;;###autoload
 (defun detached-diff-session (session1 session2)
   "Diff SESSION1 with SESSION2."
   (interactive
@@ -1409,8 +1423,7 @@ If event is cased by an update to the `detached' database, re-initialize
 (defvar detached-log-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd detached-detach-key) #'detached-detach-session)
-    ;; TODO(Niklas Eklund, 20220530): Add refresh command (g), good
-    ;; for manual tailing
+    (define-key map (kbd "C-c C-l") #'detached-refresh-session-log)
     map)
   "Keymap for `detached-log-mode'.")
 
