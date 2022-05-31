@@ -381,7 +381,7 @@ The session is compiled by opening its output and enabling
   (when (detached-valid-session session)
     (if (or (eq 'inactive (detached--session-state session))
             (not (detached--session-attachable session)))
-        (detached-open-session session)
+        (detached-view-dwim session)
       (if-let ((attach-fun (plist-get (detached--session-action session) :attach)))
           (funcall attach-fun session)
         (detached-shell-command-attach-session session)))))
@@ -756,6 +756,8 @@ This function uses the `notifications' library."
            (detached-view-session session))
           ((eq 'failure status)
            (detached-compile-session session))
+          ((eq 'unknown status)
+           (detached-view-session session))
           (t (message "Detached session is in an unexpected state.")))))
 
 (defun detached-get-sessions ()
