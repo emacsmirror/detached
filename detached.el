@@ -708,7 +708,8 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
            (goto-char (point-max))
            (thing-at-point 'line t)))
         (failure-message (rx "detached-exit-code: " (group (one-or-more digit)))))
-    (cond ((string-match failure-message detached-env-message)
+    (cond ((null detached-env-message) `(success . 0))
+          ((string-match failure-message detached-env-message)
            `(failure . ,(string-to-number (match-string 1 detached-env-message))))
           (t `(success . 0)))))
 
