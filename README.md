@@ -286,9 +286,11 @@ Which is compatible with the options described in [script(1) - Linux manual page
 
 ## Chained commands
 
-With `detached` there exists the possibility to enable callback for a session. With this functionality its possible to create a new session once a session is finished. Here is an example which essentially provides `sleep 1 && ls && ls -la` but every step in the chain is run in isolation.
+With `detached` there exist the possibility to use callback. This functionality makes it possible to create chained sessions, essentially starting a new session once a previous one is finished. Here is an example:
 
 ``` emacs-lisp
+;; The detached commands are run in serial.
+;; This is equivalent to run sleep 1 && ls && ls -la
 (let* ((default-directory "/tmp")
        (detached-session-action
         `(,@detached-shell-command-session-action
