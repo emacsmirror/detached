@@ -132,8 +132,8 @@ If set to a non nil value the latest entry to
   :type 'bool
   :group 'detached)
 
-(defcustom detached-nonattachable-commands nil
-  "A list of commands which `detached' should consider nonattachable."
+(defcustom detached-degraded-commands nil
+  "A list of commands which `detached' should consider degraded."
   :type '(repeat (regexp :format "%v"))
   :group 'detached)
 
@@ -184,7 +184,7 @@ Valid values are: create, new and attach")
 (defvar detached-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst detached-session-version "0.7.1"
+(defconst detached-session-version "0.7.2"
   "The version of `detached-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -271,7 +271,7 @@ This version is encoded as [package-version].[revision].")
   (directory nil :read-only t)
   (metadata nil :read-only t)
   (host nil :read-only t)
-  (attachable nil :read-only t)
+  (degraded nil :read-only t)
   (env nil :read-only t)
   (action nil :read-only t)
   (time nil)
@@ -561,7 +561,7 @@ active session.  For sessions created with `detached-compile' or
                                   :origin detached-session-origin
                                   :action detached-session-action
                                   :working-directory (detached--get-working-directory)
-                                  :attachable (detached-attachable-command-p command)
+                                  :degraded (detached-degraded-command-p command)
                                   :time `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0)
                                   :status '(unknown . 0)
                                   :size 0
@@ -776,9 +776,9 @@ Optionally CONCAT the command return command into a string."
   "Return shell command for SESSION.
 
 Optionally CONCAT the command return command into a string."
-  (if (detached--session-attachable session)
-      (detached-dtach-command session concat)
-    (detached-tail-command session concat)))
+  (if (detached--session-degraded session)
+      (detached-tail-command session concat)
+    (detached-dtach-command session concat)))
 
 (cl-defgeneric detached-tail-command (entity &optional concat)
   "Return tail command for ENTITY optionally CONCAT.")
@@ -824,10 +824,7 @@ Optionally CONCAT the command return command into a string."
 
 Optionally CONCAT the command return command into a string."
   (detached-connection-local-variables
-   (let* ((detached-session-mode (cond ((eq detached-session-mode 'attach) 'attach)
-                                     ((not (detached--session-attachable session)) 'create)
-                                     (t detached-session-mode)))
-          (socket (detached--session-file session 'socket t))
+   (let* ((socket (detached--session-file session 'socket t))
           (log (detached--session-file session 'log t))
           (dtach-arg (detached--dtach-arg)))
      (setq detached--buffer-session session)
@@ -858,15 +855,14 @@ Optionally CONCAT the command return command into a string."
                       ,detached-shell-program "-c"
                       ,(detached--detached-command session)))))))
 
-(defun detached-attachable-command-p (command)
-  "Return t if COMMAND is attachable."
-  (if (thread-last detached-nonattachable-commands
-                   (seq-filter (lambda (regexp)
-                                 (string-match-p regexp command)))
-                   (length)
-                   (= 0))
-      t
-    nil))
+(defun detached-degraded-command-p (command)
+  "Return t if COMMAND is degraded."
+  (>
+   (thread-last detached-degraded-commands
+                (seq-filter (lambda (regexp)
+                              (string-match-p regexp command)))
+                (length))
+   0))
 
 (defun detached-metadata ()
   "Return a property list with metadata."
@@ -1195,7 +1191,7 @@ Optionally make the path LOCAL to host."
 (defun detached--detached-command (session)
   "Return the detached command for SESSION.
 
-If SESSION is non-attachable fallback to a command that doesn't rely on tee."
+If SESSION is degraded fallback to a command that doesn't rely on tee."
   (let* ((log (detached--session-file session 'log t))
          (begin-shell-group (if (string= "fish" (file-name-nondirectory detached-shell-program))
                                 "begin;"
@@ -1204,9 +1200,9 @@ If SESSION is non-attachable fallback to a command that doesn't rely on tee."
                               "end"
                             "}"))
          (redirect
-          (if (detached--session-attachable session)
-              (format "2>&1 | tee %s" log)
-            (format "&> %s" log)))
+          (if (detached--session-degraded session)
+              (format "&> %s" log)
+            (format "2>&1 | tee %s" log)))
          (shell (format "%s -c" detached-shell-program))
          (command
           (shell-quote-argument
