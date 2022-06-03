@@ -89,8 +89,8 @@
                                      (detached--session-file session 'socket t)
                                      detached-shell-program
                                      "\\{\\ detached-command\\ \\}")))
-       (should (equal expected (detached-dtach-command session)))
-       (should (equal expected-concat (detached-dtach-command session t))))
+       (should (equal expected (detached--dtach-command session)))
+       (should (equal expected-concat (detached--dtach-command session t))))
      (let* ((detached-session-mode 'attach)
             (log (detached--session-file session 'log t))
             (expected `(,detached-tail-program
@@ -102,8 +102,8 @@
                                      log
                                      detached-dtach-program
                                      (detached--session-file session 'socket t))))
-       (should (equal expected (detached-dtach-command session)))
-       (should (equal expected-concat (detached-dtach-command session t)))))))
+       (should (equal expected (detached--dtach-command session)))
+       (should (equal expected-concat (detached--dtach-command session t)))))))
 
 (ert-deftest detached-test-metadata ()
   ;; No annotators

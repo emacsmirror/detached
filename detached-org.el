@@ -56,8 +56,8 @@ property of :detached t in the org babel src block."
                    (new-command (replace-regexp-in-string "\n" " && " full-body))
                    (dtach-command
                     (if (string= "none" (alist-get :session params))
-                        (detached-dtach-command new-command t)
-                      (format "%s\necho \"[detached]\"" (detached-dtach-command new-command t))))
+                        (detached--dtach-command new-command t)
+                      (format "%s\necho \"[detached]\"" (detached--dtach-command new-command t))))
                    ((symbol-function #'org-babel-eval)
                     (lambda (_ command)
                       (start-file-process-shell-command "detached-org" nil command)
