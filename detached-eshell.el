@@ -80,11 +80,10 @@ If prefix-argument directly DETACH from the session."
   (interactive
    (list (detached-eshell-select-session)))
   (when (detached-valid-session session)
-    (if (and (eq 'active (detached--determine-session-state session))
-             (detached--session-attachable session))
+    (if (eq 'active (detached--determine-session-state session))
         (cl-letf* ((detached-session-mode 'attach)
                    (input
-                    (detached-dtach-command session t))
+                    (detached--shell-command session t))
                    ((symbol-function #'eshell-add-to-history) #'ignore))
           (let ((kill-ring nil))
             (eshell-kill-input))
@@ -111,7 +110,7 @@ If prefix-argument directly DETACH from the session."
                               (flatten-list args)
                               " ")))
          (session (detached-create-session command))
-         (command (detached-dtach-command session)))
+         (command (detached--shell-command session)))
     (advice-remove #'eshell-external-command #'detached-eshell-external-command)
     (setq detached--buffer-session session)
     (setq detached-enabled nil)

@@ -3,7 +3,9 @@
 #+language: en
 
 * Development
-- Remove tail command, favor using =attach= or =view= instead. To tail a session doesn't work as well as attaching to it. For non-attachable-commands it will open in log mode, and there is a keybinding for manually refresh the log output.
+- Detached now relies on the tool =tail= in order to attach to degraded sessions. That means that =dtach= and =tail= are required to properly use the package.
+- Rename non-attachable sessions to degraded sessions.
+- Remove tail command, favor using =attach= or =view=.
 - Improve support for Emacsen. The PID of all detached Emacsen are registered, this is done to be able to promote one Emacs to primary, which has the responsibility to update the database.
 - Add command to open a session's log file in =dired=.
 - Remove the need for =detached-shell-history-file=, the advice is updated to figure out the history file based on the shell program.

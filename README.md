@@ -41,7 +41,7 @@ The package is available on [GNU ELPA](https://elpa.gnu.org) and [MELPA](https:/
 
 # Configuration
 
-The prerequisite for `detached.el` is that the user has the program `dtach` installed.
+The prerequisite for `detached.el` is that the user has the programs `dtach` and `tail` installed.
 
 ## Use-package example
 
@@ -192,7 +192,7 @@ The package provides the following customizable variables.
 | detached-timer-configuration         | Configuration of the timer that runs on remote hosts                             |
 | detached-annotation-format           | A list of annotations that should be present in completion                       |
 | detached-command-format              | A configuration for displaying a session command                                 |
-| detached-nonattachable-commands      | A list of commands that should be considered nonattachable                       |
+| detached-degraded-commands      | A list of commands that should be run in degraded mode                       |
 | detached-notification-function       | Specifies which function to issue notifications with                             |
 | detached-detach-key                  | Specifies which keybinding to use to detach from a session                       |
 | detached-shell-command-initial-input | Enables latest value in history to be used as initial input                      |
@@ -241,13 +241,9 @@ Users can customize the appearance of annotations in `detached-open-session` by 
   "The format of the annotations.")
 ```
 
-## Show session output when attaching
+## Show session context when attaching
 
-By default the `detached-show-output-on-attach` is set to nil. However if the user enables this feature it means that all the output from a session will be shown when attaching to a session. To be able to do this the `detached-show-output-command` is used. This is set to use `cat` to display the output. Many times with long sessions showing all the output might not be necessary, or desirable. A good alternative is then to use `tail` as the command. For example by showing the last 50 lines of the session:
-
-``` emacs-lisp
-(setq detached-show-output-command "tail --lines=50")
-```
+By default the `detached-show-session-context` is set to t. This means that part of the output from a session will be shown when attaching to a session. The number of lines of the context is determined by `detached-session-context-lines`. The package uses `tail` in order to display the context.
 
 ## Metadata annotators
 
@@ -259,16 +255,16 @@ This function can be added as an annotation function to the `detached-metadata-a
 (setq detached-metadata-annotators-alist '((branch . detached--metadata-git-branch)))
 ```
 
-## Non-attachable commands
+## Degraded commands
 
 To be able to both attach to a dtach session as well as logging its output `detached.el` relies on the usage of `tee`. However it is possible that the user tries to run a command which involves a program that doesn't integrate well with tee. In those situations the output could be delayed until the session ends, which is not preferable.
 
-For these situations `detached.el` provides the `detached-nonattachable-commands` variable. This is a list of regular expressions. Any command that matches any of the strings will be getting the property `attachable` set to false.
+For these situations `detached.el` provides the `detached-degraded-commands` variable. This is a list of regular expressions. Any command that matches any of the strings will be getting the property `degraded` set to true.
 ``` emacs-lisp
-(setq detached-nonattachable-commands '("^ls"))
+(setq detached-degraded-commands '("^ls"))
 ```
 
-Here a command beginning with `ls` would from now on be considered non-attachable.
+Here a command beginning with `ls` would from now on be considered degraded, hence `detached` will use `tail`to tail the sessions log instead of attaching to the `dtach` process.
 
 ## Colors in sessions
 

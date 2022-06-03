@@ -70,8 +70,7 @@ cluttering the comint-history with dtach commands."
   (interactive
    (list (detached-shell-select-session)))
   (when (detached-valid-session session)
-    (if (and (eq 'active (detached--determine-session-state session))
-             (detached--session-attachable session))
+    (if (eq 'active (detached--determine-session-state session))
         (cl-letf ((detached--current-session session)
                   (comint-input-sender #'detached-shell--attach-input-sender)
                   ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
@@ -88,15 +87,15 @@ cluttering the comint-history with dtach commands."
   "Attach to `detached--session' and send the attach command to PROC."
   (let* ((detached-session-mode 'attach)
          (input
-          (detached-dtach-command detached--current-session t)))
+          (detached--shell-command detached--current-session t)))
     (comint-simple-send proc input)))
 
 (defun detached-shell--create-input-sender (proc string)
   "Create a detached session based on STRING and send to PROC."
   (with-connection-local-variables
-   (let* ((command (substring-no-properties string))
-          (dtach-command (detached-dtach-command command t)))
-     (comint-simple-send proc dtach-command))))
+   (let* ((command (detached--shell-command
+                    (substring-no-properties string) t)))
+     (comint-simple-send proc command))))
 
 (defun detached-shell--comint-read-input-ring-advice (orig-fun &rest args)
   "Set `comint-input-ring-file-name' before calling ORIG-FUN with ARGS."

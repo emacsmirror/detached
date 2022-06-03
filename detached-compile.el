@@ -108,13 +108,12 @@ Optionally EDIT-COMMAND."
   (if detached-enabled
       (pcase-let ((`(,command ,mode ,_ ,highlight-regexp) args)
                   (buffer-name "*detached-compilation*"))
-        (if (and (not (eq detached-session-mode 'attach))
-                 (not (detached-attachable-command-p command)))
+        (if (eq detached-session-mode 'create)
             (detached-start-session command t)
           (cl-letf* ((name-function (lambda (_) buffer-name))
                      (detached--current-session (or detached--current-session
                                                     (detached-create-session command))))
-            (apply compilation-start `(,(detached-dtach-command detached--current-session t)
+            (apply compilation-start `(,(detached--shell-command detached--current-session t)
                                        ,(or mode 'detached-compilation-mode)
                                        ,name-function
                                        ,highlight-regexp)))))

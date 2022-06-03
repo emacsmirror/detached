@@ -69,8 +69,9 @@
    (cl-letf* ((detached-dtach-program "dtach")
               (detached-shell-program "bash")
               (session (detached-create-session "ls -la"))
-              (detached-show-output-on-attach t)
-              (detached-show-output-command "/bin/cat")
+              (detached-show-session-context t)
+              (detached-session-context-lines 20)
+              (detached-tail-program "tail")
               ((symbol-function #'detached-create-session)
                (lambda (_)
                  session))
@@ -91,12 +92,14 @@
        (should (equal expected (detached-dtach-command session)))
        (should (equal expected-concat (detached-dtach-command session t))))
      (let* ((detached-session-mode 'attach)
-            (expected `(,detached-show-output-command
-                        ,(format "%s;" (detached--session-file session 'log t))
+            (log (detached--session-file session 'log t))
+            (expected `(,detached-tail-program
+                        ,(format "--lines=%s" detached-session-context-lines)
+                        ,(format "%s;" log)
                         ,detached-dtach-program "-a" ,(detached--session-file session 'socket t) "-r" "none"))
             (expected-concat (format "%s %s; %s -a %s -r none"
-                                     detached-show-output-command
-                                     (detached--session-file session 'log t)
+                                     (format "%s --lines=%s" detached-tail-program detached-session-context-lines)
+                                     log
                                      detached-dtach-program
                                      (detached--session-file session 'socket t))))
        (should (equal expected (detached-dtach-command session)))
@@ -207,29 +210,29 @@
 (ert-deftest detached-test-detached-command ()
   (let ((detached-shell-program "bash")
         (detached-terminal-data-command "script --quiet --flush --return --command \"%s\" /dev/null")
-        (attachable-terminal-data-session
+        (terminal-data-session
          (detached--session-create :directory "/tmp/detached/"
                                    :working-directory "/home/user/"
                                    :command "ls -la"
-                                   :attachable t
+                                   :degraded nil
                                    :env 'terminal-data
                                    :id 'foo123))
-        (nonattachable-plain-text-session
+        (degraded-plain-text-session
          (detached--session-create :directory "/tmp/detached/"
                                    :working-directory "/home/user/"
                                    :command "ls -la"
-                                   :attachable nil
+                                   :degraded t
                                    :env 'plain-text
                                    :id 'foo123)))
     (should (string= "{ bash -c if\\ TERM\\=eterm-color\\ script\\ --quiet\\ --flush\\ --return\\ --command\\ \\\"ls\\ -la\\\"\\ /dev/null\\;\\ then\\ true\\;\\ else\\ echo\\ \\\"\\[detached-exit-code\\:\\ \\$\\?\\]\\\"\\;\\ fi; } 2>&1 | tee /tmp/detached/foo123.log"
-                     (detached--detached-command attachable-terminal-data-session)))
+                     (detached--detached-command terminal-data-session)))
     (should (string= "{ bash -c if\\ ls\\ -la\\;\\ then\\ true\\;\\ else\\ echo\\ \\\"\\[detached-exit-code\\:\\ \\$\\?\\]\\\"\\;\\ fi; } &> /tmp/detached/foo123.log"
-                     (detached--detached-command nonattachable-plain-text-session)))))
+                     (detached--detached-command degraded-plain-text-session)))))
 
-(ert-deftest detached-test-attachable-command-p ()
-  (let ((detached-nonattachable-commands '("ls")))
-    (should (detached-attachable-command-p "cd"))
-    (should (not (detached-attachable-command-p "ls -la")))))
+(ert-deftest detached-test-degraded-command-p ()
+  (let ((detached-degraded-commands '("ls")))
+    (should (not (detached-degraded-command-p "cd")))
+    (should (detached-degraded-command-p "ls -la"))))
 
 ;;;;; String representations
 
