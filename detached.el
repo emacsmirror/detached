@@ -51,7 +51,7 @@
 (require 'simple)
 (require 'tramp)
 
-(declare-function detached-eshell-get-dtach-process "detached-eshell")
+(declare-function detached-eshell--get-dtach-process "detached-eshell")
 
 ;;;; Variables
 
@@ -531,7 +531,7 @@ active session.  For sessions created with `detached-compile' or
         (if (eq 'active (detached--determine-session-state detached--buffer-session))
             ;; `detached-eshell'
             (if-let ((process (and (eq major-mode 'eshell-mode)
-                                   (detached-eshell-get-dtach-process))))
+                                   (detached-eshell--get-dtach-process))))
                 (progn
                   (setq detached--buffer-session nil)
                   (process-send-string process detached--dtach-detach-character))

@@ -39,15 +39,22 @@
 
 ;;;; Functions
 
-(defun detached-shell-select-session ()
-  "Return selected session."
-  (let* ((host-name (car (detached--host)))
-         (sessions
-          (thread-last (detached-get-sessions)
-                       (seq-filter (lambda (it)
-                                     (string= (car (detached--session-host it)) host-name)))
-                       (seq-filter (lambda (it) (eq 'active (detached--determine-session-state it)))))))
-    (detached-completing-read sessions)))
+;;;###autoload
+(defun detached-shell-override-history (orig-fun &rest args)
+  "Override history in ORIG-FUN with ARGS.
+
+This function also makes sure that the HISTFILE is disabled for local shells."
+  (cl-letf (((getenv "HISTFILE") ""))
+    (advice-add 'comint-read-input-ring :around #'detached-shell--comint-read-input-ring-advice)
+    (apply (if (called-interactively-p 'any)
+               #'funcall-interactively #'funcall)
+           orig-fun
+           args)))
+
+;;;###autoload
+(defun detached-shell-save-history-on-kill ()
+  "Add hook to save history when killing `shell' buffer."
+  (add-hook 'kill-buffer-hook #'detached-shell--save-history 0 t))
 
 ;;;; Commands
 
@@ -66,9 +73,9 @@
   "Attach to SESSION.
 
 `comint-add-to-input-history' is temporarily disabled to avoid
-cluttering the comint-history with dtach commands."
+cluttering the `comint-history' with dtach commands."
   (interactive
-   (list (detached-shell-select-session)))
+   (list (detached-shell--select-session)))
   (when (detached-valid-session session)
     (if (eq 'active (detached--determine-session-state session))
         (cl-letf ((detached--current-session session)
@@ -82,6 +89,16 @@ cluttering the comint-history with dtach commands."
       (detached-open-session session))))
 
 ;;;; Support functions
+
+(defun detached-shell--select-session ()
+  "Return selected session."
+  (let* ((host-name (car (detached--host)))
+         (sessions
+          (thread-last (detached-get-sessions)
+                       (seq-filter (lambda (it)
+                                     (string= (car (detached--session-host it)) host-name)))
+                       (seq-filter (lambda (it) (eq 'active (detached--determine-session-state it)))))))
+    (detached-completing-read sessions)))
 
 (defun detached-shell--attach-input-sender (proc _string)
   "Attach to `detached--session' and send the attach command to PROC."
@@ -118,23 +135,6 @@ cluttering the comint-history with dtach commands."
   (unless (string-prefix-p detached--shell-command-buffer (buffer-name))
     (let* ((inhibit-message t))
       (comint-write-input-ring))))
-
-;;;###autoload
-(defun detached-shell-override-history (orig-fun &rest args)
-  "Override history in ORIG-FUN with ARGS.
-
-This function also makes sure that the HISTFILE is disabled for local shells."
-  (cl-letf (((getenv "HISTFILE") ""))
-    (advice-add 'comint-read-input-ring :around #'detached-shell--comint-read-input-ring-advice)
-    (apply (if (called-interactively-p 'any)
-               #'funcall-interactively #'funcall)
-           orig-fun
-           args)))
-
-;;;###autoload
-(defun detached-shell-save-history-on-kill ()
-  "Add hook to save history when killing `shell' buffer."
-  (add-hook 'kill-buffer-hook #'detached-shell--save-history 0 t))
 
 ;;;; Minor mode
 

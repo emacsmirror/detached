@@ -40,7 +40,7 @@
 (declare-function detached-diff-session "detached")
 
 (declare-function detached-shell-mode "detached")
-(declare-function detached-compile-start "detached-compile")
+(declare-function detached-compile--start "detached-compile")
 (declare-function detached-dired-do-shell-command "detached-dired")
 (declare-function detached-eshell-mode "detached-eshell")
 (declare-function detached-extra-projectile-run-compilation "detached-extra")
@@ -89,15 +89,15 @@
 
 ;;;; Support functions
 
-(defvar detached-init--package-integration '((compile . detached-init-compile)
-                                             (dired . detached-init-dired)
-                                             (dired-rsync . detached-init-dired-rsync)
-                                             (embark . detached-init-embark)
-                                             (eshell . detached-init-eshell)
-                                             (org . detached-init-org)
-                                             (projectile . detached-init-projectile)
-                                             (shell . detached-init-shell)
-                                             (vterm . detached-init-vterm))
+(defvar detached-init--package-integration '((compile . detached-init--compile)
+                                             (dired . detached-init--dired)
+                                             (dired-rsync . detached-init--dired-rsync)
+                                             (embark . detached-init--embark)
+                                             (eshell . detached-init--eshell)
+                                             (org . detached-init--org)
+                                             (projectile . detached-init--projectile)
+                                             (shell . detached-init--shell)
+                                             (vterm . detached-init--vterm))
   "Alist which contain names of packages and their initialization function.")
 
 ;;;; Functions
@@ -119,45 +119,47 @@
     (dolist (init-function init-functions)
       (funcall init-function))))
 
-(defun detached-init-shell ()
+;;;; Support functions
+
+(defun detached-init--shell ()
   "Initialize integration with `shell'."
   (advice-add #'shell :around #'detached-shell-override-history)
   (add-hook 'shell-mode-hook #'detached-shell-save-history-on-kill))
 
-(defun detached-init-compile ()
+(defun detached-init--compile ()
   "Initialize integration with `compile'."
-  (add-hook 'compilation-start-hook #'detached-compile-start)
+  (add-hook 'compilation-start-hook #'detached-compile--start)
   (add-hook 'compilation-shell-minor-mode-hook #'detached-shell-mode))
 
-(defun detached-init-eshell ()
+(defun detached-init--eshell ()
   "Initialize integration with `eshell'."
   (add-hook 'eshell-mode-hook #'detached-eshell-mode))
 
-(defun detached-init-org ()
+(defun detached-init--org ()
   "Initialize integration with `org'."
   (advice-add #'org-babel-sh-evaluate :around #'detached-org-babel-sh))
 
-(defun detached-init-dired ()
+(defun detached-init--dired ()
   "Initialize integration with `dired'."
   (advice-add 'dired-do-shell-command :around #'detached-dired-do-shell-command))
 
-(defun detached-init-dired-rsync ()
+(defun detached-init--dired-rsync ()
   "Initialize integration with `dired-rsync'."
   (when (functionp #'dired-rsync)
     (advice-add #'dired-rsync--do-run :override #'detached-extra-dired-rsync)))
 
-(defun detached-init-projectile ()
+(defun detached-init--projectile ()
   "Initialize integration with `projectile'."
   (when (functionp #'projectile)
     (advice-add 'projectile-run-compilation
                 :override #'detached-extra-projectile-run-compilation)))
 
-(defun detached-init-vterm ()
+(defun detached-init--vterm ()
   "Initialize integration with `vterm'."
   (when (functionp #'vterm)
     (add-hook 'vterm-mode-hook #'detached-vterm-mode)))
 
-(defun detached-init-embark ()
+(defun detached-init--embark ()
   "Initialize integration with `embark'."
   (with-eval-after-load 'embark
     (defvar embark-detached-map (make-composed-keymap detached-action-map embark-general-map))

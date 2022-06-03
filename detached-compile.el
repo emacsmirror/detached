@@ -84,16 +84,10 @@ Optionally EDIT-COMMAND."
              (detached--session-working-directory session)))
       (compilation-start (detached--session-command session)))))
 
-;;;###autoload
-(defun detached-compile-open (session)
-  "Open SESSION with `detached-compile'."
-  (when (detached-valid-session session)
-    (if (eq 'active (detached--session-state session))
-        (detached-compile-attach session)
-      (detached-compile-session session))))
+;;;;; Support functions
 
 ;;;###autoload
-(defun detached-compile-start (_)
+(defun detached-compile--start (_)
   "Run in `compilation-start-hook' if `detached-enabled'."
   (when detached-enabled
     (setq detached--buffer-session detached--current-session)
@@ -102,8 +96,6 @@ Optionally EDIT-COMMAND."
       (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter 0 t))
     (add-hook 'comint-preoutput-filter-functions #'detached--env-message-filter 0 t)
     (add-hook 'comint-preoutput-filter-functions #'detached--dtach-eof-message-filter 0 t)))
-
-;;;;; Support functions
 
 (defun detached-compile--compilation-start (compilation-start &rest args)
   "Create a `detached' session before running COMPILATION-START with ARGS."

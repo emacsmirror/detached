@@ -35,6 +35,16 @@
 
 (defvar vterm--process)
 
+;;;; Variables
+
+(defcustom detached-vterm-session-action
+  '(:attach detached-shell-command-attach-session
+            :view detached-view-dwim
+            :run detached-shell-command)
+  "Actions for a session created with `detached-vterm'."
+  :group 'detached
+  :type 'plist)
+
 ;;;; Commands
 
 ;;;###autoload
@@ -46,10 +56,7 @@ Optionally DETACH from it."
   (vterm-send-C-a)
   (let* ((input (buffer-substring-no-properties (point) (vterm-end-of-line)))
          (detached-session-origin 'vterm)
-         (detached-session-action
-          '(:attach detached-shell-command-attach-session
-                    :view detached-view-dwim
-                    :run detached-shell-command))
+         (detached-session-action detached-vterm-session-action)
          (detached-session-mode
           (if detach 'create 'create-and-attach)))
     (vterm-send-C-k)
@@ -77,7 +84,9 @@ Optionally DETACH from it."
 (defun detached-vterm-detach ()
   "Detach from a `detached' session."
   (interactive)
-  (process-send-string vterm--process detached--dtach-detach-character))
+  (process-send-string
+   vterm--process
+   detached--dtach-detach-character))
 
 ;;;; Minor mode
 

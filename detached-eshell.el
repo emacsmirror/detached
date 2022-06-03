@@ -43,21 +43,20 @@
 
 ;;;; Functions
 
-(defun detached-eshell-select-session ()
-  "Return selected session."
-  (let* ((host-name (car (detached--host)))
-         (sessions
-          (thread-last (detached-get-sessions)
-                       (seq-filter (lambda (it)
-                                     (string= (car (detached--session-host it)) host-name)))
-                       (seq-filter (lambda (it) (eq 'active (detached--determine-session-state it)))))))
-    (detached-completing-read sessions)))
-
-(defun detached-eshell-get-dtach-process ()
-  "Return `eshell' process if `detached' is running."
-  (when-let* ((process (and eshell-process-list (caar eshell-process-list))))
-    (and (string= (process-name process) "dtach")
-         process)))
+;;;###autoload
+(defun detached-eshell-external-command (orig-fun &rest args)
+  "Advice `eshell-external-command' to optionally use `detached'."
+  (let* ((detached-session-action detached-eshell-session-action)
+         (command (string-trim-right
+                   (mapconcat #'identity
+                              (flatten-list args)
+                              " ")))
+         (session (detached-create-session command))
+         (command (detached--shell-command session)))
+    (advice-remove #'eshell-external-command #'detached-eshell-external-command)
+    (setq detached--buffer-session session)
+    (setq detached-enabled nil)
+    (apply orig-fun `(,(seq-first command) ,(seq-rest command)))))
 
 ;;;; Commands
 
@@ -78,7 +77,7 @@ If prefix-argument directly DETACH from the session."
 (defun detached-eshell-attach-session (session)
   "Attach to SESSION."
   (interactive
-   (list (detached-eshell-select-session)))
+   (list (detached-eshell--select-session)))
   (when (detached-valid-session session)
     (if (eq 'active (detached--determine-session-state session))
         (cl-letf* ((detached-session-mode 'attach)
@@ -101,20 +100,21 @@ If prefix-argument directly DETACH from the session."
 
 ;;;; Support functions
 
-;;;###autoload
-(defun detached-eshell-external-command (orig-fun &rest args)
-  "Advice `eshell-external-command' to optionally use `detached'."
-  (let* ((detached-session-action detached-eshell-session-action)
-         (command (string-trim-right
-                   (mapconcat #'identity
-                              (flatten-list args)
-                              " ")))
-         (session (detached-create-session command))
-         (command (detached--shell-command session)))
-    (advice-remove #'eshell-external-command #'detached-eshell-external-command)
-    (setq detached--buffer-session session)
-    (setq detached-enabled nil)
-    (apply orig-fun `(,(seq-first command) ,(seq-rest command)))))
+(defun detached-eshell--get-dtach-process ()
+  "Return `eshell' process if `detached' is running."
+  (when-let* ((process (and eshell-process-list (caar eshell-process-list))))
+    (and (string= (process-name process) "dtach")
+         process)))
+
+(defun detached-eshell--select-session ()
+  "Return selected session."
+  (let* ((host-name (car (detached--host)))
+         (sessions
+          (thread-last (detached-get-sessions)
+                       (seq-filter (lambda (it)
+                                     (string= (car (detached--session-host it)) host-name)))
+                       (seq-filter (lambda (it) (eq 'active (detached--determine-session-state it)))))))
+    (detached-completing-read sessions)))
 
 ;;;; Minor mode
 
