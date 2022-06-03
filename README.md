@@ -241,13 +241,9 @@ Users can customize the appearance of annotations in `detached-open-session` by 
   "The format of the annotations.")
 ```
 
-## Show session output when attaching
+## Show session context when attaching
 
-By default the `detached-show-output-on-attach` is set to nil. However if the user enables this feature it means that all the output from a session will be shown when attaching to a session. To be able to do this the `detached-show-output-command` is used. This is set to use `cat` to display the output. Many times with long sessions showing all the output might not be necessary, or desirable. A good alternative is then to use `tail` as the command. For example by showing the last 50 lines of the session:
-
-``` emacs-lisp
-(setq detached-show-output-command "tail --lines=50")
-```
+By default the `detached-show-session-context` is set to t. This means that part of the output from a session will be shown when attaching to a session. The number of lines of the context is determined by `detached-session-context-lines`. The package uses `tail` in order to display the context.
 
 ## Metadata annotators
 

@@ -68,7 +68,12 @@
   :group 'detached)
 
 (defcustom detached-dtach-program "dtach"
-  "The name of the `dtach' program."
+  "The name of the dtach program."
+  :type 'string
+  :group 'detached)
+
+(defcustom detached-tail-program "tail"
+  "The name of the tail program."
   :type 'string
   :group 'detached)
 
@@ -77,14 +82,14 @@
   :type 'string
   :group 'detached)
 
-(defcustom detached-show-output-on-attach nil
-  "If set to t show the session output when attaching to it."
-  :type 'bool
+(defcustom detached-session-context-lines 50
+  "Number of context lines to display for a session."
+  :type 'string
   :group 'detached)
 
-(defcustom detached-show-output-command (executable-find "cat")
-  "The command to be run to show a sessions output."
-  :type 'string
+(defcustom detached-show-session-context t
+  "If session context should be shown when attaching."
+  :type 'boolean
   :group 'detached)
 
 (defcustom detached-terminal-data-command "script --quiet --flush --return --command \"%s\" /dev/null"
@@ -795,7 +800,9 @@ Optionally CONCAT the command return command into a string."
 Optionally CONCAT the command return command into a string."
   (detached-connection-local-variables
    (let* ((log (detached--session-file session 'log t))
-          (tail-command `("tail" "--follow=name" "--retry" "--lines=50" ,log)))
+          (tail-command `(,detached-tail-program "--follow=name" "--retry"
+                                                 ,(concat "--lines=" detached-session-context-lines)
+                                                 ,log)))
      (cond ((eq 'create detached-session-mode)
             (detached-dtach-command session))
            ((eq 'create-and-attach detached-session-mode)
@@ -831,16 +838,17 @@ Optionally CONCAT the command return command into a string."
      (if (eq detached-session-mode 'attach)
          (if concat
              (mapconcat #'identity
-                        `(,(when detached-show-output-on-attach
-                             (concat detached-show-output-command " " log ";"))
+                        `(,(when detached-show-session-context
+                             (format  "%s --lines=%s %s;" detached-tail-program detached-session-context-lines log))
                           ,detached-dtach-program
                           ,dtach-arg
                           ,socket
                           "-r none")
                         " ")
            (append
-            (when detached-show-output-on-attach
-              `(,detached-show-output-command  ,(concat log ";")))
+            (when detached-show-session-context
+              `(,detached-tail-program ,(concat "--lines=" detached-session-context-lines)
+                                       ,(concat log ";")))
             `(,detached-dtach-program ,dtach-arg ,socket "-r" "none")))
        (if concat
            (mapconcat #'identity
