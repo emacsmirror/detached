@@ -41,7 +41,7 @@ The package is available on [GNU ELPA](https://elpa.gnu.org) and [MELPA](https:/
 
 # Configuration
 
-The prerequisite for `detached.el` is that the user has the program `dtach` installed.
+The prerequisite for `detached.el` is that the user has the programs `dtach` and `tail` installed.
 
 ## Use-package example
 
