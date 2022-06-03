@@ -847,7 +847,7 @@ Optionally CONCAT the command return command into a string."
                         " ")
            (append
             (when detached-show-session-context
-              `(,detached-tail-program ,(concat "--lines=" detached-session-context-lines)
+              `(,detached-tail-program ,(format "--lines=%s" detached-session-context-lines)
                                        ,(concat log ";")))
             `(,detached-dtach-program ,dtach-arg ,socket "-r" "none")))
        (if concat

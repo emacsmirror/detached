@@ -69,8 +69,9 @@
    (cl-letf* ((detached-dtach-program "dtach")
               (detached-shell-program "bash")
               (session (detached-create-session "ls -la"))
-              (detached-show-output-on-attach t)
-              (detached-show-output-command "/bin/cat")
+              (detached-show-session-context t)
+              (detached-session-context-lines 20)
+              (detached-tail-program "tail")
               ((symbol-function #'detached-create-session)
                (lambda (_)
                  session))
@@ -91,12 +92,14 @@
        (should (equal expected (detached-dtach-command session)))
        (should (equal expected-concat (detached-dtach-command session t))))
      (let* ((detached-session-mode 'attach)
-            (expected `(,detached-show-output-command
-                        ,(format "%s;" (detached--session-file session 'log t))
+            (log (detached--session-file session 'log t))
+            (expected `(,detached-tail-program
+                        ,(format "--lines=%s" detached-session-context-lines)
+                        ,(format "%s;" log)
                         ,detached-dtach-program "-a" ,(detached--session-file session 'socket t) "-r" "none"))
             (expected-concat (format "%s %s; %s -a %s -r none"
-                                     detached-show-output-command
-                                     (detached--session-file session 'log t)
+                                     (format "%s --lines=%s" detached-tail-program detached-session-context-lines)
+                                     log
                                      detached-dtach-program
                                      (detached--session-file session 'socket t))))
        (should (equal expected (detached-dtach-command session)))
