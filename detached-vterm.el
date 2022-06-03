@@ -53,7 +53,7 @@ Optionally DETACH from it."
          (detached-session-mode
           (if detach 'create 'create-and-attach)))
     (vterm-send-C-k)
-    (process-send-string vterm--process (detached-dtach-command input t))
+    (process-send-string vterm--process (detached--shell-command input t))
     (vterm-send-C-e)
     (vterm-send-return)))
 
@@ -70,7 +70,7 @@ Optionally DETACH from it."
                          (seq-filter (lambda (it) (eq 'active (detached--determine-session-state it)))))))
       (detached-completing-read sessions))))
   (let ((detached-session-mode 'attach))
-    (process-send-string vterm--process (detached-dtach-command session t))
+    (process-send-string vterm--process (detached--shell-command session t))
     (vterm-send-return)))
 
 ;;;###autoload
