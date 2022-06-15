@@ -79,7 +79,9 @@ Optionally EDIT-COMMAND."
   (when (detached-valid-session session)
     (let* ((detached-enabled t)
            (detached-session-mode 'attach)
-           (detached--current-session session))
+           (detached--current-session session)
+           (default-directory
+             (detached--session-working-directory session)))
       (compilation-start (detached--session-command session)))))
 
 ;;;###autoload
