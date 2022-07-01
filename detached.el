@@ -92,8 +92,10 @@
   :type 'boolean
   :group 'detached)
 
-(defcustom detached-terminal-data-command "script --quiet --flush --return --command \"%s\" /dev/null"
-  "The command for the tool script, which is used to record terminal data."
+(defcustom detached-terminal-data-command nil
+  "The command for the tool script, which is used to record terminal data.
+If the variable is not set, the command is the deduced by `detached'
+based on the `system-type'."
   :type 'string
   :group 'detached)
 
@@ -1232,8 +1234,14 @@ If SESSION is degraded fallback to a command that doesn't rely on tee."
            (format "if %s; then true; else echo \"[detached-exit-code: $?]\"; fi"
                    (if (eq 'terminal-data (detached--session-env session))
                        (format "TERM=eterm-color %s"
-                               (format detached-terminal-data-command
-                                       (detached--session-command session)))
+                               (format
+                                (or
+                                 detached-terminal-data-command
+                                 (pcase system-type
+                                   ('gnu/linux "script --quiet --flush --return --command \"%s\" /dev/null")
+                                   ('darwin "script -F -q /dev/null %s")
+                                   (_ (error "Unable to determine script command, set `detached-terminal-data-command'"))))
+                                (detached--session-command session)))
                      (detached--session-command session))))))
     (format "%s %s %s; %s %s" begin-shell-group shell command end-shell-group redirect)))
 

@@ -3,6 +3,7 @@
 #+language: en
 
 * Development
+- Detached tries to guess the =detached-terimal-data-command= based on operating system, if that's not possible the user needs to set it manually. Currently detection of =gnu/linux= and =darwin= is supported.
 - Detached now relies on the tool =tail= in order to attach to degraded sessions. That means that =dtach= and =tail= are required to properly use the package.
 - Rename non-attachable sessions to degraded sessions.
 - Remove tail command, favor using =attach= or =view=.
