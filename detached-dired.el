@@ -38,7 +38,9 @@
               (lambda (command)
                 (detached-start-session command)
                 nil)))
-    (apply dired-do-shell-command args)))
+    (pcase-let* ((`(,command ,arg ,file-list) args)
+                 (modified-args `(,(string-remove-suffix " &" command) ,arg ,file-list)))
+      (apply dired-do-shell-command modified-args))))
 
 (provide 'detached-dired)
 
