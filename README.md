@@ -192,7 +192,7 @@ The package provides the following customizable variables.
 | detached-timer-configuration         | Configuration of the timer that runs on remote hosts                             |
 | detached-annotation-format           | A list of annotations that should be present in completion                       |
 | detached-command-format              | A configuration for displaying a session command                                 |
-| detached-degraded-commands      | A list of commands that should be run in degraded mode                       |
+| detached-degraded-commands           | A list of commands that should be run in degraded mode                           |
 | detached-notification-function       | Specifies which function to issue notifications with                             |
 | detached-detach-key                  | Specifies which keybinding to use to detach from a session                       |
 | detached-shell-command-initial-input | Enables latest value in history to be used as initial input                      |
@@ -272,13 +272,7 @@ The package needs to use a trick to get programs programs such as `git` or `grep
 
 The drawback is that there can be commands which generates escape sequences that the package supports and will therefore mess up the output for some commands. If you detect such an incompatible command you can add a regexp that matches that command to the list `detached-plain-text-commands`. By doing so `detached.el` will be instructed to run those commands in plain-text mode.
 
-The tool `script` can have different options depending on version and operating system. If you are having trouble with the default settings you should update the `detached-terminal-data-command`. Its default is:
-
-``` emacs-lisp
-(setq detached-terminal-data-command "script --quiet --flush --return --command \"%s\" /dev/null")
-```
-
-Which is compatible with the options described in [script(1) - Linux manual page](https://man7.org/linux/man-pages/man1/script.1.html).
+The tool `script` can have different options depending on version and operating system. The package tries to automatically determine the command to use, based on your operating system. But if it fails to do that there is the option to set the command manually with `detached-terminal-data-command`.
 
 ## Chained commands
 
