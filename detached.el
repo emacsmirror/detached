@@ -1329,7 +1329,7 @@ session and trigger a state transition."
                          (seq-uniq)
                          (seq-filter (lambda (it) (string= it session-directory))))
           (file-notify-rm-watch
-           (alist-get session-directory detached--watched-session-directories))
+           (alist-get session-directory detached--watched-session-directories nil nil #'string=))
           (setq detached--watched-session-directories
                 (assoc-delete-all session-directory detached--watched-session-directories)))))))
 
