@@ -124,12 +124,11 @@ Optionally EDIT-COMMAND."
 (defun detached-compile--replace-modesetter ()
   "Replace the modsetter inserted by `compilation-start'."
   (save-excursion
-    (let ((kill-ring nil)
-          (inhibit-read-only t)
+    (let ((inhibit-read-only t)
           (regexp (rx (regexp "^dtach ") (or "-c" "-a") (regexp ".*\.socket.*$"))))
       (goto-char (point-min))
       (when (re-search-forward regexp nil t)
-        (kill-region (match-beginning 0) (match-end 0))
+        (delete-region (match-beginning 0) (match-end 0))
         (insert (detached--session-command detached--current-session))))))
 
 (defun detached-compile--compilation-detached-filter ()
