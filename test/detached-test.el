@@ -234,6 +234,19 @@
     (should (not (detached-degraded-command-p "cd")))
     (should (detached-degraded-command-p "ls -la"))))
 
+(ert-deftest detached-test-get-session-directory ()
+  (let ((default-directory "/ssh:remotehost:/home/user/git")
+        (detached-session-directory "/tmp/detached"))
+    ;; Remote session directory
+    (should (string= "/ssh:remotehost:/tmp/detached" (detached--get-session-directory)))
+    (let ((detached-local-session t))
+      ;; Enforced local session directory with `detached-local-session'
+      (should (string= "/tmp/detached" (detached--get-session-directory)))))
+  (let ((default-directory "/home/user/git")
+        (detached-session-directory "/tmp/detached"))
+    ;; Local session directory
+    (should (string= "/tmp/detached" (detached--get-session-directory)))))
+
 ;;;;; String representations
 
 (ert-deftest detached-test-duration-str ()

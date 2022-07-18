@@ -572,8 +572,7 @@ active session.  For sessions created with `detached-compile' or
                                     :time `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0)
                                     :status '(unknown . 0)
                                     :size 0
-                                    :directory (if detached-local-session detached-session-directory
-                                                 (concat (file-remote-p default-directory) detached-session-directory))
+                                    :directory (detached--get-session-directory)
                                     :env (detached--env command)
                                     :host (detached--host)
                                     :metadata (detached-metadata)
@@ -1056,10 +1055,7 @@ Optionally make the path LOCAL to host."
 
 (defun detached--create-session-directory ()
   "Create session directory if it doesn't exist."
-  (let ((directory
-         (concat
-          (file-remote-p default-directory)
-          detached-session-directory)))
+  (let ((directory (detached--get-session-directory)))
     (unless (file-exists-p directory)
       (make-directory directory t))))
 
@@ -1070,6 +1066,12 @@ Optionally make the path LOCAL to host."
                                  (concat remote "~/")
                                  (expand-file-name default-directory))
     (abbreviate-file-name default-directory)))
+
+(defun detached--get-session-directory ()
+  "Return the session directory."
+  (if detached-local-session
+      detached-session-directory
+    (concat (file-remote-p default-directory) detached-session-directory)))
 
 ;;;;; Database
 
