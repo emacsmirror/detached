@@ -7,4 +7,4 @@ environment:
 tasks:
 - guix: |
     cd $project
-    guix build --file=guix.scm
+    guix shell emacs-minimal -- ./build-package
