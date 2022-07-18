@@ -1,10 +1,10 @@
 image: guix
 packages:
-- emacs-ert-runner
 - dtach
+- emacs-minimal
 environment:
   project: detached.el
 tasks:
 - guix: |
     cd $project
-    guix shell emacs-minimal -- ./build-package
+    ./build-package
