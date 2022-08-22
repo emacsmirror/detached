@@ -150,7 +150,7 @@
 
 (defun detached-init--projectile ()
   "Initialize integration with `projectile'."
-  (when (functionp #'projectile)
+  (when (featurep 'projectile)
     (advice-add 'projectile-run-compilation
                 :override #'detached-extra-projectile-run-compilation)))
 
