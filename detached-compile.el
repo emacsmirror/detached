@@ -91,6 +91,8 @@ Optionally EDIT-COMMAND."
   "Run in `compilation-start-hook' if `detached-enabled'."
   (when detached-enabled
     (setq detached--buffer-session detached--current-session)
+    (setq compile-command (detached--session-command detached--current-session))
+    (setq compilation-arguments nil)
     (detached-compile--replace-modesetter)
     (when detached-filter-ansi-sequences
       (add-hook 'compilation-filter-hook #'ansi-color-compilation-filter 0 t))
