@@ -58,7 +58,8 @@ A minimal `use-package` configuration.
          ([remap recompile] . detached-compile-recompile)
          ;; Replace built in completion of sessions with `consult'
          ([remap detached-open-session] . detached-consult-session))
-  :custom ((detached-show-output-on-attach t)))
+  :custom ((detached-show-output-on-attach t)
+           (detached-terminal-data-command system-type)))
 ```
 
 The users are required to call `detached-init`. This function orchestrates the integration with all other internal and external packages that `detached.el` supports. These are:
@@ -272,7 +273,7 @@ The package needs to use a trick to get programs programs such as `git` or `grep
 
 The drawback is that there can be commands which generates escape sequences that the package supports and will therefore mess up the output for some commands. If you detect such an incompatible command you can add a regexp that matches that command to the list `detached-plain-text-commands`. By doing so `detached.el` will be instructed to run those commands in plain-text mode.
 
-The tool `script` can have different options depending on version and operating system. The package tries to automatically determine the command to use, based on your operating system. But if it fails to do that there is the option to set the command manually with `detached-terminal-data-command`.
+The tool `script` can have different options depending on version and operating system. The package requires the user to set the `detached-terminal-data-command` in the package configuration and with `connection-local-set-profiles` for remote sessions. It can either be set to a symbol or to a string.
 
 ## Chained commands
 

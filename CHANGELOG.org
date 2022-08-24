@@ -3,6 +3,8 @@
 #+language: en
 
 * Development
+- Update expectations on =detached-terminal-data-command= command, user should now set it manually. This approach works better since it doesn't cause any conflict when remote host and local host operating system differs.
+- Improved handling of remote sessions. The package will not eagerly try to watch sessions, it waits until user requests or that it finds an open connection to the remote host.
 - Detached tries to guess the =detached-terimal-data-command= based on operating system, if that's not possible the user needs to set it manually. Currently detection of =gnu/linux= and =darwin= is supported.
 - Detached now relies on the tool =tail= in order to attach to degraded sessions. That means that =dtach= and =tail= are required to properly use the package.
 - Rename non-attachable sessions to degraded sessions.

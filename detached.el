@@ -94,8 +94,14 @@
 
 (defcustom detached-terminal-data-command nil
   "The command for the tool script, which is used to record terminal data.
-If the variable is not set, the command is the deduced by `detached'
-based on the `system-type'."
+The variable needs to be set in order for terminal data to be
+recorded, instead of plain-text data.
+
+Acceptable values are
+- `gnu/linux'
+- `darwin'
+- a custom string
+"
   :type 'string
   :group 'detached)
 
@@ -1234,18 +1240,22 @@ If SESSION is degraded fallback to a command that doesn't rely on tee."
          (command
           (shell-quote-argument
            (format "if %s; then true; else echo \"[detached-exit-code: $?]\"; fi"
-                   (if (eq 'terminal-data (detached--session-env session))
+                   (if (and (eq 'terminal-data (detached--session-env session))
+                            detached-terminal-data-command)
                        (format "TERM=eterm-color %s"
                                (format
-                                (or
-                                 detached-terminal-data-command
-                                 (pcase system-type
-                                   ('gnu/linux "script --quiet --flush --return --command \"%s\" /dev/null")
-                                   ('darwin "script -F -q /dev/null %s")
-                                   (_ (error "Unable to determine script command, set `detached-terminal-data-command'"))))
+                                (detached--get-terminal-data-command)
                                 (detached--session-command session)))
                      (detached--session-command session))))))
     (format "%s %s %s; %s %s" begin-shell-group shell command end-shell-group redirect)))
+
+(defun detached--get-terminal-data-command ()
+  "Return terminal data command."
+  (pcase detached-terminal-data-command
+    ('gnu/linux "script --quiet --flush --return --command \"%s\" /dev/null")
+    ('darwin "script -F -q /dev/null %s")
+    ((and (pred stringp) command) command)
+    (_ (error "Unable to determine script command, set `detached-terminal-data-command' properly"))))
 
 (defun detached--env (command)
   "Return the environment to run in COMMAND in."
