@@ -123,7 +123,7 @@
 
 (defun detached-init--shell ()
   "Initialize integration with `shell'."
-  (advice-add #'shell :around #'detached-shell-override-history)
+  (advice-add 'shell :around #'detached-shell-override-history)
   (add-hook 'shell-mode-hook #'detached-shell-save-history-on-kill))
 
 (defun detached-init--compile ()
@@ -137,26 +137,27 @@
 
 (defun detached-init--org ()
   "Initialize integration with `org'."
-  (advice-add #'org-babel-sh-evaluate :around #'detached-org-babel-sh))
+  (advice-add 'org-babel-sh-evaluate
+              :around #'detached-org-babel-sh))
 
 (defun detached-init--dired ()
   "Initialize integration with `dired'."
-  (advice-add 'dired-do-shell-command :around #'detached-dired-do-shell-command))
+  (advice-add 'dired-do-shell-command
+              :around #'detached-dired-do-shell-command))
 
 (defun detached-init--dired-rsync ()
   "Initialize integration with `dired-rsync'."
-  (when (functionp #'dired-rsync)
-    (advice-add #'dired-rsync--do-run :override #'detached-extra-dired-rsync)))
+  (advice-add 'dired-rsync--do-run
+              :override #'detached-extra-dired-rsync))
 
 (defun detached-init--projectile ()
   "Initialize integration with `projectile'."
-  (when (featurep 'projectile)
-    (advice-add 'projectile-run-compilation
-                :override #'detached-extra-projectile-run-compilation)))
+  (advice-add 'projectile-run-compilation
+              :override #'detached-extra-projectile-run-compilation))
 
 (defun detached-init--vterm ()
   "Initialize integration with `vterm'."
-  (when (functionp #'vterm)
+  (when (featurep 'vterm)
     (add-hook 'vterm-mode-hook #'detached-vterm-mode)))
 
 (defun detached-init--embark ()
