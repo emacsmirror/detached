@@ -71,6 +71,12 @@ Optionally EDIT-COMMAND."
          (detached-session-mode 'create-and-attach))
     (recompile edit-command)))
 
+;;;###autoload
+(defun detached-compile-kill ()
+  "Kill a 'detached' session."
+  (interactive)
+  (detached-kill-session detached--buffer-session))
+
 ;;;;; Functions
 
 ;;;###autoload
@@ -147,6 +153,7 @@ Optionally EDIT-COMMAND."
 
 (defvar detached-compilation-mode-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "C-c C-k") #'detached-compile-kill)
     (define-key map (kbd detached-detach-key) #'detached-detach-session)
     map)
   "Keymap for `detached-compilation-mode'.")
