@@ -628,8 +628,8 @@ Optionally SUPPRESS-OUTPUT."
                         (seq-map #'detached--session-command)
                         (seq-map #'length)
                         (seq-max)
-                        (min (plist-get detached-command-format ':width)))))
-      (let ((command-fun (plist-get detached-command-format ':function)))
+                        (min (plist-get detached-command-format :width)))))
+      (let ((command-fun (plist-get detached-command-format :function)))
         (setq detached--session-candidates
               (thread-last sessions
                            (seq-map (lambda (it)
@@ -1368,8 +1368,8 @@ If event is cased by an update to the `detached' database, re-initialize
 
 (defun detached--annotation-width (sessions annotation)
   "Determine width for ANNOTATION based on SESSIONS."
-  (let ((annotation-fun (plist-get annotation ':function))
-        (width (plist-get annotation ':width)))
+  (let ((annotation-fun (plist-get annotation :function))
+        (width (plist-get annotation :width)))
     `(,annotation-fun .
                       ,(thread-last sessions
                                     (seq-map annotation-fun)
