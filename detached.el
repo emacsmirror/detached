@@ -48,6 +48,7 @@
 (require 'comint)
 (require 'notifications)
 (require 'filenotify)
+(eval-when-compile (require 'rx))
 (require 'simple)
 (require 'subr-x)
 (require 'tramp)
