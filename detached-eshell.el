@@ -57,7 +57,6 @@
 
 ;;;; Commands
 
-;;;###autoload
 (defun detached-eshell-send-input (&optional detach)
   "Create a session and attach to it.
 
@@ -70,7 +69,6 @@ If prefix-argument directly DETACH from the session."
     (advice-add #'eshell-external-command :around #'detached-eshell-external-command)
     (call-interactively #'eshell-send-input)))
 
-;;;###autoload
 (defun detached-eshell-attach-session (session)
   "Attach to SESSION."
   (interactive

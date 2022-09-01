@@ -47,7 +47,6 @@
 
 ;;;; Commands
 
-;;;###autoload
 (defun detached-vterm-send-input (&optional detach)
   "Create a `detached' session.
 
@@ -64,7 +63,6 @@ Optionally DETACH from it."
     (vterm-send-C-e)
     (vterm-send-return)))
 
-;;;###autoload
 (defun detached-vterm-attach (session)
   "Attach to an active `detached' SESSION."
   (interactive
@@ -80,7 +78,6 @@ Optionally DETACH from it."
     (process-send-string vterm--process (detached--shell-command session t))
     (vterm-send-return)))
 
-;;;###autoload
 (defun detached-vterm-detach ()
   "Detach from a `detached' session."
   (interactive)

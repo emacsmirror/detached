@@ -71,7 +71,6 @@ Optionally EDIT-COMMAND."
          (detached-session-mode 'create-and-attach))
     (recompile edit-command)))
 
-;;;###autoload
 (defun detached-compile-kill ()
   "Kill a 'detached' session."
   (interactive)

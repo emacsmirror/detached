@@ -58,7 +58,6 @@ This function also makes sure that the HISTFILE is disabled for local shells."
 
 ;;;; Commands
 
-;;;###autoload
 (defun detached-shell-send-input (&optional detach)
   "Create a session and attach to it unless DETACH."
   (interactive "P")
@@ -68,7 +67,6 @@ This function also makes sure that the HISTFILE is disabled for local shells."
          (comint-input-sender #'detached-shell--create-input-sender))
     (comint-send-input)))
 
-;;;###autoload
 (defun detached-shell-attach-session (session)
   "Attach to SESSION.
 
