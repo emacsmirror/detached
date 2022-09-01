@@ -3,7 +3,7 @@
 ;; Copyright (C) 2020-2022  Free Software Foundation, Inc.
 
 ;; Author: Niklas Eklund <niklas.eklund@posteo.net>
-;; Maintainer: Niklas Eklund <niklas.eklund@posteo.net>
+;; Maintainer: detached.el Development <~niklaseklund/detached.el@lists.sr.ht>
 ;; URL: https://sr.ht/~niklaseklund/detached.el/
 ;; Version: 0.7
 ;; Package-Requires: ((emacs "27.1"))
