@@ -3,6 +3,10 @@
 #+language: en
 
 * Development
+
+* Version 0.8.0 (2022-09-02)
+
+- Change to semantic versioning
 - Update expectations on =detached-terminal-data-command= command, user should now set it manually. This approach works better since it doesn't cause any conflict when remote host and local host operating system differs.
 - Improved handling of remote sessions. The package will not eagerly try to watch sessions, it waits until user requests or that it finds an open connection to the remote host.
 - Detached tries to guess the =detached-terimal-data-command= based on operating system, if that's not possible the user needs to set it manually. Currently detection of =gnu/linux= and =darwin= is supported.
@@ -18,7 +22,8 @@
 - The package makes sure to let-bind the kill-ring before killing input in different modes, previously the killed text unintentionally ended up in users kill-ring.
 - Notification using the =alert= package is now present in the =detached-extra.el= and therefore doesn't need to be manually added by users
 
-*   Version 0.7 (2022-05-21)
+*  Version 0.7 (2022-05-21)
+
 - Rename =dtache= to =detached.el=, source code has been moved to https://git.sr.ht/~niklaseklund/detached.el
 - Introduce =dtache-init.el= and move integration of other packages there. The integration now becomes even simpler for users of =dtache=.
 - Rewrite =dtache= to enable the package to lazy load and not force users to load it when starting Emacs.
