@@ -199,7 +199,7 @@ Valid values are: create, new and attach")
 (defvar detached-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst detached-session-version "0.8.0.0"
+(defconst detached-session-version "0.8.0.1"
   "The version of `detached-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -283,6 +283,7 @@ This version is encoded as [package-version].[revision].")
   (command nil :read-only t)
   (origin nil :read-only t)
   (working-directory nil :read-only t)
+  (initial-mode nil :read-only t)
   (directory nil :read-only t)
   (metadata nil :read-only t)
   (host nil :read-only t)
@@ -380,6 +381,7 @@ The session is compiled by opening its output and enabling
   (when (detached-valid-session session)
     (let* ((default-directory
              (detached--session-working-directory session))
+           (detached-session-mode (detached--session-initial-mode session))
            (detached-session-action (detached--session-action session))
            (command (detached--session-command session)))
       (if suppress-output
@@ -577,6 +579,7 @@ active session.  For sessions created with `detached-compile' or
                                     :action detached-session-action
                                     :working-directory (detached--get-working-directory)
                                     :degraded (detached-degraded-command-p command)
+                                    :initial-mode detached-session-mode
                                     :time `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0)
                                     :status '(unknown . 0)
                                     :size 0

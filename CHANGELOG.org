@@ -4,6 +4,8 @@
 
 * Development
 
+- Add an =initial-mode= property to a session. This enables sessions that were created using =create= mode instead of =create-and-attach= to inherit this property when a session is being rerun.
+
 * Version 0.8.0 (2022-09-02)
 
 - Change to semantic versioning

@@ -57,7 +57,7 @@ Optionally enable COMINT if prefix-argument is provided."
          (detached-session-origin (or detached-session-origin 'compile))
          (detached-session-action (or detached-session-action
                                       detached-compile-session-action))
-         (detached-session-mode 'create-and-attach))
+         (detached-session-mode (or detached-session-mode 'create-and-attach)))
     (compile command comint)))
 
 ;;;###autoload
