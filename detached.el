@@ -283,7 +283,7 @@ This version is encoded as [package-version].[revision].")
   (command nil :read-only t)
   (origin nil :read-only t)
   (working-directory nil :read-only t)
-  (initial-mode nil :read-only t)
+  (initial-mode nil)
   (directory nil :read-only t)
   (metadata nil :read-only t)
   (host nil :read-only t)
@@ -598,21 +598,24 @@ active session.  For sessions created with `detached-compile' or
 
 Optionally SUPPRESS-OUTPUT."
   (let ((inhibit-message t)
-        (detached-enabled t)
-        (detached--current-session
-         (or detached--current-session
-             (detached-create-session command))))
+        (detached-enabled t))
     (if-let ((run-in-background
               (or suppress-output
                   (eq detached-session-mode 'create)))
              (detached-session-mode 'create))
-        (progn (setq detached-enabled nil)
-               (if detached-local-session
-                   (apply #'start-process-shell-command
-                          `("detached" nil ,(detached--dtach-command detached--current-session t)))
-                 (apply #'start-file-process-shell-command
-                        `("detached" nil ,(detached--dtach-command detached--current-session t)))))
+        (let ((detached--current-session
+               (or detached--current-session
+                   (detached-create-session command))))
+          (setq detached-enabled nil)
+          (if detached-local-session
+              (apply #'start-process-shell-command
+                     `("detached" nil ,(detached--dtach-command detached--current-session t)))
+            (apply #'start-file-process-shell-command
+                   `("detached" nil ,(detached--dtach-command detached--current-session t)))))
       (cl-letf* ((detached-session-mode 'create-and-attach)
+                 (detached--current-session
+                  (or detached--current-session
+                      (detached-create-session command)))
                  ((symbol-function #'set-process-sentinel) #'ignore)
                  (buffer (get-buffer-create detached--shell-command-buffer))
                  (command (detached--shell-command detached--current-session t)))
