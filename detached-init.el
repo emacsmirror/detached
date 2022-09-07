@@ -38,8 +38,9 @@
 (declare-function detached-copy-session-command "detached")
 (declare-function detached-copy-session "detached")
 (declare-function detached-diff-session "detached")
-
+(declare-function detached-initialize-sessions "detached")
 (declare-function detached-shell-mode "detached")
+
 (declare-function detached-compile--start "detached-compile")
 (declare-function detached-dired-do-shell-command "detached-dired")
 (declare-function detached-eshell-mode "detached-eshell")
@@ -105,6 +106,10 @@
 ;;;###autoload
 (defun detached-init ()
   "Initialize `detached' integration with all packages."
+
+  ;; Trigger initialization of sessions upon load of `detached'
+  (with-eval-after-load 'detached
+      (detached-initialize-sessions))
 
   ;; Required for `detached-shell-command' which is always provided
   (add-hook 'shell-mode-hook #'detached-shell-mode)
