@@ -1386,8 +1386,7 @@ If event is cased by an update to the `detached' database, re-initialize
 
 (defun detached--metadata-git-branch ()
   "Return current git branch."
-  (let ((args '("symbolic-ref" "HEAD" "--short"))
-        (process-file-return-signal-string t))
+  (let ((args '("symbolic-ref" "HEAD" "--short")))
     (with-temp-buffer
       (when (= 0 (apply #'process-file `("git" nil t nil ,@args)))
         (unless (bobp)
