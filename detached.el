@@ -682,7 +682,7 @@ Optionally SUPPRESS-OUTPUT."
 
     ;; Remove missing local sessions
     (thread-last (detached--db-get-sessions)
-                 (seq-filter (lambda (it) (eq 'local (cdr (detached--session-host it)))))
+                 (seq-filter #'detached--local-session-p)
                  (seq-filter #'detached--session-missing-p)
                  (seq-do #'detached--db-remove-entry))
 
@@ -691,16 +691,16 @@ Optionally SUPPRESS-OUTPUT."
 
     ;; Update transitioned sessions
     (thread-last (detached--db-get-sessions)
-                 (seq-filter (lambda (it) (eq 'active (detached--session-state it))))
+                 (seq-filter #'detached--active-session-p)
                  (seq-remove (lambda (it) (when (detached--session-missing-p it)
-                                            (detached--db-remove-entry it)
-                                            t)))
+                                       (detached--db-remove-entry it)
+                                       t)))
                  (seq-filter #'detached--state-transition-p)
                  (seq-do #'detached--session-state-transition-update))
 
     ;; Watch session directories with active sessions
     (thread-last (detached--db-get-sessions)
-                 (seq-filter (lambda (it) (eq 'active (detached--session-state it))))
+                 (seq-filter #'detached--active-session-p)
                  (seq-map #'detached--session-directory)
                  (seq-uniq)
                  (seq-do #'detached--watch-session-directory))))
@@ -968,6 +968,20 @@ Optionally CONCAT the command return command into a string."
   (and
    (eq 'active (detached--session-state session))
    (eq 'inactive (detached--determine-session-state session))))
+
+(defun detached--active-session-p (session)
+  "Return t if SESSION is active."
+  (eq 'active (detached--session-state session)))
+
+(defun detached--remote-session-p (session)
+  "Return t if SESSION is a remote session."
+  (eq 'remote
+      (cdr (detached--session-host session))))
+
+(defun detached--local-session-p (session)
+  "Return t if SESSION is a local session."
+  (eq 'local
+      (cdr (detached--session-host session))))
 
 (defun detached--session-missing-p (session)
   "Return t if SESSION is missing."
