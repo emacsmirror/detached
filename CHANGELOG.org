@@ -4,6 +4,8 @@
 
 * Development
 
+- Improved handling of remote sessions. The package will only try to initialize sessions that are accessible when package loads. Other active sessions it will wait until a remote connection has been established before they are being watched.
+
 * Version 0.8.1 (2022-09-08)
 
 - Adjust default location for sessions, from a directory under =temporary-file-directory= to =user-emacs-directory=. This change is for security reasons in case the user shares the computer with other users. By default sessions will not be removed on reboots, the user can use =M-x detached-delete-sessions= to clear old sessions manually.

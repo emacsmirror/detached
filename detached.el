@@ -692,6 +692,7 @@ Optionally SUPPRESS-OUTPUT."
     ;; Update transitioned sessions
     (thread-last (detached--db-get-sessions)
                  (seq-filter #'detached--active-session-p)
+                 (seq-filter #'detached--session-accessible-p)
                  (seq-remove (lambda (it) (when (detached--session-missing-p it)
                                        (detached--db-remove-entry it)
                                        t)))
@@ -701,6 +702,7 @@ Optionally SUPPRESS-OUTPUT."
     ;; Watch session directories with active sessions
     (thread-last (detached--db-get-sessions)
                  (seq-filter #'detached--active-session-p)
+                 (seq-filter #'detached--session-accessible-p)
                  (seq-map #'detached--session-directory)
                  (seq-uniq)
                  (seq-do #'detached--watch-session-directory))))
@@ -766,6 +768,7 @@ This function uses the `notifications' library."
 (defun detached-get-sessions ()
   "Return validated sessions."
   (detached--validate-unknown-sessions)
+  (detached--initialize-remote-sessions)
   (detached--db-get-sessions))
 
 (defun detached-shell-command-attach-session (session)
@@ -983,6 +986,17 @@ Optionally CONCAT the command return command into a string."
   (eq 'local
       (cdr (detached--session-host session))))
 
+(defun detached--session-accessible-p (session)
+  "Return t if SESSION is accessible."
+  (or (detached--local-session-p session)
+      (file-remote-p (detached--session-directory session) nil t)))
+
+(defun detached--watched-session-directory-p (directory)
+  "Return t if DIRECTORY is being watched."
+  (alist-get directory
+             detached--watched-session-directories
+             nil nil #'string=))
+
 (defun detached--session-missing-p (session)
   "Return t if SESSION is missing."
   (not
@@ -1034,6 +1048,7 @@ Optionally CONCAT the command return command into a string."
   "Validate `detached' sessions with state unknown."
   (thread-last (detached--db-get-sessions)
                (seq-filter (lambda (it) (eq 'unknown (detached--session-state it))))
+               (seq-filter #'detached--session-accessible-p)
                (seq-do (lambda (it)
                          (if (detached--session-missing-p it)
                              (detached--db-remove-entry it)
@@ -1058,7 +1073,7 @@ Optionally make the path LOCAL to host."
       full-path)))
 
 (defun detached--cleanup-host-sessions (host)
-  "Run cleanuup on HOST sessions."
+  "Run cleanup on HOST sessions."
   (let ((host-name (car host)))
     (thread-last (detached--db-get-sessions)
                  (seq-filter (lambda (it) (string= host-name (car (detached--session-host it)))))
@@ -1071,12 +1086,20 @@ Optionally make the path LOCAL to host."
          (detached-message (rx (regexp "\n.detached-exit-code:.*"))))
     (with-temp-buffer
       (insert-file-contents filename)
+      (detached--maybe-watch-session session)
       (goto-char (point-min))
       (let ((beginning (point))
             (end (if (search-forward-regexp detached-message nil t)
                      (match-beginning 0)
                    (point-max))))
         (buffer-substring beginning end)))))
+
+(defun detached--maybe-watch-session (session)
+  "Maybe watch SESSION."
+  (let ((session-directory (detached--session-directory session)))
+    (and (detached--active-session-p session)
+         (not (detached--watched-session-directory-p session-directory))
+         (detached--watch-session-directory session-directory))))
 
 (defun detached--create-session-directory ()
   "Create session directory if it doesn't exist."
@@ -1097,6 +1120,27 @@ Optionally make the path LOCAL to host."
   (if detached-local-session
       detached-session-directory
     (concat (file-remote-p default-directory) detached-session-directory)))
+
+(defun detached--initialize-remote-sessions ()
+  "Initialize accessible remote sessions."
+  (let ((remote-sessions
+         (thread-last (detached--db-get-sessions)
+                      (seq-filter #'detached--remote-session-p)
+                      (seq-filter #'detached--session-accessible-p))))
+
+    ;; Update transitioned sessions
+    (thread-last remote-sessions
+                 (seq-remove (lambda (it) (when (detached--session-missing-p it)
+                                       (detached--db-remove-entry it)
+                                       t)))
+                 (seq-filter #'detached--state-transition-p)
+                 (seq-do #'detached--session-state-transition-update))
+
+    ;; Watch session directories
+    (thread-last remote-sessions
+                 (seq-map #'detached--session-directory)
+                 (seq-uniq)
+                 (seq-do #'detached--watch-session-directory))))
 
 ;;;;; Database
 
@@ -1318,8 +1362,7 @@ log to deduce the end time."
 
 (defun detached--watch-session-directory (session-directory)
   "Watch for events in SESSION-DIRECTORY."
-  (unless (alist-get session-directory detached--watched-session-directories
-                     nil nil #'string=)
+  (unless (detached--watched-session-directory-p session-directory)
     (push
      `(,session-directory . ,(file-notify-add-watch
                               session-directory
@@ -1415,10 +1458,10 @@ If event is cased by an update to the `detached' database, re-initialize
 
 (defun detached--duration-str (session)
   "Return SESSION's duration time."
-  (let* ((duration (if (eq 'active (detached--session-state session))
-                       (- (time-to-seconds) (plist-get (detached--session-time session) :start))
-                     (plist-get
-                      (detached--session-time session) :duration)))
+  (let* ((duration (if (eq (detached--session-state session) 'inactive)
+                       (plist-get
+                        (detached--session-time session) :duration)
+                     (- (time-to-seconds) (plist-get (detached--session-time session) :start))))
          (time (round duration))
          (hours (/ time 3600))
          (minutes (/ (mod time 3600) 60))
@@ -1450,9 +1493,12 @@ If event is cased by an update to the `detached' database, re-initialize
 
 (defun detached--state-str (session)
   "Return string based on SESSION state."
-  (if (eq 'active (detached--session-state session))
-      "*"
-    ""))
+  (pcase (detached--session-state session)
+    ('active (if (detached--session-accessible-p session)
+                 "*"
+               "?"))
+    ('inactive "")
+    ('unknown "?")))
 
 (defun detached--working-dir-str (session)
   "Return working directory of SESSION."

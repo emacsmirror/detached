@@ -250,9 +250,12 @@
 ;;;;; String representations
 
 (ert-deftest detached-test-duration-str ()
-  (should (string= "1s" (detached--duration-str (detached--session-create :time '(:duration 1)))))
-  (should (string= "1m 1s" (detached--duration-str (detached--session-create :time '(:duration 61)))))
-  (should (string= "1h 1m 1s" (detached--duration-str (detached--session-create :time '(:duration 3661))))))
+  (should (string= "1s" (detached--duration-str
+                         (detached--session-create :time '(:duration 1) :state 'inactive))))
+  (should (string= "1m 1s" (detached--duration-str
+                            (detached--session-create :time '(:duration 61) :state 'inactive))))
+  (should (string= "1h 1m 1s" (detached--duration-str
+                               (detached--session-create :time '(:duration 3661) :state 'inactive)))))
 
 (ert-deftest detached-test-creation-str ()
   ;; Make sure to set the TIMEZONE before executing the test to avoid
@@ -271,8 +274,23 @@
   (should (string= "" (detached--status-str (detached--session-create :status '(unknown . 0))))))
 
 (ert-deftest detached-test-state-str ()
-  (should (string= "*" (detached--state-str (detached--session-create :state 'active))))
-  (should (string= "" (detached--state-str (detached--session-create :state 'inactive)))))
+  ;; Accessible sessions
+  (cl-letf (((symbol-function #'detached--session-accessible-p) (lambda (_) t)))
+    (should (string= "*" (detached--state-str
+                          (detached--session-create :state 'active))))
+    (should (string= "" (detached--state-str
+                         (detached--session-create :state 'inactive))))
+    (should (string= "?" (detached--state-str
+                          (detached--session-create :state 'unknown)))))
+
+  ;; Inaccessible sessions
+  (cl-letf (((symbol-function #'detached--session-accessible-p) (lambda (_) nil)))
+    (should (string= "?" (detached--state-str
+                          (detached--session-create :state 'active))))
+    (should (string= "" (detached--state-str
+                         (detached--session-create :state 'inactive))))
+    (should (string= "?" (detached--state-str
+                          (detached--session-create :state 'unknown))))))
 
 (ert-deftest detached-test-working-dir-str ()
   (should
