@@ -59,7 +59,7 @@
 
 ;;;;; Customizable
 
-(defcustom detached-session-directory (expand-file-name "detached" (temporary-file-directory))
+(defcustom detached-session-directory (expand-file-name "detached" temporary-file-directory)
   "The directory to store sessions."
   :type 'string
   :group 'detached)
@@ -199,7 +199,7 @@ Valid values are: create, new and attach")
 (defvar detached-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst detached-session-version "0.8.0.1"
+(defconst detached-session-version "0.8.1.0"
   "The version of `detached-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -673,7 +673,7 @@ Optionally SUPPRESS-OUTPUT."
     (unless (file-exists-p detached-db-directory)
       (make-directory detached-db-directory t))
     (detached--db-initialize)
-    (detached--register-detached-emacs )
+    (detached--register-detached-emacs)
     (setq detached--db-watch
           (file-notify-add-watch detached-db-directory
                                  '(change attribute-change)
