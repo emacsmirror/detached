@@ -5,7 +5,7 @@
 ;; Author: Niklas Eklund <niklas.eklund@posteo.net>
 ;; Maintainer: detached.el Development <~niklaseklund/detached.el@lists.sr.ht>
 ;; URL: https://sr.ht/~niklaseklund/detached.el/
-;; Version: 0.8.0
+;; Version: 0.8.1
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: convenience processes
 
@@ -59,12 +59,12 @@
 
 ;;;;; Customizable
 
-(defcustom detached-session-directory (expand-file-name "detached" temporary-file-directory)
+(defcustom detached-session-directory (expand-file-name "detached" user-emacs-directory)
   "The directory to store sessions."
   :type 'string
   :group 'detached)
 
-(defcustom detached-db-directory user-emacs-directory
+(defcustom detached-db-directory (expand-file-name "detached" user-emacs-directory)
   "The directory to store the `detached' database."
   :type 'string
   :group 'detached)
