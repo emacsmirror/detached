@@ -1345,7 +1345,7 @@ log to deduce the end time."
 
 (defun detached--create-id (command)
   "Return a hash identifier for COMMAND."
-  (let ((current-time (current-time-string)))
+  (let ((current-time (number-to-string (time-to-seconds))))
     (secure-hash 'md5 (concat command current-time))))
 
 (defun detached--env-message-filter (str)
