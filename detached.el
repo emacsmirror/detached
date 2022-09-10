@@ -491,19 +491,21 @@ Optionally DELETE the session if prefix-argument is provided."
     (let ((buffer1 "*detached-session-output-1*")
           (buffer2 "*detached-session-output-2*"))
       (with-current-buffer (get-buffer-create buffer1)
-        (erase-buffer)
-        (insert (detached--session-header session1))
-        (insert (detached--session-output session1))
-        (when (eq 'terminal-data (detached--session-env session1))
-          ;; Enable `detached-log-mode' to parse ansi-escape sequences
-          (detached-log-mode)))
+        (let ((inhibit-read-only t))
+          (erase-buffer)
+          (insert (detached--session-header session1))
+          (insert (detached--session-output session1))
+          (when (eq 'terminal-data (detached--session-env session1))
+            ;; Enable `detached-log-mode' to parse ansi-escape sequences
+            (detached-log-mode))))
       (with-current-buffer (get-buffer-create buffer2)
-        (erase-buffer)
-        (insert (detached--session-header session2))
-        (insert (detached--session-output session2))
-        (when (eq 'terminal-data (detached--session-env session2))
-          ;; Enable `detached-log-mode' to parse ansi-escape sequences
-          (detached-log-mode)))
+        (let ((inhibit-read-only t))
+          (erase-buffer)
+          (insert (detached--session-header session2))
+          (insert (detached--session-output session2))
+          (when (eq 'terminal-data (detached--session-env session2))
+            ;; Enable `detached-log-mode' to parse ansi-escape sequences
+            (detached-log-mode))))
       (ediff-buffers buffer1 buffer2))))
 
 ;;;###autoload
