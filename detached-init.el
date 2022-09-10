@@ -106,14 +106,7 @@
 ;;;###autoload
 (defun detached-init ()
   "Initialize `detached' integration with all packages."
-
-  ;; Trigger initialization of sessions upon load of `detached'
-  (with-eval-after-load 'detached
-      (detached-initialize-sessions))
-
-  ;; Required for `detached-shell-command' which is always provided
-  (add-hook 'shell-mode-hook #'detached-shell-mode)
-
+  (detached-init--detached)
   (let ((init-functions
          (thread-last detached-init--package-integration
                       (seq-filter (lambda (it)
@@ -170,6 +163,14 @@
   (with-eval-after-load 'embark
     (defvar embark-detached-map (make-composed-keymap detached-action-map embark-general-map))
     (add-to-list 'embark-keymap-alist '(detached . embark-detached-map))))
+
+(defun detached-init--detached ()
+  "Initialize `detached'."
+  ;; Trigger initialization of sessions upon load of `detached'
+  (with-eval-after-load 'detached
+    (detached-initialize-sessions))
+  ;; Required for `detached-shell-command' which is always provided
+  (add-hook 'shell-mode-hook #'detached-shell-mode))
 
 (provide 'detached-init)
 
