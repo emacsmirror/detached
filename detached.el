@@ -179,27 +179,38 @@ If set to a non nil value the latest entry to
   :type 'list
   :group 'detached)
 
+(defcustom detached-dtach-socket-creation-delay 1.0
+  "A maximum delay, in seconds, that is reasonable for dtach socket creation."
+  :type 'float
+  :group 'detached)
+
 ;;;;; Public
 
 (defvar detached-enabled nil)
+
 (defvar detached-session-mode nil
   "Mode of operation for session.
 Valid values are: create, new and attach")
+
 (defvar detached-session-origin nil
   "Variable to specify the origin of the session.")
+
 (defvar detached-session-action nil
   "A property list of actions for a session.")
+
 (defvar detached-shell-command-history nil
   "History of commands run with `detached-shell-command'.")
+
 (defvar detached-local-session nil
   "If set to t enforces a local session.")
 
 (defvar detached-compile-session-hooks nil
   "Hooks to run when compiling a session.")
+
 (defvar detached-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst detached-session-version "0.8.1.0"
+(defconst detached-session-version "0.8.1.1"
   "The version of `detached-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -250,28 +261,46 @@ This version is encoded as [package-version].[revision].")
 
 (defvar detached--sessions-initialized nil
   "Sessions are initialized.")
+
 (defvar detached--sessions nil
   "A list of sessions.")
+
 (defvar detached--watched-session-directories nil
   "An alist where values are a (directory . descriptor).")
+
+(defvar detached--hashed-sessions nil
+  "Hashed sessions.")
+
+(defvar detached--unvalidated-sessions nil
+  "List of unvalidated sessions.")
+
+(defvar detached--current-emacsen nil
+  "List of current detached Emacsen.")
+
 (defvar detached--db-watch nil
   "A descriptor to the `detached-db-directory'.")
-(defvar detached--buffer-session nil
+
+(defvar-local detached--buffer-session nil
   "The `detached-session' session in current buffer.")
+
 (defvar detached--current-session nil
   "The current session.")
-(make-variable-buffer-local 'detached--buffer-session)
+
 (defvar detached--session-candidates nil
   "An alist of session candidates.")
+
 (defvar detached--annotation-widths nil
   "An alist of widths to use for annotation.")
 
 (defconst detached--shell-command-buffer "*Detached Shell Command*"
   "Name of the `detached-shell-command' buffer.")
+
 (defconst detached--dtach-eof-message "\\[EOF - dtach terminating\\]"
   "Message printed when `dtach' terminates.")
+
 (defconst detached--dtach-detached-message "\\[detached\\]\^M"
   "Message printed when detaching from `dtach'.")
+
 (defconst detached--dtach-detach-character "\C-\\"
   "Character used to detach from a session.")
 
@@ -293,7 +322,8 @@ This version is encoded as [package-version].[revision].")
   (time nil)
   (status nil)
   (size nil)
-  (state nil))
+  (state nil)
+  (initialized-emacsen nil))
 
 ;;;; Macros
 
@@ -336,11 +366,12 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
   (interactive
    (list (detached-completing-read (detached-get-sessions))))
   (when (detached-valid-session session)
-    (if (eq 'active (detached--session-state session))
-        (detached-attach-session session)
-      (if-let ((view-fun (plist-get (detached--session-action session) :view)))
-          (funcall view-fun session)
-        (detached-view-dwim session)))))
+    (let ((initialized-session (detached--get-initialized-session session)))
+      (if (eq 'active (detached--session-state initialized-session))
+          (detached-attach-session initialized-session)
+        (if-let ((view-fun (plist-get (detached--session-action initialized-session) :view)))
+            (funcall view-fun initialized-session)
+          (detached-view-dwim initialized-session))))))
 
 ;;;###autoload
 (defun detached-compile-session (session)
@@ -396,11 +427,12 @@ The session is compiled by opening its output and enabling
   (interactive
    (list (detached-completing-read (detached-get-sessions))))
   (when (detached-valid-session session)
-    (if (eq 'inactive (detached--session-state session))
-        (detached-open-session session)
-      (if-let ((attach-fun (plist-get (detached--session-action session) :attach)))
-          (funcall attach-fun session)
-        (detached-shell-command-attach-session session)))))
+    (let ((initialized-session (detached--get-initialized-session session)))
+      (if (eq 'inactive (detached--session-state initialized-session))
+          (detached-open-session initialized-session)
+        (if-let ((attach-fun (plist-get (detached--session-action initialized-session) :attach)))
+            (funcall attach-fun initialized-session)
+          (detached-shell-command-attach-session initialized-session))))))
 
 ;;;###autoload
 (defun detached-copy-session (session)
@@ -589,8 +621,9 @@ active session.  For sessions created with `detached-compile' or
                                     :env (detached--env command)
                                     :host (detached--host)
                                     :metadata (detached-metadata)
-                                    :state 'unknown)))
-     (detached--db-insert-entry session)
+                                    :state 'unknown
+                                    :initialized-emacsen `(,(emacs-pid)))))
+     (detached--create-session-validator session)
      (detached--watch-session-directory (detached--session-directory session))
      session)))
 
@@ -680,34 +713,24 @@ Optionally SUPPRESS-OUTPUT."
           (file-notify-add-watch detached-db-directory
                                  '(change attribute-change)
                                  #'detached--db-directory-event))
+
     (setq detached--sessions-initialized t)
 
-    ;; Remove missing local sessions
-    (thread-last (detached--db-get-sessions)
-                 (seq-filter #'detached--local-session-p)
-                 (seq-filter #'detached--session-missing-p)
-                 (seq-do #'detached--db-remove-entry))
+    ;; Hash sessions and set the status for all sessions to uninitialized
+    (setq detached--hashed-sessions
+          (let* ((sessions (detached--db-get-sessions))
+                 (ht (make-hash-table :test #'equal :size (length sessions))))
+            (seq-do (lambda (session)
+                      (puthash (detached--session-id session) 'uninitialized ht))
+                    sessions)
+            ht))
 
-    ;; Validate sessions with unknown state
-    (detached--validate-unknown-sessions)
-
-    ;; Update transitioned sessions
-    (thread-last (detached--db-get-sessions)
-                 (seq-filter #'detached--active-session-p)
-                 (seq-filter #'detached--session-accessible-p)
-                 (seq-remove (lambda (it) (when (detached--session-missing-p it)
-                                       (detached--db-remove-entry it)
-                                       t)))
-                 (seq-filter #'detached--state-transition-p)
-                 (seq-do #'detached--session-state-transition-update))
-
-    ;; Watch session directories with active sessions
-    (thread-last (detached--db-get-sessions)
-                 (seq-filter #'detached--active-session-p)
-                 (seq-filter #'detached--session-accessible-p)
-                 (seq-map #'detached--session-directory)
-                 (seq-uniq)
-                 (seq-do #'detached--watch-session-directory))))
+    ;; Initialize accessible sessions
+    (let ((detached--current-emacsen (detached--active-detached-emacsen)))
+      (detached--update-detached-emacsen)
+      (thread-last (detached--db-get-sessions)
+                   (seq-filter #'detached--session-accessible-p)
+                   (seq-do #'detached--initialize-session)))))
 
 (defun detached-valid-session (session)
   "Ensure that SESSION is valid.
@@ -768,9 +791,11 @@ This function uses the `notifications' library."
           (t (message "Detached session is in an unexpected state.")))))
 
 (defun detached-get-sessions ()
-  "Return validated sessions."
-  (detached--validate-unknown-sessions)
-  (detached--initialize-remote-sessions)
+  "Return as initialized sessions as possible."
+  ;; Try to initialize unknown sessions
+  (thread-last (detached--uninitialized-sessions)
+               (seq-filter #'detached--session-accessible-p)
+               (seq-do #'detached--initialize-session))
   (detached--db-get-sessions))
 
 (defun detached-shell-command-attach-session (session)
@@ -1055,7 +1080,28 @@ Optionally CONCAT the command return command into a string."
                          (if (detached--session-missing-p it)
                              (detached--db-remove-entry it)
                            (setf (detached--session-state it) 'active)
-                           (detached--db-update-entry it))))))
+                           (detached--db-update-entry it t))))))
+
+(defun detached--create-session-validator (session)
+  "Create a function to validate SESSION.
+
+It can take some time for a dtach socket to be created.  Therefore all
+sessions are created with state unknown.  This function creates a
+function to verify that a session was created correctly.  If the
+session is missing its deleted from the database."
+  (setf (alist-get (detached--session-id session) detached--unvalidated-sessions)
+        session)
+  (run-with-timer detached-dtach-socket-creation-delay
+                  nil
+                  (lambda ()
+                    (when (alist-get (detached--session-id session)
+                                     detached--unvalidated-sessions)
+                      (setq detached--unvalidated-sessions
+                            (assq-delete-all (detached--session-id session)
+                                             detached--unvalidated-sessions))
+                      (unless (detached--session-missing-p session)
+                        (setf (detached--session-state session) 'active)
+                        (detached--db-insert-entry session))))))
 
 (defun detached--session-file (session file &optional local)
   "Return the full path to SESSION's FILE.
@@ -1123,27 +1169,6 @@ Optionally make the path LOCAL to host."
       detached-session-directory
     (concat (file-remote-p default-directory) detached-session-directory)))
 
-(defun detached--initialize-remote-sessions ()
-  "Initialize accessible remote sessions."
-  (let ((remote-sessions
-         (thread-last (detached--db-get-sessions)
-                      (seq-filter #'detached--remote-session-p)
-                      (seq-filter #'detached--session-accessible-p))))
-
-    ;; Update transitioned sessions
-    (thread-last remote-sessions
-                 (seq-remove (lambda (it) (when (detached--session-missing-p it)
-                                       (detached--db-remove-entry it)
-                                       t)))
-                 (seq-filter #'detached--state-transition-p)
-                 (seq-do #'detached--session-state-transition-update))
-
-    ;; Watch session directories
-    (thread-last remote-sessions
-                 (seq-map #'detached--session-directory)
-                 (seq-uniq)
-                 (seq-do #'detached--watch-session-directory))))
-
 ;;;;; Database
 
 (defun detached--db-initialize ()
@@ -1209,31 +1234,60 @@ Optionally make the path LOCAL to host."
         (read (current-buffer))))))
 
 (defun detached--register-detached-emacs ()
-  "Register Emacs PID."
+  "Register the Emacs process."
   (let* ((file (expand-file-name "detached-emacsen" detached-db-directory))
-         (emacsen
-          (seq-uniq (append (detached--read-detached-emacsen)
-                            `(,(emacs-pid))))))
+         (emacs-process (process-attributes (emacs-pid)))
+         (emacsen (detached--read-detached-emacsen)))
+    (setf (alist-get (emacs-pid) emacsen) emacs-process)
     (with-temp-file file
       (insert (format ";; Detached Emacsen\n\n"))
       (prin1 emacsen (current-buffer)))))
 
-(defun detached--primary-detached-emacs-p ()
-  "Return t if `(emacs-pid)' is the primary detached Emacs."
+(defun detached--primary-detached-emacs-p (session)
+  "Return t if current Emacs is primary Emacs for SESSION."
   (let ((emacsen (detached--read-detached-emacsen))
-        (system-processes (list-system-processes)))
-    (thread-last emacsen
-                 (seq-find (lambda (emacs-pid) (member emacs-pid system-processes)))
-                 (= (emacs-pid)))))
+        (initialized-emacsen (detached--session-initialized-emacsen
+                              session)))
+    (thread-last initialized-emacsen
+                 (seq-find (lambda (pid)
+                             (when-let ((emacs-process (alist-get pid emacsen))
+                                        (process-attrs (process-attributes pid)))
+                               (and
+                                ;; Make sure the args are the same
+                                (string= (alist-get 'args emacs-process)
+                                         (alist-get 'args process-attrs))
+                                ;; Make sure process id of the parent is the same
+                                (= (alist-get 'ppid emacs-process)
+                                   (alist-get 'ppid process-attrs))
+                                ;; Make sure current Emacs is the right Emacs
+                                (= pid (emacs-pid)))))))))
 
-(defun detached--remove-detached-emacsen ()
-  "Remove terminated Emacsen from the list."
-  (let* ((system-processes (list-system-processes))
-         (emacses (thread-last (detached--read-detached-emacsen)
-                               (seq-filter (lambda (it) (member it system-processes))))))
-    (with-temp-file (expand-file-name "detached-emacsen" detached-db-directory)
-      (insert (format ";; Detached Emacsen\n\n"))
-      (prin1 emacses (current-buffer)))))
+(defun detached--update-detached-emacsen ()
+  "Update list of detached Emacsen."
+  (with-temp-file (expand-file-name "detached-emacsen" detached-db-directory)
+    (insert (format ";; Detached Emacsen\n\n"))
+    (prin1 detached--current-emacsen (current-buffer))))
+
+(defun detached--active-detached-emacsen ()
+  "Return a list of active detached Emacsen."
+  (thread-last (detached--read-detached-emacsen)
+               (seq-filter (lambda (emacs-process)
+                             (when-let ((process-attrs (process-attributes (car emacs-process))))
+                               (and
+                                ;; Make sure the args are the same
+                                (string= (alist-get 'args (cdr emacs-process))
+                                         (alist-get 'args process-attrs))
+                                ;; Make sure process id of the parent is the same
+                                (= (alist-get 'ppid (cdr emacs-process))
+                                   (alist-get 'ppid process-attrs))))))))
+
+(defun detached--get-initialized-session (session)
+  "Return an initialized copy of SESSION."
+  (if (detached--uninitialized-session-p session)
+      (progn
+        (detached--initialize-session session)
+        (detached--db-get-session (detached--session-id session)))
+    session))
 
 ;;;;; Other
 
@@ -1380,15 +1434,21 @@ session and trigger a state transition."
   (pcase-let* ((`(,_ ,action ,file) event))
     (when (and (eq action 'deleted)
                (string= "socket" (file-name-extension file)))
+
       (when-let* ((id (intern (file-name-base file)))
-                  (session (detached--db-get-session id))
+                  (session
+                   (or (alist-get id detached--unvalidated-sessions)
+                       (detached--db-get-session id)))
                   (session-directory (detached--session-directory session))
-                  (is-primary (detached--primary-detached-emacs-p)))
+                  (is-primary
+                   (detached--primary-detached-emacs-p session)))
+
+        ;; Remove from unvalidated sessions
+        (setq detached--unvalidated-sessions
+              (assq-delete-all id detached--unvalidated-sessions))
+
         ;; Update session
         (detached--session-state-transition-update session)
-
-        ;; Update Emacsen
-        (detached--remove-detached-emacsen)
 
         ;; Remove session directory from `detached--watch-session-directory'
         ;; if there is no active session associated with the directory
@@ -1403,6 +1463,36 @@ session and trigger a state transition."
           (setq detached--watched-session-directories
                 (assoc-delete-all session-directory detached--watched-session-directories)))))))
 
+(defun detached--initialize-session (session)
+  "Initialize SESSION."
+  (puthash (detached--session-id session) 'initialized detached--hashed-sessions)
+
+  (let* ((emacsen
+          (thread-last `(,(emacs-pid) ,@(detached--session-initialized-emacsen session))
+                       (seq-filter (lambda (it)
+                                     (alist-get it detached--current-emacsen)))
+                       (seq-uniq))))
+    (setf (detached--session-initialized-emacsen session) emacsen))
+
+  (if (detached--active-session-p session)
+      (if (detached--state-transition-p session)
+          (detached--session-state-transition-update session)
+        (detached--db-update-entry session t)
+        (detached--watch-session-directory (detached--session-directory session)))
+    (if (detached--session-missing-p session)
+        (detached--db-remove-entry session)
+      (detached--db-update-entry session t))))
+
+(defun detached--uninitialized-sessions ()
+  "Return a list of uninitialized sessions."
+  (seq-filter #'detached--uninitialized-session-p
+   (detached--db-get-sessions)))
+
+(defun detached--uninitialized-session-p (session)
+  "Return t if SESSION is uninitialized."
+  (eq 'uninitialized
+      (gethash (detached--session-id session) detached--hashed-sessions)))
+
 (defun detached--db-directory-event (event)
   "Act on EVENT in `detached-db-directory'.
 
@@ -1411,16 +1501,18 @@ If event is cased by an update to the `detached' database, re-initialize
   (pcase-let* ((`(,_descriptor ,action ,file) event)
                (database-updated (and (string-match "detached-sessions.db$" file)
                                       (or (eq 'attribute-changed action)
-                                          (eq 'changed action)))))
+                                          (eq 'changed action))))
+               (detached--current-emacsen (detached--active-detached-emacsen)))
     (when database-updated
       ;; Re-initialize the sessions
       (detached--db-initialize)
-      ;; Make sure to watch session directories
-      (thread-last (detached--db-get-sessions)
-                   (seq-filter (lambda (it) (eq 'active (detached--session-state it))))
-                   (seq-map #'detached--session-directory)
-                   (seq-uniq)
-                   (seq-do #'detached--watch-session-directory)))))
+      ;; Initialize unknown sessions
+      (seq-do (lambda (session)
+                (unless (gethash (detached--session-id session) detached--hashed-sessions)
+                  (if (not (detached--session-accessible-p session))
+                      (puthash (detached--session-id session) 'uninitialized detached--hashed-sessions)
+                    (detached--initialize-session session))))
+              (detached--db-get-sessions)))))
 
 (defun detached--annotation-widths (sessions annotation-format)
   "Return widths for ANNOTATION-FORMAT based on SESSIONS."

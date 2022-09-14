@@ -46,8 +46,10 @@
   (cl-letf* (((symbol-function #'detached--host) (lambda () host))
              ((symbol-function #'detached-metadata) (lambda () nil))
              ((symbol-function #'detached--watch-session-directory) #'ignore)
+             ((symbol-function #'emacs-pid) (lambda () 1))
              (session (detached-create-session command)))
     (detached-test--change-session-state session 'activate)
+    (detached--db-insert-entry session)
     session))
 
 (defun detached-test--change-session-state (session state)

@@ -4,6 +4,7 @@
 
 * Development
 
+- Rework session initialization and validation. This also improves the way Emacsen co-operates in term of updating sessions that become inactive. The new approach is described under =architecture= in =notes.org=.
 - Improved handling of remote sessions. The package will only try to initialize sessions that are accessible when package loads. Other active sessions it will wait until a remote connection has been established before they are being watched.
 
 * Version 0.8.1 (2022-09-08)
