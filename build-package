@@ -2,7 +2,7 @@
 # ; -*- mode: sh;-*-
 
 # 1) Byte compile
-emacs --batch --load=detached.el -f batch-byte-compile *.el
+emacs --batch --load=detached.el -f batch-byte-compile ./*.el
 
 # 2) Make autoloads
 emacs --batch --eval='(progn (setq make-backup-files nil) (make-directory-autoloads default-directory "detached-autoloads.el"))'
