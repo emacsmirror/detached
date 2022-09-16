@@ -658,7 +658,8 @@ Optionally SUPPRESS-OUTPUT."
           (setq buffer (generate-new-buffer (buffer-name buffer))))
         (setq detached-enabled nil)
         (funcall #'async-shell-command command buffer)
-        (with-current-buffer buffer (setq detached--buffer-session detached--current-session))))))
+        (with-current-buffer buffer
+          (setq detached--buffer-session detached--current-session))))))
 
 (defun detached-session-candidates (sessions)
   "Return an alist of SESSIONS candidates."
@@ -810,7 +811,8 @@ This function uses the `notifications' library."
       (when (get-buffer-process buffer)
         (setq buffer (generate-new-buffer (buffer-name buffer))))
       (funcall #'async-shell-command command buffer)
-      (with-current-buffer buffer (setq detached--buffer-session detached--current-session)))))
+      (with-current-buffer buffer
+        (setq detached--buffer-session detached--current-session)))))
 
 (defun detached-session-exit-code (session)
   "Return exit code for SESSION."
