@@ -257,6 +257,10 @@ This version is encoded as [package-version].[revision].")
   '((t :inherit font-lock-comment-face))
   "Face used to highlight identifier in `detached'.")
 
+(defface detached-mark-face
+  '((t :inherit detached-state-face))
+  "Face used to highlight marked session in `detached-list-mode'.")
+
 ;;;;; Private
 
 (defvar detached--sessions-initialized nil
@@ -894,7 +898,6 @@ Optionally CONCAT the command return command into a string."
    (let* ((socket (detached--session-file session 'socket t))
           (log (detached--session-file session 'log t))
           (dtach-arg (detached--dtach-arg)))
-     (setq detached--buffer-session session)
      (if (eq detached-session-mode 'attach)
          (if concat
              (string-join
