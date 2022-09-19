@@ -212,7 +212,7 @@ Optionally SUPPRESS-OUTPUT."
   "Narrow to failed SESSIONS."
   (interactive)
   (detached-list-narrow-sessions
-   `("Success" .
+   `("Failure" .
      ,(lambda (session)
         (eq 'failure (car (detached--session-status session)))))))
 
