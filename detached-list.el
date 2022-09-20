@@ -374,6 +374,18 @@ If prefix-argument is provided unmark instead of mark."
 
 ;;;; Support functions
 
+(defun detached-list--get-buffer (&optional filters)
+  "Return buffer based on FILTERS."
+  (get-buffer-create
+   (if filters
+       (format "*detached-list [%s]*"
+               (string-join
+                (thread-last filters
+                             (seq-reverse)
+                             (seq-map #'car))
+                " AND "))
+     "*detached-list*")))
+
 (defun detached-list--revert-sessions ()
   "Recompute `tabulated-list-entries'."
   (setq tabulated-list-entries
