@@ -49,6 +49,13 @@
   :group 'detached
   :type 'list)
 
+(defcustom detached-list-filters nil
+  "An alist of custom filters that can be applied.
+
+The filters are built using the different narrow functions that
+detached list implements."
+  :group 'detached)
+
 ;;;; Private
 
 (defvar-local detached-list--marked-sessions nil
@@ -204,6 +211,12 @@ Optionally SUPPRESS-OUTPUT."
          (detached--remote-session-p session)))
      ,@detached-list--filters)))
 
+(defun detached-list-select-filter ()
+  "Select a `detached-list-filter' to apply."
+  (interactive)
+  (when-let* ((filter-name (completing-read "Select filter: " detached-list-filters))
+              (filter (alist-get filter-name detached-list-filters nil nil #'string=)))
+    (seq-do (lambda (it) (apply it)) filter)))
 
 (defun detached-list-narrow-origin (origin)
   "Narrow to sessions with a specific ORIGIN."
@@ -488,6 +501,7 @@ If prefix-argument is provided unmark instead of mark."
 (defvar detached-list-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "d") #'detached-list-delete-session)
+    (define-key map (kbd "f") #'detached-list-select-filter)
     (define-key map (kbd "g") #'detached-list-revert)
     (define-key map (kbd "j") #'detached-list-jump-to-directory)
     (define-key map (kbd "k") #'detached-list-kill-session)
