@@ -94,6 +94,11 @@ detached list implements."
         (kill-buffer-and-window)
       (kill-current-buffer))))
 
+(defun detached-list-widen ()
+  "Remove narrowing restrictions."
+  (interactive)
+  (detached-list-update-narrowing nil))
+
 (defun detached-list-detach-from-session (session)
   "Detach from SESSION at point."
   (interactive
@@ -152,7 +157,7 @@ Optionally SUPPRESS-OUTPUT."
   (interactive)
   (if (= (length detached-list--marked-sessions) 2)
       (apply #'detached-diff-session detached-list--marked-sessions)
-      (message "Mark two sessions")))
+    (message "Mark two sessions")))
 
 (defun detached-list-open-session ()
   "View session."
@@ -384,6 +389,20 @@ If prefix-argument is provided unmark instead of mark."
                      (detached-list--get-filtered-sessions)))
       (tabulated-list-print t))))
 
+(defun detached-list-update-narrowing (filters)
+  "Update narrowing with FILTERS."
+  (let* ((current-buffer (current-buffer))
+         (window (get-buffer-window current-buffer))
+         (new-buffer (detached-list--get-buffer filters)))
+    (with-current-buffer new-buffer
+      (set-window-buffer window new-buffer)
+      (kill-buffer current-buffer)
+      (detached-list-mode)
+      (setq detached-list--filters filters)
+      (setq tabulated-list-entries
+            (seq-map #'detached-list--get-entry
+                     (detached-list--get-filtered-sessions)))
+      (tabulated-list-print t))))
 
 ;;;; Support functions
 
@@ -527,6 +546,7 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "x") #'detached-list-detach-from-session)
     (define-key map (kbd "%") #'detached-list-mark-regexp)
     (define-key map (kbd "=") #'detached-list-diff-marked-sessions)
+    (define-key map (kbd "-") #'detached-list-widen)
     (define-key map (kbd "!") #'detached-shell-command)
     (define-key map (kbd "<return>") #'detached-list-open-session)
     map)
