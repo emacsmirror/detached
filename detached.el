@@ -406,7 +406,8 @@ The session is compiled by opening its output and enabling
             (setq detached--buffer-session session)
             (setq-local font-lock-defaults '(compilation-mode-font-lock-keywords t)))
           (font-lock-mode)
-          (read-only-mode))
+          (read-only-mode)
+          (goto-char (point-max)))
         (pop-to-buffer buffer-name)))))
 
 ;;;###autoload
