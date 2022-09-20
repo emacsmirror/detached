@@ -43,6 +43,12 @@
   :type '(repeat symbol)
   :group 'detached)
 
+(defcustom detached-list-display-buffer-action '(display-buffer-same-window
+                                                 (inhibit-same-window . nil))
+  "The action used to display the detached list buffer."
+  :group 'detached
+  :type 'list)
+
 ;;;; Private
 
 (defvar-local detached-list--marked-sessions nil
@@ -301,14 +307,6 @@ If prefix-argument is provided unmark instead of mark."
 (defun detached-list-sessions ()
   "Open list of `detached'."
   (interactive)
-  (let ((buffer (get-buffer-create "*detached-list*")))
-    (pop-to-buffer-same-window buffer)
-    (detached-list-mode)
-    (setq tabulated-list-entries
-          (seq-map #'detached-list--get-entry
-                   (detached-list--get-filtered-sessions)))
-    (tabulated-list-print t)))
-
 (defun detached-list-narrow-sessions (filter)
   "Narrow session(s) based on FILTER."
   (let* ((current-filters `(,filter ,@detached-list--filters))
@@ -326,6 +324,15 @@ If prefix-argument is provided unmark instead of mark."
           (seq-map #'detached-list--get-entry
                    (detached-list--get-filtered-sessions)))
     (tabulated-list-print t)))
+  (let* ((buffer (detached-list--get-buffer))
+         (window (display-buffer buffer detached-list-display-buffer-action)))
+    (with-selected-window window
+      (detached-list-mode)
+      (setq tabulated-list-entries
+            (seq-map #'detached-list--get-entry
+                     (detached-list--get-filtered-sessions)))
+      (tabulated-list-print t))))
+
 
 ;;;; Support functions
 
