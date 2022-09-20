@@ -77,6 +77,16 @@
 
 ;;;; Commands
 
+(defun detached-list-quit-dwim ()
+  "Quit DWIM command."
+  (interactive)
+  (if detached-list--filters
+      (detached-list-update-narrowing
+       (cdr detached-list--filters))
+    (if (> (length (window-list)) 1)
+        (kill-buffer-and-window)
+      (kill-current-buffer))))
+
 (defun detached-list-detach-from-session (session)
   "Detach from SESSION at point."
   (interactive
@@ -450,6 +460,7 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "n r") #'detached-list-narrow-remote)
     (define-key map (kbd "n s") #'detached-list-narrow-success)
     (define-key map (kbd "n %") #'detached-list-narrow-regexp)
+    (define-key map (kbd "q") #'detached-list-quit-dwim)
     (define-key map (kbd "r") #'detached-list-rerun-session)
     (define-key map (kbd "s") #'imenu)
     (define-key map (kbd "t") #'detached-list-toggle-mark-session)
