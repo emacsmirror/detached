@@ -108,8 +108,10 @@ cluttering the `comint-history' with dtach commands."
 (defun detached-shell--create-input-sender (proc string)
   "Create a detached session based on STRING and send to PROC."
   (with-connection-local-variables
-   (let* ((command (detached--shell-command
-                    (substring-no-properties string) t)))
+   (let* ((session
+           (detached-create-session (substring-no-properties string)))
+          (command (detached--shell-command session t)))
+     (setq detached--buffer-session session)
      (comint-simple-send proc command))))
 
 (defun detached-shell--comint-read-input-ring-advice (orig-fun &rest args)
