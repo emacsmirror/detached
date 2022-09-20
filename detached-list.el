@@ -40,21 +40,25 @@
     (:name "Duration" :function detached--duration-str :length 20 :face detached-duration-face)
     (:name "Created" :function detached--creation-str :length 20 :face detached-creation-face))
   "Configuration for `detached' list mode."
-  :type '(repeat symbol)
+  :type '(repeat (plist :options ((:name symbol)
+                                  (:function symbol)
+                                  (:length symbol)
+                                  (:face symbol))))
   :group 'detached)
 
 (defcustom detached-list-display-buffer-action '(display-buffer-same-window
                                                  (inhibit-same-window . nil))
   "The action used to display the detached list buffer."
   :group 'detached
-  :type 'list)
+  :type 'sexp)
 
 (defcustom detached-list-filters nil
   "An alist of custom filters that can be applied.
 
 The filters are built using the different narrow functions that
 detached list implements."
-  :group 'detached)
+  :group 'detached
+  :type '(alist :key-type string))
 
 ;;;; Private
 
