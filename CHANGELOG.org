@@ -4,6 +4,10 @@
 
 * Development
 
+* Version 0.9.1 (2022-09-22)
+
+- Fix bug with detaching in =shell=
+
 * Version 0.9.0 (2022-09-16)
 
 - Add =detached-list= user interface. It is an alternative user interface where it is easier to manage the =detached= sessions. Commands to mark, toggle, and narrow based on different criteria are available.
