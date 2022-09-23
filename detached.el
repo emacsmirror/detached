@@ -81,6 +81,11 @@
   :type 'string
   :group 'detached)
 
+(defcustom detached-grep-program "grep"
+  "The name of the grep program."
+  :type 'string
+  :group 'detached)
+
 (defcustom detached-shell-program shell-file-name
   "Path to the shell to run the dtach command in."
   :type 'string

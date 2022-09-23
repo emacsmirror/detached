@@ -8,6 +8,7 @@
 - Add concept of =filters= to quickly apply a set of narrow criteria.
 - Speed up initialization of sessions.
 - Narrow criteria are persistent and applied when resuming detached list sessions.
+- Add narrow criterion which searches through the output of all sessions in detached list which matches a regexp.
 
 * Version 0.9.1 (2022-09-22)
 
