@@ -738,7 +738,8 @@ Optionally SUPPRESS-OUTPUT."
       (detached--update-detached-emacsen)
       (thread-last (detached--db-get-sessions)
                    (seq-filter #'detached--session-accessible-p)
-                   (seq-do #'detached--initialize-session)))))
+                   (seq-do #'detached--initialize-session))
+      (detached--db-update-sessions))))
 
 (defun detached-valid-session (session)
   "Ensure that SESSION is valid.
@@ -801,9 +802,11 @@ This function uses the `notifications' library."
 (defun detached-get-sessions ()
   "Return as initialized sessions as possible."
   ;; Try to initialize unknown sessions
-  (thread-last (detached--uninitialized-sessions)
-               (seq-filter #'detached--session-accessible-p)
-               (seq-do #'detached--initialize-session))
+  (when-let ((initialized-sessions
+              (thread-last (detached--uninitialized-sessions)
+                           (seq-filter #'detached--session-accessible-p)
+                           (seq-do #'detached--initialize-session))))
+    (detached--db-update-sessions))
   (detached--db-get-sessions))
 
 (defun detached-shell-command-attach-session (session)
@@ -1294,6 +1297,7 @@ Optionally make the path LOCAL to host."
   (if (detached--uninitialized-session-p session)
       (progn
         (detached--initialize-session session)
+        (detached--db-update-sessions)
         (detached--db-get-session (detached--session-id session)))
     session))
 
@@ -1485,11 +1489,11 @@ session and trigger a state transition."
   (if (detached--active-session-p session)
       (if (detached--state-transition-p session)
           (detached--session-state-transition-update session)
-        (detached--db-update-entry session t)
+        (detached--db-update-entry session)
         (detached--watch-session-directory (detached--session-directory session)))
     (if (detached--session-missing-p session)
         (detached--db-remove-entry session)
-      (detached--db-update-entry session t))))
+      (detached--db-update-entry session))))
 
 (defun detached--uninitialized-sessions ()
   "Return a list of uninitialized sessions."
@@ -1519,7 +1523,8 @@ If event is cased by an update to the `detached' database, re-initialize
                 (unless (gethash (detached--session-id session) detached--hashed-sessions)
                   (if (not (detached--session-accessible-p session))
                       (puthash (detached--session-id session) 'uninitialized detached--hashed-sessions)
-                    (detached--initialize-session session))))
+                    (detached--initialize-session session)
+                    (detached--db-update-sessions))))
               (detached--db-get-sessions)))))
 
 (defun detached--annotation-widths (sessions annotation-format)
