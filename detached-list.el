@@ -308,11 +308,13 @@ If prefix-argument is provided unmark instead of mark."
   (when (y-or-n-p (if detached-list--marked-sessions
                       "Delete all marked sessions? "
                     "Delete session at point? "))
-    (seq-do
-     (lambda (session)
-       (detached-list--unmark-session session)
-       (detached-delete-session session))
-     (detached-list--get-marked-or-current-sessions))
+    (let ((detached--update-database nil))
+      (seq-do
+       (lambda (session)
+         (detached-list--unmark-session session)
+         (detached-delete-session session))
+       (detached-list--get-marked-or-current-sessions)))
+    (detached--db-update-sessions)
     (detached-list-revert)))
 
 (defun detached-list-mark-session ()

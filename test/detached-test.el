@@ -206,7 +206,7 @@
      (setq copy (copy-detached-session session))
      (setf (detached--session-state copy) nil)
      (should (not (equal copy (detached--db-get-session id))))
-     (detached--db-update-entry copy t)
+     (detached--db-update-entry copy)
      (should (equal copy (car (detached--db-get-sessions)))))))
 
 (ert-deftest detached-test-detached-command ()

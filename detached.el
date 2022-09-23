@@ -298,6 +298,9 @@ This version is encoded as [package-version].[revision].")
 (defvar detached--annotation-widths nil
   "An alist of widths to use for annotation.")
 
+(defvar detached--update-database t
+  "Update the database when value is t.")
+
 (defconst detached--shell-command-buffer "*Detached Shell Command*"
   "Name of the `detached-shell-command' buffer.")
 
@@ -736,9 +739,10 @@ Optionally SUPPRESS-OUTPUT."
     ;; Initialize accessible sessions
     (let ((detached--current-emacsen (detached--active-detached-emacsen)))
       (detached--update-detached-emacsen)
-      (thread-last (detached--db-get-sessions)
-                   (seq-filter #'detached--session-accessible-p)
-                   (seq-do #'detached--initialize-session))
+      (let ((detached--update-database nil))
+        (thread-last (detached--db-get-sessions)
+                     (seq-filter #'detached--session-accessible-p)
+                     (seq-do #'detached--initialize-session)))
       (detached--db-update-sessions))))
 
 (defun detached-valid-session (session)
@@ -802,10 +806,11 @@ This function uses the `notifications' library."
 (defun detached-get-sessions ()
   "Return as initialized sessions as possible."
   ;; Try to initialize unknown sessions
-  (when-let ((initialized-sessions
-              (thread-last (detached--uninitialized-sessions)
-                           (seq-filter #'detached--session-accessible-p)
-                           (seq-do #'detached--initialize-session))))
+  (when-let* ((detached--update-database nil)
+              (initialized-sessions
+               (thread-last (detached--uninitialized-sessions)
+                            (seq-filter #'detached--session-accessible-p)
+                            (seq-do #'detached--initialize-session))))
     (detached--db-update-sessions))
   (detached--db-get-sessions))
 
@@ -1203,7 +1208,8 @@ Optionally make the path LOCAL to host."
 (defun detached--db-insert-entry (session)
   "Insert SESSION into `detached--sessions' and update database."
   (push `(,(detached--session-id session) . ,session) detached--sessions)
-  (detached--db-update-sessions))
+  (when detached--update-database
+    (detached--db-update-sessions)))
 
 (defun detached--db-remove-entry (session)
   "Remove SESSION from `detached--sessions', delete log and update database."
@@ -1212,12 +1218,13 @@ Optionally make the path LOCAL to host."
       (delete-file log)))
   (setq detached--sessions
         (assq-delete-all (detached--session-id session) detached--sessions))
-  (detached--db-update-sessions))
+  (when detached--update-database
+    (detached--db-update-sessions)))
 
-(defun detached--db-update-entry (session &optional update)
-  "Update SESSION in `detached--sessions' optionally UPDATE database."
+(defun detached--db-update-entry (session)
+  "Update SESSION in `detached--sessions' and the database."
   (setf (alist-get (detached--session-id session) detached--sessions) session)
-  (when update
+  (when detached--update-database
     (detached--db-update-sessions)))
 
 (defun detached--db-get-session (id)
@@ -1329,7 +1336,7 @@ Optionally make the path LOCAL to host."
   (funcall detached-notification-function session)
 
   ;; Update session in database
-  (detached--db-update-entry session t)
+  (detached--db-update-entry session)
 
   ;; Execute callback
   (when-let ((callback (plist-get (detached--session-action session) :callback)))
@@ -1523,8 +1530,7 @@ If event is cased by an update to the `detached' database, re-initialize
                 (unless (gethash (detached--session-id session) detached--hashed-sessions)
                   (if (not (detached--session-accessible-p session))
                       (puthash (detached--session-id session) 'uninitialized detached--hashed-sessions)
-                    (detached--initialize-session session)
-                    (detached--db-update-sessions))))
+                    (detached--initialize-session session))))
               (detached--db-get-sessions)))))
 
 (defun detached--annotation-widths (sessions annotation-format)
