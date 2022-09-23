@@ -107,7 +107,8 @@ detached list implements."
 (defun detached-list-widen ()
   "Remove all narrowing restrictions."
   (interactive)
-  (detached-list-update-narrowing nil))
+  (when detached-list--filters
+    (detached-list-update-narrowing nil)))
 
 (defun detached-list-detach-from-session (session)
   "Detach from SESSION at point."
