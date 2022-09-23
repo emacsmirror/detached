@@ -443,11 +443,7 @@ If prefix-argument is provided unmark instead of mark."
 (defun detached-list-sessions ()
   "Open list of `detached'."
   (interactive)
-  (if-let* ((existing-buffer
-             (seq-find (lambda (buffer)
-                         (with-current-buffer buffer
-                           (eq major-mode 'detached-list-mode)))
-                       (buffer-list)))
+  (if-let* ((existing-buffer (detached-list--get-list-mode-buffer))
             (window (display-buffer existing-buffer detached-list-display-buffer-action)))
       (with-selected-window window
         (detached-list--revert-sessions))
@@ -491,6 +487,19 @@ If prefix-argument is provided unmark instead of mark."
       (tabulated-list-print t))))
 
 ;;;; Support functions
+
+(defun detached-list--db-update ()
+  "Function to run when the database is updated."
+  (when-let ((detached-list-buffer (detached-list--get-list-mode-buffer)))
+    (with-current-buffer detached-list-buffer
+      (detached-list-revert))))
+
+(defun detached-list--get-list-mode-buffer ()
+  "Return buffer with `detached-list-mode'."
+  (seq-find (lambda (buffer)
+              (with-current-buffer buffer
+                (eq major-mode 'detached-list-mode)))
+            (buffer-list)))
 
 (defun detached-list--get-buffer (&optional filters)
   "Return buffer based on FILTERS."

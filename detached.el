@@ -214,6 +214,9 @@ Valid values are: create, new and attach")
 (defvar detached-compile-session-hooks nil
   "Hooks to run when compiling a session.")
 
+(defvar detached-update-db-hooks nil
+  "Hooks to run when the database is updated.")
+
 (defvar detached-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
@@ -1231,6 +1234,7 @@ Optionally make the path LOCAL to host."
 
 (defun detached--db-update-sessions ()
   "Write `detached--sessions' to database."
+  (run-hooks 'detached-update-db-hooks)
   (let ((db (expand-file-name "detached-sessions.db" detached-db-directory)))
     (with-temp-file db
       (insert (format ";; Detached Session Version: %s\n\n" detached-session-version))

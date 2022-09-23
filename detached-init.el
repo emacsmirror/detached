@@ -46,6 +46,7 @@
 (declare-function detached-eshell-mode "detached-eshell")
 (declare-function detached-extra-projectile-run-compilation "detached-extra")
 (declare-function detached-extra-dired-rsync "detached-extra")
+(declare-function detached-list--db-update "detached-list")
 (declare-function detached-org-babel-sh "detached-org")
 (declare-function detached-shell-override-history "detached-shell")
 (declare-function detached-shell-save-history-on-kill "detached-shell")
@@ -107,6 +108,7 @@
 (defun detached-init ()
   "Initialize `detached' integration with all packages."
   (detached-init--detached)
+  (detached-init--detached-list)
   (let ((init-functions
          (thread-last detached-init--package-integration
                       (seq-filter (lambda (it)
@@ -163,6 +165,12 @@
   (with-eval-after-load 'embark
     (defvar embark-detached-map (make-composed-keymap detached-action-map embark-general-map))
     (add-to-list 'embark-keymap-alist '(detached . embark-detached-map))))
+
+(defun detached-init--detached-list ()
+  "Initialize `detached-list'."
+  ;; Trigger initialization of sessions upon load of `detached-list'
+  (with-eval-after-load 'detached-list
+    (add-hook 'detached-update-db-hooks #'detached-list--db-update)))
 
 (defun detached-init--detached ()
   "Initialize `detached'."
