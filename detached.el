@@ -1087,17 +1087,6 @@ Optionally CONCAT the command return command into a string."
   "Return the session associated with ITEM."
   (cdr (assoc item detached--session-candidates)))
 
-(defun detached--validate-unknown-sessions ()
-  "Validate `detached' sessions with state unknown."
-  (thread-last (detached--db-get-sessions)
-               (seq-filter (lambda (it) (eq 'unknown (detached--session-state it))))
-               (seq-filter #'detached--session-accessible-p)
-               (seq-do (lambda (it)
-                         (if (detached--session-missing-p it)
-                             (detached--db-remove-entry it)
-                           (setf (detached--session-state it) 'active)
-                           (detached--db-update-entry it t))))))
-
 (defun detached--create-session-validator (session)
   "Create a function to validate SESSION.
 
