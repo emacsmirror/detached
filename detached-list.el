@@ -88,18 +88,24 @@ detached list implements."
 
 ;;;; Commands
 
-(defun detached-list-quit-dwim ()
-  "Quit DWIM command."
+(defun detached-list-quit ()
+  "Quit command."
+  (interactive)
+  (if (= (length (window-list)) 1)
+      (bury-buffer)
+    (bury-buffer)
+    (delete-window)))
+
+(defun detached-list-remove-narrow-criterion ()
+  "Remove narrow criterion."
   (interactive)
   (if detached-list--filters
       (detached-list-update-narrowing
        (cdr detached-list--filters))
-    (if (> (length (window-list)) 1)
-        (kill-buffer-and-window)
-      (kill-current-buffer))))
+    (message "No criterion to remove")))
 
 (defun detached-list-widen ()
-  "Remove narrowing restrictions."
+  "Remove all narrowing restrictions."
   (interactive)
   (detached-list-update-narrowing nil))
 
@@ -225,6 +231,7 @@ Optionally SUPPRESS-OUTPUT."
   (interactive)
   (when-let* ((filter-name (completing-read "Select filter: " detached-list-filters))
               (filter (alist-get filter-name detached-list-filters nil nil #'string=)))
+    (setq detached-list--filters nil)
     (seq-do (lambda (it) (apply it)) filter)))
 
 (defun detached-list-narrow-origin (origin)
@@ -371,14 +378,22 @@ If prefix-argument is provided unmark instead of mark."
 (defun detached-list-sessions ()
   "Open list of `detached'."
   (interactive)
-  (let* ((buffer (detached-list--get-buffer))
-         (window (display-buffer buffer detached-list-display-buffer-action)))
-    (with-selected-window window
-      (detached-list-mode)
-      (setq tabulated-list-entries
-            (seq-map #'detached-list--get-entry
-                     (detached-list--get-filtered-sessions)))
-      (tabulated-list-print t))))
+  (if-let* ((existing-buffer
+             (seq-find (lambda (buffer)
+                         (with-current-buffer buffer
+                           (eq major-mode 'detached-list-mode)))
+                       (buffer-list)))
+            (window (display-buffer existing-buffer detached-list-display-buffer-action)))
+      (with-selected-window window
+        (detached-list--revert-sessions))
+    (let* ((buffer (detached-list--get-buffer))
+           (window (display-buffer buffer detached-list-display-buffer-action)))
+      (with-selected-window window
+        (detached-list-mode)
+        (setq tabulated-list-entries
+              (seq-map #'detached-list--get-entry
+                       (detached-list--get-filtered-sessions)))
+        (tabulated-list-print t)))))
 
 (defun detached-list-narrow-sessions (filters)
   "Narrow session(s) based on FILTERS."
@@ -540,7 +555,7 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "n r") #'detached-list-narrow-remote)
     (define-key map (kbd "n s") #'detached-list-narrow-success)
     (define-key map (kbd "n %") #'detached-list-narrow-regexp)
-    (define-key map (kbd "q") #'detached-list-quit-dwim)
+    (define-key map (kbd "q") #'detached-list-quit)
     (define-key map (kbd "r") #'detached-list-rerun-session)
     (define-key map (kbd "s") #'imenu)
     (define-key map (kbd "t") #'detached-list-toggle-mark-session)
@@ -554,6 +569,7 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "=") #'detached-list-diff-marked-sessions)
     (define-key map (kbd "-") #'detached-list-widen)
     (define-key map (kbd "!") #'detached-shell-command)
+    (define-key map (kbd "<backspace>") #'detached-list-remove-narrow-criterion)
     (define-key map (kbd "<return>") #'detached-list-open-session)
     map)
   "Keymap used in `detached-list-mode'.")

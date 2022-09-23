@@ -7,6 +7,7 @@
 - Use =display-buffer= in =detached-list= in order for users to more easily customize the display of the buffer.
 - Add concept of =filters= to quickly apply a set of narrow criteria.
 - Speed up initialization of sessions.
+- Narrow criteria are persistent and applied when resuming detached list sessions.
 
 * Version 0.9.1 (2022-09-22)
 
