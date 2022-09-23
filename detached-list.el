@@ -229,9 +229,11 @@ Optionally SUPPRESS-OUTPUT."
                                                           sessions))
                                                 (grep-command
                                                  (string-join `(,detached-grep-program
-                                                                "-l"
+                                                                "--files-with-matches"
                                                                 ,@includes
-                                                                "-snir"
+                                                                "--no-messages"
+                                                                "--ignore-case"
+                                                                "--recursive"
                                                                 ,(format "\"%s\"" regexp))
                                                               " ")))
                                      (split-string
