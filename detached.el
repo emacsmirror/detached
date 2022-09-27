@@ -694,10 +694,10 @@ Optionally SUPPRESS-OUTPUT."
                   (or detached--current-session
                       (detached-create-session command)))
                  ((symbol-function #'set-process-sentinel) #'ignore)
-                 (buffer (get-buffer-create detached--shell-command-buffer))
+                 (buffer (detached--generate-buffer detached--shell-command-buffer
+                                                    (lambda (buffer)
+                                                      (not (get-buffer-process buffer)))))
                  (command (detached--shell-command detached--current-session t)))
-        (when (get-buffer-process buffer)
-          (setq buffer (generate-new-buffer (buffer-name buffer))))
         (setq detached-enabled nil)
         (funcall #'async-shell-command command buffer)
         (with-current-buffer buffer
@@ -1652,6 +1652,22 @@ If event is cased by an update to the `detached' database, re-initialize
                                     (seq-map #'length)
                                     (seq-max)
                                     (min width)))))
+
+(defun detached--generate-buffer (name reuse-p &optional number)
+  "Reuse or generate new buffer like built-in function `generate-new-buffer'.
+NAME is used the same way as `generate-new-buffer' but if a buffer which
+REUSE-P for buffer returns nil, return buffer instead.
+
+NUMBER is used internally for recursive calls, but can be used to
+start searching at NUMBER offset."
+  (let* ((buffer-name (if number
+                          (format "%s<%d>" name number)
+                        name))
+         (buffer (get-buffer buffer-name))
+         (number (or number 1)))
+    (if (and buffer (not (funcall reuse-p buffer)))
+        (detached--generate-buffer name reuse-p (1+ number))
+      (get-buffer-create buffer-name))))
 
 (defun detached--metadata-git-branch ()
   "Return current git branch."
