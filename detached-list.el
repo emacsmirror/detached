@@ -445,16 +445,17 @@ If prefix-argument is provided unmark instead of mark."
   (interactive)
   (if-let* ((existing-buffer (detached-list--get-list-mode-buffer))
             (window (display-buffer existing-buffer detached-list-display-buffer-action)))
-      (with-selected-window window
+      (progn
+        (select-window window)
         (detached-list--revert-sessions))
     (let* ((buffer (detached-list--get-buffer))
            (window (display-buffer buffer detached-list-display-buffer-action)))
-      (with-selected-window window
-        (detached-list-mode)
-        (setq tabulated-list-entries
-              (seq-map #'detached-list--get-entry
-                       (detached-list--get-filtered-sessions)))
-        (tabulated-list-print t)))))
+      (select-window window)
+      (detached-list-mode)
+      (setq tabulated-list-entries
+            (seq-map #'detached-list--get-entry
+                     (detached-list--get-filtered-sessions)))
+      (tabulated-list-print t))))
 
 (defun detached-list-narrow-sessions (filters)
   "Narrow session(s) based on FILTERS."
