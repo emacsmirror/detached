@@ -444,7 +444,9 @@ If prefix-argument is provided unmark instead of mark."
   "Open list of `detached'."
   (interactive)
   (if-let* ((existing-buffer (detached-list--get-list-mode-buffer))
-            (window (display-buffer existing-buffer detached-list-display-buffer-action)))
+            (window (or
+                     (get-buffer-window existing-buffer)
+                     (display-buffer existing-buffer detached-list-display-buffer-action))))
       (progn
         (select-window window)
         (detached-list--revert-sessions))
