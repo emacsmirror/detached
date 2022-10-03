@@ -220,7 +220,10 @@ Valid values are: create, new and attach")
 (defvar detached-metadata-annotators-alist nil
   "An alist of annotators for metadata.")
 
-(defconst detached-session-version "0.9.1.0"
+(defvar detached-session-annotation nil
+  "An annotation string.")
+
+(defconst detached-session-version "0.9.1.1"
   "The version of `detached-session'.
 This version is encoded as [package-version].[revision].")
 
@@ -270,6 +273,10 @@ This version is encoded as [package-version].[revision].")
 (defface detached-mark-face
   '((t :inherit detached-state-face))
   "Face used to highlight marked session in `detached-list-mode'.")
+
+(defface detached-annotation-face
+  '((t :inherit font-lock-comment-face))
+  "Face used to highlight the annotation of a session in `eldoc-mode'.")
 
 ;;;;; Private
 
@@ -336,6 +343,7 @@ This version is encoded as [package-version].[revision].")
   (degraded nil :read-only t)
   (env nil :read-only t)
   (action nil :read-only t)
+  (annotation)
   (time nil)
   (status nil)
   (size nil)
@@ -634,6 +642,7 @@ active session.  For sessions created with `detached-compile' or
                                     :initial-mode detached-session-mode
                                     :time `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0)
                                     :status '(unknown . 0)
+                                    :annotation detached-session-annotation
                                     :size 0
                                     :directory (detached--get-session-directory)
                                     :env (detached--env command)

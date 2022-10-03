@@ -10,7 +10,8 @@
 - Narrow criteria are persistent and applied when resuming detached list sessions.
 - Add narrow criterion which searches through the output of all sessions in detached list which matches a regexp.
 - Add database hook in order for detached list to update automatically when a session is updated.
-
+- Add annotation property to session. This allows users to add a custom annotation to a session, see it as a possibility to document a session for the future.
+  
 * Version 0.9.1 (2022-09-22)
 
 - Fix bug with detaching in =shell=

@@ -84,9 +84,23 @@ detached list implements."
   "A member of `eldoc-documentation-functions', for signatures."
   (let ((session (tabulated-list-get-id)))
     (when (detached-session-p session)
-      (detached--session-command session))))
+      (let ((strs `(,(detached--session-command session)
+                    ,(when-let  ((annotation (detached--session-annotation session)))
+                       (propertize annotation 'face 'detached-annotation-face)))))
+        (string-join (seq-remove #'null strs) "\n")))))
 
 ;;;; Commands
+
+(defun detached-list-edit-annotation (session)
+  "Edit SESSION's annotation."
+  (interactive
+   (list (tabulated-list-get-id)))
+  (when-let* ((initial-value (or
+                     (detached--session-annotation session)
+                     ""))
+              (annotation (read-string "Annotation: " initial-value)))
+    (setf (detached--session-annotation session) annotation)
+    (detached--db-update-entry session)))
 
 (defun detached-list-quit ()
   "Quit command."
@@ -263,6 +277,21 @@ Optionally SUPPRESS-OUTPUT."
            (seq-filter (lambda (it)
                          (string-match regexp
                                        (detached--session-command it)))
+                       sessions)))
+       ,@detached-list--filters))))
+
+(defun detached-list-narrow-annotation-regexp (regexp)
+  "Narrow to sessions which annotation match REGEXP."
+  (interactive
+   (list (read-regexp
+          "Filter session annotations containing (regexp): ")))
+  (when regexp
+    (detached-list-narrow-sessions
+     `((,(concat "Annotation: " regexp) .
+        ,(lambda (sessions)
+           (seq-filter (lambda (it)
+                         (when-let ((annotation (detached--session-annotation it)))
+                           (string-match regexp annotation)))
                        sessions)))
        ,@detached-list--filters))))
 
@@ -615,6 +644,7 @@ If prefix-argument is provided unmark instead of mark."
 
 (defvar detached-list-mode-map
   (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "a") #'detached-list-edit-annotation)
     (define-key map (kbd "d") #'detached-list-delete-session)
     (define-key map (kbd "f") #'detached-list-select-filter)
     (define-key map (kbd "g") #'detached-list-revert)
@@ -630,7 +660,8 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "n r") #'detached-list-narrow-remote)
     (define-key map (kbd "n s") #'detached-list-narrow-success)
     (define-key map (kbd "n /") #'detached-list-narrow-output-regexp)
-    (define-key map (kbd "n %") #'detached-list-narrow-regexp)
+    (define-key map (kbd "n % a") #'detached-list-narrow-annotation-regexp)
+    (define-key map (kbd "n % c") #'detached-list-narrow-regexp)
     (define-key map (kbd "q") #'detached-list-quit)
     (define-key map (kbd "r") #'detached-list-rerun-session)
     (define-key map (kbd "t") #'detached-list-toggle-mark-session)
@@ -655,6 +686,8 @@ If prefix-argument is provided unmark instead of mark."
   (setq tabulated-list-padding 2)
   (setq tabulated-list-sort-key nil)
   (setq imenu-create-index-function #'detached-list-imenu-index)
+  (setq-local eldoc-echo-area-use-multiline-p t)
+  (setq-local eldoc-idle-delay 0)
   (add-hook 'eldoc-documentation-functions #'detached-list-eldoc nil t)
   (add-hook 'tabulated-list-revert-hook #'detached-list--revert-sessions nil t)
   (tabulated-list-init-header))
