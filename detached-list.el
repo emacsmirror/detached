@@ -224,6 +224,44 @@ Optionally SUPPRESS-OUTPUT."
       (bury-buffer buffer))
     (detached-open-session session)))
 
+(defun detached-list-narrow-after-time (time-threshold)
+  "Narrow to session's created after TIME-THRESHOLD."
+  (interactive
+   (list
+    (read-string "Enter time: ")))
+  (when time-threshold
+    (if-let ((parsed-threshold (detached--list-parse-time time-threshold)))
+        (detached-list-narrow-sessions
+         `((,(format "+%s" time-threshold) .
+            ,(lambda (sessions)
+               (let ((current-time (time-to-seconds (current-time))))
+                 (seq-filter (lambda (it)
+                               (< (- current-time
+                                     (plist-get (detached--session-time it) :start))
+                                  parsed-threshold))
+                             sessions))))
+           ,@detached-list--filters))
+      (message "Cannot parse time"))))
+
+(defun detached-list-narrow-before-time (time-threshold)
+  "Narrow to session's created before TIME-THRESHOLD."
+  (interactive
+   (list
+    (read-string "Enter time: ")))
+  (when time-threshold
+    (if-let ((parsed-threshold (detached--list-parse-time time-threshold)))
+      (detached-list-narrow-sessions
+       `((,(format "-%s" time-threshold) .
+          ,(lambda (sessions)
+             (let ((current-time (time-to-seconds (current-time))))
+               (seq-filter (lambda (it)
+                             (> (- current-time
+                                   (plist-get (detached--session-time it) :start))
+                                parsed-threshold))
+                           sessions))))
+         ,@detached-list--filters))
+      (message "Cannot parse time"))))
+
 (defun detached-list-narrow-host (hostname)
   "Narrow to sessions from a selected HOSTNAME."
   (interactive
@@ -499,6 +537,19 @@ If prefix-argument is provided unmark instead of mark."
                (seq-filter (lambda (it) (string= directory (detached--session-directory it))))
                (seq-do #'detached--initialize-session)))
 
+(defun detached--list-parse-time (time)
+  "Return a value in seconds based on TIME."
+  (when time
+    (cond ((string-match (rx (group (one-or-more digit)) "h") time)
+           (* 60 60 (string-to-number (match-string 1 time))))
+          ((string-match (rx (group (one-or-more digit)) space "day" (zero-or-more "s")) time)
+           (* 60 60 24 (string-to-number (match-string 1 time))))
+          ((string-match (rx (group (one-or-more digit)) space "week" (zero-or-more "s")) time)
+           (* 60 60 24 7 (string-to-number (match-string 1 time))))
+          ((string-match (rx (group (one-or-more digit)) space "month" (zero-or-more "s")) time)
+           (* 60 60 24 7 30 (string-to-number (match-string 1 time))))
+          ('t nil))))
+
 (defun detached-list--db-update ()
   "Function to run when the database is updated."
   (when-let ((detached-list-buffer (detached-list--get-list-mode-buffer)))
@@ -676,6 +727,8 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "n o") #'detached-list-narrow-origin)
     (define-key map (kbd "n r") #'detached-list-narrow-remote)
     (define-key map (kbd "n s") #'detached-list-narrow-success)
+    (define-key map (kbd "n t") #'detached-list-narrow-after-time)
+    (define-key map (kbd "n T") #'detached-list-narrow-before-time)
     (define-key map (kbd "n /") #'detached-list-narrow-output-regexp)
     (define-key map (kbd "n % a") #'detached-list-narrow-annotation-regexp)
     (define-key map (kbd "n % c") #'detached-list-narrow-regexp)
