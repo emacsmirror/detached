@@ -109,15 +109,13 @@ Optionally EDIT-COMMAND."
 (defun detached-compile--compilation-start (compilation-start &rest args)
   "Create a `detached' session before running COMPILATION-START with ARGS."
   (if detached-enabled
-      (pcase-let ((`(,_command ,mode ,_name_function ,highlight-regexp) args)
-                  (buffer-name "*detached-compilation*"))
+      (pcase-let ((`(,_command ,mode ,name-function ,highlight-regexp) args))
         (if (eq detached-session-mode 'create)
             (detached-start-detached-session detached--current-session)
-          (cl-letf* ((name-function (lambda (_) buffer-name)))
-            (apply compilation-start `(,(detached--shell-command detached--current-session t)
-                                       ,(or mode 'detached-compilation-mode)
-                                       ,name-function
-                                       ,highlight-regexp)))))
+          (apply compilation-start `(,(detached--shell-command detached--current-session t)
+                                     ,(or mode 'detached-compilation-mode)
+                                     ,name-function
+                                     ,highlight-regexp))))
     (apply compilation-start args)))
 
 (defun detached-compile--replace-modesetter ()
