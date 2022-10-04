@@ -26,6 +26,7 @@
 ;;;; Requirements
 
 (require 'detached)
+(require 'hl-line)
 (require 'tabulated-list)
 
 ;;;; Variables
@@ -466,7 +467,8 @@ If prefix-argument is provided unmark instead of mark."
   "Update content in buffer."
   (interactive)
   (tabulated-list-revert)
-  (detached-list--restore-marks))
+  (detached-list--restore-marks)
+  (when hl-line-mode (hl-line-highlight)))
 
 ;;;###autoload
 (defun detached-list-sessions ()
@@ -688,6 +690,7 @@ If prefix-argument is provided unmark instead of mark."
   (setq imenu-create-index-function #'detached-list-imenu-index)
   (setq-local eldoc-echo-area-use-multiline-p t)
   (setq-local eldoc-idle-delay 0)
+  (hl-line-mode)
   (add-hook 'eldoc-documentation-functions #'detached-list-eldoc nil t)
   (add-hook 'tabulated-list-revert-hook #'detached-list--revert-sessions nil t)
   (tabulated-list-init-header))
