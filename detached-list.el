@@ -47,9 +47,17 @@
                                   (:face symbol))))
   :group 'detached)
 
-(defcustom detached-list-display-buffer-action '(display-buffer-same-window
-                                                 (inhibit-same-window . nil))
+(defcustom detached-list-display-buffer-action
+  '(display-buffer-same-window
+    (inhibit-same-window . nil))
   "The action used to display the detached list buffer."
+  :group 'detached
+  :type 'sexp)
+
+(defcustom detached-list-open-session-display-buffer-action
+  '(display-buffer-same-window
+    (inhibit-same-window . nil))
+  "The action used to display a detached session."
   :group 'detached
   :type 'sexp)
 
@@ -187,7 +195,9 @@ Optionally SUPPRESS-OUTPUT."
 (defun detached-list-open-session ()
   "View session."
   (interactive)
-  (let ((session (tabulated-list-get-id)))
+  (let ((session (tabulated-list-get-id))
+        (detached-open-session-display-buffer-action
+         detached-list-open-session-display-buffer-action))
     (when (> (length (window-list)) 1)
       (delete-window (get-buffer-window)))
     (detached-open-session session)))
