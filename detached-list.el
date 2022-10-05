@@ -108,7 +108,6 @@ detached list implements."
   (interactive)
   (if (= (length (window-list)) 1)
       (bury-buffer)
-    (bury-buffer)
     (delete-window)))
 
 (defun detached-list-remove-narrow-criterion ()
@@ -188,8 +187,9 @@ Optionally SUPPRESS-OUTPUT."
 (defun detached-list-open-session ()
   "View session."
   (interactive)
-  (detached-open-session
-   (tabulated-list-get-id)))
+  (let ((session (tabulated-list-get-id)))
+    (delete-window (get-buffer-window (current-buffer)))
+    (detached-open-session session)))
 
 (defun detached-list-narrow-host (hostname)
   "Narrow to sessions from a selected HOSTNAME."
