@@ -188,7 +188,7 @@ Optionally SUPPRESS-OUTPUT."
   "View session."
   (interactive)
   (let ((session (tabulated-list-get-id)))
-    (delete-window (get-buffer-window (current-buffer)))
+    (delete-window (get-buffer-window))
     (detached-open-session session)))
 
 (defun detached-list-narrow-host (hostname)
