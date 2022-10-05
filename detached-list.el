@@ -198,8 +198,10 @@ Optionally SUPPRESS-OUTPUT."
   (let ((session (tabulated-list-get-id))
         (detached-open-session-display-buffer-action
          detached-list-open-session-display-buffer-action))
-    (when (> (length (window-list)) 1)
-      (delete-window (get-buffer-window)))
+    (when-let ((single-window (> (length (window-list)) 1))
+               (buffer (current-buffer)))
+      (delete-window (get-buffer-window))
+      (bury-buffer buffer))
     (detached-open-session session)))
 
 (defun detached-list-narrow-host (hostname)
