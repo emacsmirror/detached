@@ -100,6 +100,21 @@ detached list implements."
 
 ;;;; Commands
 
+(defun detached-list-initialize-session-directory (&optional all)
+  "Initialize a session-directory.
+
+Optionally initialize ALL session-directories."
+  (interactive "P")
+  (when-let* ((uninitialized-directories
+               (thread-last (detached-get-sessions)
+                            (seq-filter #'detached--uninitialized-session-p)
+                            (seq-map #'detached--session-directory)
+                            (seq-uniq))))
+    (if all
+        (seq-do #'detached-list--initialize-directory uninitialized-directories)
+      (when-let ((directory (completing-read "Initialize directory: " uninitialized-directories)))
+        (detached-list--initialize-directory directory)))))
+
 (defun detached-list-edit-annotation (session)
   "Edit SESSION's annotation."
   (interactive
@@ -510,6 +525,12 @@ If prefix-argument is provided unmark instead of mark."
 
 ;;;; Support functions
 
+(defun detached-list--initialize-directory (directory)
+  "Initialize sessions in DIRECTORY."
+  (thread-last (detached-get-sessions)
+               (seq-filter (lambda (it) (string= directory (detached--session-directory it))))
+               (seq-do #'detached--initialize-session)))
+
 (defun detached-list--db-update ()
   "Function to run when the database is updated."
   (when-let ((detached-list-buffer (detached-list--get-list-mode-buffer)))
@@ -626,6 +647,7 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "d") #'detached-list-delete-session)
     (define-key map (kbd "f") #'detached-list-select-filter)
     (define-key map (kbd "g") #'detached-list-revert)
+    (define-key map (kbd "i") #'detached-list-initialize-session-directory)
     (define-key map (kbd "j") #'imenu)
     (define-key map (kbd "k") #'detached-list-kill-session)
     (define-key map (kbd "m") #'detached-list-mark-session)
