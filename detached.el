@@ -597,7 +597,9 @@ active session.  For sessions created with `detached-compile' or
               (comint-simple-send process detached--dtach-detach-character)
               (message "[detached]"))
             (setq detached--buffer-session nil)
-            (kill-buffer-and-window))
+            (if (= (length (window-list)) 1)
+                (kill-buffer)
+              (kill-buffer-and-window)))
         (if (eq 'active (detached--determine-session-state detached--buffer-session))
             ;; `detached-eshell'
             (if-let ((process (and (eq major-mode 'eshell-mode)
