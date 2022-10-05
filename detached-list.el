@@ -115,7 +115,7 @@ detached list implements."
   "Remove narrow criterion."
   (interactive)
   (if detached-list--filters
-      (detached-list-update-narrowing
+      (detached-list-narrow-sessions
        (cdr detached-list--filters))
     (message "No criterion to remove")))
 
@@ -123,7 +123,7 @@ detached list implements."
   "Remove all narrowing restrictions."
   (interactive)
   (when detached-list--filters
-    (detached-list-update-narrowing nil)))
+    (detached-list-narrow-sessions nil)))
 
 (defun detached-list-detach-from-session (session)
   "Detach from SESSION at point."
@@ -474,51 +474,25 @@ If prefix-argument is provided unmark instead of mark."
 (defun detached-list-sessions ()
   "Open list of `detached'."
   (interactive)
-  (if-let* ((existing-buffer (detached-list--get-list-mode-buffer))
-            (window (or
-                     (get-buffer-window existing-buffer)
-                     (display-buffer existing-buffer detached-list-display-buffer-action))))
-      (progn
-        (select-window window)
-        (detached-list--revert-sessions))
-    (let* ((buffer (detached-list--get-buffer))
-           (window (display-buffer buffer detached-list-display-buffer-action)))
-      (select-window window)
-      (detached-list-mode)
-      (setq tabulated-list-entries
-            (seq-map #'detached-list--get-entry
-                     (detached-list--get-filtered-sessions)))
-      (tabulated-list-print t))))
+  (let* ((buffer (get-buffer-create "*detached-list*"))
+         (window
+          (or
+           (get-buffer-window buffer)
+           (display-buffer buffer detached-list-display-buffer-action))))
+    (select-window window)
+    (detached-list-mode)
+    (setq tabulated-list-entries
+          (seq-map #'detached-list--get-entry
+                   (detached-list--get-filtered-sessions)))
+    (tabulated-list-print t)))
 
 (defun detached-list-narrow-sessions (filters)
   "Narrow session(s) based on FILTERS."
-  (let* ((current-buffer (current-buffer))
-         (window (get-buffer-window current-buffer))
-         (new-buffer (detached-list--get-buffer filters)))
-    (with-current-buffer new-buffer
-      (set-window-buffer window new-buffer)
-      (kill-buffer current-buffer)
-      (detached-list-mode)
-      (setq detached-list--filters filters)
-      (setq tabulated-list-entries
-            (seq-map #'detached-list--get-entry
-                     (detached-list--get-filtered-sessions)))
-      (tabulated-list-print t))))
-
-(defun detached-list-update-narrowing (filters)
-  "Update narrowing with FILTERS."
-  (let* ((current-buffer (current-buffer))
-         (window (get-buffer-window current-buffer))
-         (new-buffer (detached-list--get-buffer filters)))
-    (with-current-buffer new-buffer
-      (set-window-buffer window new-buffer)
-      (kill-buffer current-buffer)
-      (detached-list-mode)
-      (setq detached-list--filters filters)
-      (setq tabulated-list-entries
-            (seq-map #'detached-list--get-entry
-                     (detached-list--get-filtered-sessions)))
-      (tabulated-list-print t))))
+  (setq detached-list--filters filters)
+  (setq tabulated-list-entries
+        (seq-map #'detached-list--get-entry
+                 (detached-list--get-filtered-sessions)))
+  (tabulated-list-print t))
 
 ;;;; Support functions
 
@@ -534,18 +508,6 @@ If prefix-argument is provided unmark instead of mark."
               (with-current-buffer buffer
                 (eq major-mode 'detached-list-mode)))
             (buffer-list)))
-
-(defun detached-list--get-buffer (&optional filters)
-  "Return buffer based on FILTERS."
-  (get-buffer-create
-   (if filters
-       (format "*detached-list [%s]*"
-               (string-join
-                (thread-last filters
-                             (seq-reverse)
-                             (seq-map #'car))
-                " AND "))
-     "*detached-list*")))
 
 (defun detached-list--revert-sessions ()
   "Recompute `tabulated-list-entries'."
@@ -682,6 +644,16 @@ If prefix-argument is provided unmark instead of mark."
     map)
   "Keymap used in `detached-list-mode'.")
 
+(defun detached-list--mode-line-indicator ()
+  "Return the mode line indicator based on narrow criteria."
+  (if detached-list--filters
+      (string-join
+       (thread-last detached-list--filters
+                    (seq-reverse)
+                    (seq-map #'car))
+       " > ")
+    ""))
+
 (define-derived-mode detached-list-mode tabulated-list-mode "Detached List"
   "Mode for `detached' list."
   (setq tabulated-list-format (detached-list--get-format))
@@ -693,6 +665,7 @@ If prefix-argument is provided unmark instead of mark."
   (hl-line-mode)
   (add-hook 'eldoc-documentation-functions #'detached-list-eldoc nil t)
   (add-hook 'tabulated-list-revert-hook #'detached-list--revert-sessions nil t)
+  (setq-local mode-line-position '((:eval (detached-list--mode-line-indicator))))
   (tabulated-list-init-header))
 
 (provide 'detached-list)
