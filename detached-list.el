@@ -105,7 +105,7 @@ detached list implements."
 
 Optionally initialize ALL session-directories."
   (interactive "P")
-  (when-let* ((uninitialized-directories
+  (if-let* ((uninitialized-directories
                (thread-last (detached-get-sessions)
                             (seq-filter #'detached--uninitialized-session-p)
                             (seq-map #'detached--session-directory)
@@ -113,7 +113,8 @@ Optionally initialize ALL session-directories."
     (if all
         (seq-do #'detached-list--initialize-directory uninitialized-directories)
       (when-let ((directory (completing-read "Initialize directory: " uninitialized-directories)))
-        (detached-list--initialize-directory directory)))))
+        (detached-list--initialize-directory directory)))
+    (message "All session directories have been initialized")))
 
 (defun detached-list-edit-annotation (session)
   "Edit SESSION's annotation."
