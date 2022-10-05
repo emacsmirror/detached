@@ -1153,7 +1153,8 @@ Optionally make the path LOCAL to host."
 (defun detached--session-output (session)
   "Return content of SESSION's output."
   (let* ((filename (detached--session-file session 'log))
-         (detached-message (rx (regexp "\n.detached-exit-code:.*"))))
+         (detached-message
+          (rx (regexp "\n.*\\[detached-exit-code: .*\\]"))))
     (with-temp-buffer
       (insert-file-contents filename)
       (detached--maybe-watch-session session)
