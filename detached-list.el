@@ -480,11 +480,12 @@ If prefix-argument is provided unmark instead of mark."
            (get-buffer-window buffer)
            (display-buffer buffer detached-list-display-buffer-action))))
     (select-window window)
-    (detached-list-mode)
-    (setq tabulated-list-entries
-          (seq-map #'detached-list--get-entry
-                   (detached-list--get-filtered-sessions)))
-    (tabulated-list-print t)))
+    (unless (eq major-mode 'detached-list-mode)
+      (detached-list-mode)
+      (setq tabulated-list-entries
+            (seq-map #'detached-list--get-entry
+                     (detached-list--get-filtered-sessions)))
+      (tabulated-list-print t))))
 
 (defun detached-list-narrow-sessions (filters)
   "Narrow session(s) based on FILTERS."
