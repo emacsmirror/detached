@@ -13,6 +13,7 @@
 - Add annotation property to session. This allows users to add a custom annotation to a session, see it as a possibility to document a session for the future.
 - Implement mode-line indicator for criteria in =detached-list=
 - Add command for initializing a session directory
+- Add integration with =nano-modeline=
   
 * Version 0.9.1 (2022-09-22)
 
