@@ -679,11 +679,8 @@ Optionally SUPPRESS-OUTPUT."
                (or detached--current-session
                    (detached-create-session command))))
           (setq detached-enabled nil)
-          (if detached-local-session
-              (apply #'start-process-shell-command
-                     `("detached" nil ,(detached--dtach-command detached--current-session t)))
-            (apply #'start-file-process-shell-command
-                   `("detached" nil ,(detached--dtach-command detached--current-session t)))))
+          (detached-start-detached-session
+           detached--current-session))
       (cl-letf* ((detached-session-mode 'create-and-attach)
                  (detached--current-session
                   (or detached--current-session
@@ -697,6 +694,14 @@ Optionally SUPPRESS-OUTPUT."
         (funcall #'async-shell-command command buffer)
         (with-current-buffer buffer
           (setq detached--buffer-session detached--current-session))))))
+
+(defun detached-start-detached-session (session)
+  "Start SESSION in detached mode."
+  (if detached-local-session
+      (apply #'start-process-shell-command
+             `("detached" nil ,(detached--dtach-command session t)))
+    (apply #'start-file-process-shell-command
+           `("detached" nil ,(detached--dtach-command session t)))))
 
 (defun detached-session-candidates (sessions)
   "Return an alist of SESSIONS candidates."

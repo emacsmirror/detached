@@ -57,7 +57,8 @@ Optionally enable COMINT if prefix-argument is provided."
          (detached-session-origin (or detached-session-origin 'compile))
          (detached-session-action (or detached-session-action
                                       detached-compile-session-action))
-         (detached-session-mode (or detached-session-mode 'create-and-attach)))
+         (detached-session-mode (or detached-session-mode 'create-and-attach))
+         (detached--current-session (detached-create-session command)))
     (compile command comint)))
 
 ;;;###autoload
@@ -68,7 +69,8 @@ Optionally EDIT-COMMAND."
   (let* ((detached-enabled t)
          (detached-session-action detached-compile-session-action)
          (detached-session-origin 'compile)
-         (detached-session-mode 'create-and-attach))
+         (detached-session-mode 'create-and-attach)
+         (detached--current-session edit-command))
     (recompile edit-command)))
 
 (defun detached-compile-kill ()
@@ -107,13 +109,11 @@ Optionally EDIT-COMMAND."
 (defun detached-compile--compilation-start (compilation-start &rest args)
   "Create a `detached' session before running COMPILATION-START with ARGS."
   (if detached-enabled
-      (pcase-let ((`(,command ,mode ,_ ,highlight-regexp) args)
+      (pcase-let ((`(,_command ,mode ,_name_function ,highlight-regexp) args)
                   (buffer-name "*detached-compilation*"))
         (if (eq detached-session-mode 'create)
-            (detached-start-session command t)
-          (cl-letf* ((name-function (lambda (_) buffer-name))
-                     (detached--current-session (or detached--current-session
-                                                    (detached-create-session command))))
+            (detached-start-detached-session detached--current-session)
+          (cl-letf* ((name-function (lambda (_) buffer-name)))
             (apply compilation-start `(,(detached--shell-command detached--current-session t)
                                        ,(or mode 'detached-compilation-mode)
                                        ,name-function
