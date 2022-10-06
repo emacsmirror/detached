@@ -198,8 +198,12 @@ Optionally SUPPRESS-OUTPUT."
   (interactive
    (list (tabulated-list-get-id)
          current-prefix-arg))
-  (detached-rerun-session session suppress-output)
-  (detached-list-revert))
+  (when (eq 'create-and-attach (detached--session-initial-mode session))
+    (when-let ((single-window (> (length (window-list)) 1))
+               (buffer (current-buffer)))
+      (delete-window (get-buffer-window))
+      (bury-buffer buffer)))
+  (detached-rerun-session session suppress-output))
 
 (defun detached-list-diff-marked-sessions ()
   "Diff two sessions."
