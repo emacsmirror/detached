@@ -60,6 +60,7 @@
 
 (defvar embark-general-map)
 (defvar embark-keymap-alist)
+(defvar nano-modeline-mode-formats)
 
 ;;;; Variables
 
@@ -69,7 +70,7 @@
   :type 'list)
 
 (defcustom detached-init-allow-list
-  '(compile dired dired-rsync embark eshell org projectile shell vterm)
+  '(compile dired dired-rsync embark eshell nano-modeline org projectile shell vterm)
   "A list of allowed packages."
   :group 'detached
   :type 'list)
@@ -96,6 +97,7 @@
                                              (dired-rsync . detached-init--dired-rsync)
                                              (embark . detached-init--embark)
                                              (eshell . detached-init--eshell)
+                                             (nano-modeline . detached-init--nano-modeline)
                                              (org . detached-init--org)
                                              (projectile . detached-init--projectile)
                                              (shell . detached-init--shell)
@@ -165,6 +167,14 @@
   (with-eval-after-load 'embark
     (defvar embark-detached-map (make-composed-keymap detached-action-map embark-general-map))
     (add-to-list 'embark-keymap-alist '(detached . embark-detached-map))))
+
+(defun detached-init--nano-modeline ()
+  "Initialize integration with `nano-modeline'."
+  (with-eval-after-load 'nano-modeline
+    (push `(detached-list-mode
+            :mode-p (lambda () (derived-mode-p 'detached-list-mode))
+            :format (lambda () (nano-modeline-render "" (detached-list--mode-line-indicator) "" "")))
+          nano-modeline-mode-formats)))
 
 (defun detached-init--detached-list ()
   "Initialize `detached-list'."
