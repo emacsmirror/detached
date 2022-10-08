@@ -1,0 +1,1138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<!-- This manual describes the design of the detached (version 0.9.1,
+last updated 8 October 2022) package, as well as its options and customizations.
+
+Copyright (C) 2020-2022 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License,
+Version 1.3 or any later version published by the Free Software
+Foundation; with no Invariant Sections, with no Front-Cover Texts,
+and with no Back-Cover Texts.  A copy of the license is included in
+the section entitled "GNU Free Documentation License".
+
+
+ -->
+<!-- Created on October 8, 2022 by texi2html 5.0
+texi2html was written by: 
+            Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people.
+Send bugs and suggestions to <texi2html-bug@nongnu.org>
+-->
+<head>
+<title>Detached processes for GNU Emacs</title>
+
+<meta name="description" content="Detached processes for GNU Emacs">
+<meta name="keywords" content="Detached processes for GNU Emacs">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 5.0">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+blockquote.smallquotation {font-size: smaller}
+div.display {margin-left: 3.2em}
+div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.nocodebreak {white-space:pre}
+span.nolinebreak {white-space:pre}
+span.roman {font-family:serif; font-weight:normal}
+span.sansserif {font-family:sans-serif; font-weight:normal}
+ul.no-bullet {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="en" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<h1>Detached processes for GNU Emacs</h1>
+<strong>Niklas Eklund (<a href="mailto:~niklaseklund/detached.el@lists.sr.ht">~niklaseklund/detached.el@lists.sr.ht</a>)</strong><br>
+
+<p>This manual describes the design of the &lsquo;<samp>detached</samp>&rsquo; (version 0.9.1,
+last updated 8 October 2022) package, as well as its options and customizations.
+</p>
+<p>Copyright &copy; 2020-2022 Free Software Foundation, Inc.
+</p>
+<blockquote>
+<p>Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License,
+Version 1.3 or any later version published by the Free Software
+Foundation; with no Invariant Sections, with no Front-Cover Texts,
+and with no Back-Cover Texts.  A copy of the license is included in
+the section entitled &ldquo;GNU Free Documentation License&rdquo;.
+</p>
+</blockquote>
+<hr>
+<a name="Top"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[ &lt; ]</td>
+<td valign="middle" align="left">[<a href="#Overview" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Detached-processes-for-GNU-Emacs"></a>
+<h1 class="top">Detached processes for GNU Emacs</h1>
+
+<p>This manual describes the design of the &lsquo;<samp>detached</samp>&rsquo; (version 0.9.1,
+last updated 8 October 2022) package, as well as its options and customizations.
+</p>
+<p>Copyright &copy; 2020-2022 Free Software Foundation, Inc.
+</p>
+<blockquote>
+<p>Permission is granted to copy, distribute and/or modify this
+document under the terms of the GNU Free Documentation License,
+Version 1.3 or any later version published by the Free Software
+Foundation; with no Invariant Sections, with no Front-Cover Texts,
+and with no Back-Cover Texts.  A copy of the license is included in
+the section entitled &ldquo;GNU Free Documentation License&rdquo;.
+</p>
+</blockquote>
+
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#Overview">1 Overview</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Dependencies">2 Dependencies</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Installation">3 Installation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Configuration">4 Configuration</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Workflows">5 Workflows</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Customization">6 Customization</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Design">7 Design</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Known-limitations">8 Known limitations</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Contributions">9 Contributions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Acknowledgments">10 Acknowledgments</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">&mdash; The Detailed Node Listing &mdash;
+
+Installation
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="#Install-from-source">3.1 Install from source</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Install-from-package-archives">3.2 Install from package archives</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Install-from-Guix">3.3 Install from Guix</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Workflows
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="#Integration-with-shells">5.1 Integration with shells</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Integration-with-compile-and-shell_002dcommand">5.2 Integration with compile and shell-command</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Session-management">5.3 Session management</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Session management
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="#Detached-list-sessions">5.3.1 Detached list sessions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Customization
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="#Notifications">6.1 Notifications</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Detached-list">6.2 Detached list</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Design
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="#Sessions">7.1 Sessions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Sessions
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="#Session-creation">7.1.1 Session creation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Session-initialization">7.1.2 Session initialization</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Session-transition">7.1.3 Session transition</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Known limitations
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="#Quotation-marks">8.1 Quotation marks</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Reproducible-environments">8.2 Reproducible environments</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+Acknowledgments
+
+</pre></th></tr><tr><td align="left" valign="top"><a href="#Code-contributors">10.1 Code contributors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Idea-contributors">10.2 Idea contributors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><th colspan="3" align="left" valign="top"><pre class="menu-comment">
+</pre></th></tr></table>
+
+<hr size="6">
+<a name="Overview"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Top" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Top" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Dependencies" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Dependencies" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Overview-1"></a>
+<h1 class="chapter">1 Overview</h1>
+
+<p>The <code>detached</code> package allows Emacs to run processes which are independent from Emacs itself. This is accomplished by offloading the process creation to the program &lsquo;<samp>dtach</samp>&rsquo;.
+</p>
+<p>The package introduces a concept of a detached session. A session constitutes of three parts:
+</p>
+<ul>
+<li>
+a dtach process
+</li><li>
+a log with all the process output
+</li><li>
+a datastructure in Emacs-Lisp
+</li></ul>
+
+<p>After a session has been created, Emacs can optionally attach to the process. This is something that can be done seamlessly and therefore provides no disruption in the ordinary workflows. Another feature provided by the package is its monitoring of sessions. It will notify the user whenever a session transitions from active to inactive. Since all the output of the session is captured, and stored persistently, it can be thought of as a text representation of the process.
+</p>
+<p>The package provides integration with the following built-in Emacs packages:
+</p>
+<ul>
+<li>
+<code>compile</code>
+</li><li>
+<code>dired</code>
+</li><li>
+<code>eshell</code>
+</li><li>
+<code>org</code>
+</li></ul>
+
+<p>It also offers support for some 3rd-party packages. For a full list of all supported packages, see the variable <code>detached-init-package-integration</code>.
+</p>
+<hr>
+<a name="Dependencies"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Overview" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Overview" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Installation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Installation" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Dependencies-1"></a>
+<h1 class="chapter">2 Dependencies</h1>
+
+<p>The package has no dependencies to other Emacs packages. The requirements are that it needs to run on either &lsquo;<samp>Linux</samp>&rsquo; or &lsquo;<samp>macOS,</samp>&rsquo; since those are the operating systems supported by the program &lsquo;<samp>dtach</samp>&rsquo;. Apart from dtach, the complete list of external tools to get all the features from the package are:
+</p>
+<ul>
+<li>
+&lsquo;<samp>tail</samp>&rsquo;
+</li><li>
+&lsquo;<samp>script</samp>&rsquo;
+</li><li>
+&lsquo;<samp>grep</samp>&rsquo;
+</li><li>
+&lsquo;<samp>tee</samp>&rsquo;
+</li></ul>
+
+<hr>
+<a name="Installation"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Dependencies" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Dependencies" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Install-from-source" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Configuration" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Installation-1"></a>
+<h1 class="chapter">3 Installation</h1>
+
+<p>The <code>detached</code> package can be installed from &lsquo;<samp>GNU ELPA</samp>&rsquo; which is enabled by default. It is also available for installation through the &lsquo;<samp>Guix</samp>&rsquo; package manager.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#Install-from-source">3.1 Install from source</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Install-from-package-archives">3.2 Install from package archives</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Install-from-Guix">3.3 Install from Guix</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr>
+<a name="Install-from-source"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Installation" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Installation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Installation" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Install-from-package-archives" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Configuration" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Install-from-source-1"></a>
+<h2 class="section">3.1 Install from source</h2>
+
+<p>Download the source code from &lsquo;<samp>sourcehut</samp>&rsquo;.
+</p>
+<div class="example">
+<pre class="example">git clone https://git.sr.ht/~niklaseklund/detached.el ~/.config/emacs/packages/detached.el
+</pre></div>
+
+<p>Add the following code to &lsquo;<samp>init.el</samp>&rsquo;.
+</p>
+<div class="lisp">
+<pre class="lisp">(add-to-list 'load-path &quot;~/.config/emacs/packages/detached.el&quot;)
+</pre></div>
+
+<hr>
+<a name="Install-from-package-archives"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Installation" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Install-from-source" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Installation" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Install-from-Guix" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Configuration" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Install-from-package-archives-1"></a>
+<h2 class="section">3.2 Install from package archives</h2>
+
+<p>Run &lsquo;<samp>M-x package-refresh-contents</samp>&rsquo; to make sure the list of packages are up to date. List all the packages with &lsquo;<samp>M-x package-list-packages</samp>&rsquo; and and find &lsquo;<samp>detached</samp>&rsquo;. Press return to get information about the package, and press install.
+</p>
+<hr>
+<a name="Install-from-Guix"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Installation" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Install-from-package-archives" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Installation" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Configuration" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Configuration" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Install-from-Guix-1"></a>
+<h2 class="section">3.3 Install from Guix</h2>
+
+<p>To install <code>detached</code> with Guix run the following command in a terminal.
+</p>
+<div class="example">
+<pre class="example">guix install emacs-detached
+</pre></div>
+
+<hr>
+<a name="Configuration"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Installation" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Install-from-Guix" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Workflows" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Workflows" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Configuration-1"></a>
+<h1 class="chapter">4 Configuration</h1>
+
+<p>This is a a minimal <code>use-package</code> configuration.
+</p>
+<div class="lisp">
+<pre class="lisp">(use-package detached
+  :init
+  (detached-init)
+  :bind (([remap async-shell-command] . detached-shell-command)
+         ([remap compile] . detached-compile)
+         ([remap recompile] . detached-compile-recompile))
+  :custom ((detached-terminal-data-command system-type)
+           (detached-terminal-data-command system-type)))
+</pre></div>
+
+<hr>
+<a name="Workflows"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Configuration" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Configuration" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Integration-with-shells" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Customization" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Workflows-1"></a>
+<h1 class="chapter">5 Workflows</h1>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#Integration-with-shells">5.1 Integration with shells</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Integration-with-compile-and-shell_002dcommand">5.2 Integration with compile and shell-command</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Session-management">5.3 Session management</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr>
+<a name="Integration-with-shells"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Workflows" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Workflows" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Workflows" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Integration-with-compile-and-shell_002dcommand" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Customization" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Integration-with-shells-1"></a>
+<h2 class="section">5.1 Integration with shells</h2>
+
+<p>The package supports integration with &lsquo;<samp>shell</samp>&rsquo;, &lsquo;<samp>eshell</samp>&rsquo; and &lsquo;<samp>vterm</samp>&rsquo;. All of the integrations work similarly. In all cases a detached minor mode is provided. Each of the minor modes provides keybindings for the following operations:
+</p>
+<ul>
+<li>
+Creating a session
+</li><li>
+Detaching from a session
+</li><li>
+Attach to a session
+</li></ul>
+
+<p>When creating a session Emacs will automatically attach to the underlying &lsquo;<samp>dtach</samp>&rsquo; process and the result will look the same as if &lsquo;<samp>detached</samp>&rsquo; wasn&rsquo;t used. The difference is that the user can detach from the session with the keybinding determined by the &lsquo;<samp>detached-detach-key</samp>&rsquo;. If the prefix argument is provided when creating the session detached will not attach to the session. To later attach to a running session the user can do this with the attach command, by default bound to &lsquo;<samp>C-&lt;return&gt;</samp>&rsquo;.
+</p>
+<hr>
+<a name="Integration-with-compile-and-shell_002dcommand"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Workflows" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Integration-with-shells" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Workflows" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Session-management" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Customization" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Integration-with-compile-and-shell_002dcommand-1"></a>
+<h2 class="section">5.2 Integration with compile and shell-command</h2>
+
+<p>When creating a session with &lsquo;<samp>detached-compile</samp>&rsquo; or &lsquo;<samp>detached-shell-command</samp>&rsquo; Emacs will attach to the process and show the result in a buffer. It is possible to detach from the process with the &lsquo;<samp>detached-detach-key</samp>&rsquo; and the buffer will then be closed. Later on to attach to a session use any of the commands provided mentioned in Session management.
+</p>
+<hr>
+<a name="Session-management"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Workflows" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Integration-with-compile-and-shell_002dcommand" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Workflows" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Detached-list-sessions" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Customization" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Session-management-1"></a>
+<h2 class="section">5.3 Session management</h2>
+
+<p>The package offers two different interfaces for session management, &lsquo;<samp>detached-open-session</samp>&rsquo; and &lsquo;<samp>detached-list-sessions</samp>&rsquo;. The former uses the completing-read interface, whilst the latter uses the tabulated list interface. Each of the interfaces can be used to interact with a session. The &lsquo;<samp>detached-list-sessions</samp>&rsquo; interface is however more feature rich, and is what is recommended from the package author.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#Detached-list-sessions">5.3.1 Detached list sessions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr>
+<a name="Detached-list-sessions"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Workflows" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Session-management" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Session-management" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Customization" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Customization" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Detached-list-sessions-1"></a>
+<h3 class="subsection">5.3.1 Detached list sessions</h3>
+
+<p>After opening &lsquo;<samp>detached-list-sessions</samp>&rsquo; the user can press &lsquo;<samp>?</samp>&rsquo; to view a list of all commands accessible in the buffer. Generally speaking there are commands to either operate on the session at point, such as rerunning it and deleting it. Or there are commands that operate on multiple sessions at once, such as marking sessions or narrow the list of sessions based on a criteria.
+</p>
+<p>Narrow criteria are composable so that they each take effect after each other. For example narrowing based on local sessions, narrows the list of candidates, which further can be narrowed to sessions where the command match a regular expression. The mode also features a command &lsquo;<samp>detached-list-select-filter</samp>&rsquo; which allows the user to select a preconfigured set of criteria defined in &lsquo;<samp>detached-list-filters</samp>&rsquo;.
+</p>
+<hr>
+<a name="Customization"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Workflows" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Detached-list-sessions" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Notifications" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Design" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Customization-1"></a>
+<h1 class="chapter">6 Customization</h1>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#Notifications">6.1 Notifications</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Detached-list">6.2 Detached list</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr>
+<a name="Notifications"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Customization" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Customization" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Customization" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Detached-list" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Design" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Notifications-1"></a>
+<h2 class="section">6.1 Notifications</h2>
+
+<p>By default <code>detached</code> uses the built in <code>notifications</code> library to issue notifications to the user. This solution is dependent on <code>dbus</code>, and if that doesn&rsquo;t work the user has the posbility to customize the <code>detached-notification-function</code>.
+</p>
+<p>The variable can be changed to:
+</p><ul>
+<li>
+a custom function, created by the user
+</li><li>
+the <code>detached-state-transition-echo-message</code>, which uses the echo area
+</li><li>
+the <code>detached-extra-alert-notification</code>, which relies on the 3rd-party package <code>alert</code>
+</li></ul>
+
+<hr>
+<a name="Detached-list"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Customization" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Notifications" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Customization" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Design" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Design" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Detached-list-1"></a>
+<h2 class="section">6.2 Detached list</h2>
+
+<p>The buffer created by <code>detached-list-sessions</code> can be customized in its appearance. This is done through the <code>detached-list-display-buffer-action</code>. By default it will use:
+</p>
+<div class="lisp">
+<pre class="lisp">'(display-buffer-same-window
+  (inhibit-same-window . nil))
+</pre></div>
+
+<p>Which makes the buffer replace the buffer in the current window. For those that prefer a popup window, created at the bottom of the frame, the following value can be used:
+</p>
+<div class="lisp">
+<pre class="lisp">'(display-buffer-at-bottom
+  (window-height . 0.33))
+</pre></div>
+
+<hr>
+<a name="Design"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Customization" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Detached-list" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Sessions" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Known-limitations" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Design-1"></a>
+<h1 class="chapter">7 Design</h1>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#Sessions">7.1 Sessions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr>
+<a name="Sessions"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Design" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Design" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Design" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Session-creation" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Known-limitations" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Sessions-1"></a>
+<h2 class="section">7.1 Sessions</h2>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#Session-creation">7.1.1 Session creation</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Session-initialization">7.1.2 Session initialization</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Session-transition">7.1.3 Session transition</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr>
+<a name="Session-creation"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Design" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Sessions" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Sessions" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Session-initialization" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Known-limitations" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Session-creation-1"></a>
+<h3 class="subsection">7.1.1 Session creation</h3>
+
+<p>When creating a session &lsquo;<samp>three actions</samp>&rsquo; are taken:
+</p><ul>
+<li>
+The session&rsquo;s directory is getting watched, unless its already watched
+</li><li>
+A timer-based validator function is being created
+</li><li>
+The session object is added to the list of unvalidated sessions
+</li></ul>
+
+<p>The steps taken above is done in order to handle a couple of different scenarios:
+</p><ul>
+<li>
+The underlying &lsquo;<samp>dtach</samp>&rsquo; session is never created, the validator will recognize this and never insert the session into the database
+</li><li>
+The session is correctly created and is running when the validator is called, it will update the state from &lsquo;<samp>unknown</samp>&rsquo; to &lsquo;<samp>active</samp>&rsquo; and insert the object into the database
+</li><li>
+The session is finished quickly before the validator is being run, it will trigger a session directory event, this will update the session and insert it into the database, at the same time it is removed from the list of &lsquo;<samp>unvalidated</samp>&rsquo; sessions which will cause the &lsquo;<samp>validator</samp>&rsquo; to not do anything
+</li></ul>
+
+<p>The logic described mean that the Emacs that creates the session is responsible for validating the session. Only when a session has been validated, or become inactive, it will be added to the database. When it is added to the database it will cause other &lsquo;<samp>Emacsen</samp>&rsquo; to read from the database and then become aware of existence the session.
+</p>
+<hr>
+<a name="Session-initialization"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Design" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Session-creation" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Sessions" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Session-transition" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Known-limitations" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Session-initialization-1"></a>
+<h3 class="subsection">7.1.2 Session initialization</h3>
+
+<p>The initialization of  &lsquo;<samp>sessions</samp>&rsquo; when &lsquo;<samp>detached</samp>&rsquo; is loaded is performed in the following steps:
+</p><ul>
+<li>
+All known sessions are read from the database
+</li><li>
+The directory where the database resides are being watched in order to detect updates made to the database
+</li><li>
+A hash-table is created where all keys are session ids, and the values are the status, which is initialized to &lsquo;<samp>uninitialized</samp>&rsquo;
+</li><li>
+For all sessions that are accessible, which is either local sessions or remote sessions with an active connection
+<ul>
+<li>
+The hash-table is updated to &lsquo;<samp>initialized</samp>&rsquo;
+</li><li>
+The sessions &lsquo;<samp>initialized-emacsen</samp>&rsquo; property is updated with the process id of the current Emacs
+</li><li>
+If the session is registered as &lsquo;<samp>active</samp>&rsquo; the session is updated if it has transitioned to &lsquo;<samp>inactive</samp>&rsquo;, otherwise its session directory is being watched
+</li><li>
+If the session is missing, &lsquo;<samp>e.g.</samp>&rsquo; it has been deleted from the computer, the session is removed from the database
+</li></ul>
+</li></ul>
+
+<hr>
+<a name="Session-transition"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Design" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Session-initialization" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Sessions" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Known-limitations" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Known-limitations" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Session-transition-1"></a>
+<h3 class="subsection">7.1.3 Session transition</h3>
+
+<p>The &lsquo;<samp>detached</samp>&rsquo; sessions are read from the persistent &lsquo;<samp>detached.db</samp>&rsquo; file when the package is loaded. All &lsquo;<samp>Emacsen</samp>&rsquo; that loads &lsquo;<samp>detached</samp>&rsquo; are reading and writing to the same database file, that allows the sessions to be shared among Emacsen.
+</p>
+<p>To avoid all Emacsen from sending a notification when a session becomes inactive the responsibility is determined dynamically. All Emacsen, where detached is loaded, registers their process in a file named &lsquo;<samp>detached-emacsen</samp>&rsquo;. Initialization of sessions are done on a session basis
+</p>
+<hr>
+<a name="Known-limitations"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Design" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Session-transition" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Quotation-marks" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Contributions" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Known-limitations-1"></a>
+<h1 class="chapter">8 Known limitations</h1>
+
+<p>The <code>detached</code> package have some known limitations. It is designed around the idea that a single command is executed. Therefore it does not support a session that can be re-used over time, which is a common use-case with for example &lsquo;<samp>tmux</samp>&rsquo;.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#Quotation-marks">8.1 Quotation marks</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Reproducible-environments">8.2 Reproducible environments</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr>
+<a name="Quotation-marks"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Known-limitations" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Known-limitations" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Known-limitations" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Reproducible-environments" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Contributions" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Quotation-marks-1"></a>
+<h2 class="section">8.1 Quotation marks</h2>
+
+<p>The way the package transforms, the command the user wants to run, into a &lsquo;<samp>detached</samp>&rsquo; command behaves incorrectly when it contain double quotation marks. For example the following command:
+</p>
+<div class="example">
+<pre class="example">git shortlog --summary --numbered --all --no-merges --since=&quot;01 Jan 2022&quot;
+</pre></div>
+
+<p>Will unfortunately not be interpreted correctly. Instead the user needs to use single quotation marks in order for it to work:
+</p>
+<div class="example">
+<pre class="example">git shortlog --summary --numbered --all --no-merges --since='01 Jan 2022'
+</pre></div>
+
+<hr>
+<a name="Reproducible-environments"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Known-limitations" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Quotation-marks" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Known-limitations" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Contributions" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Contributions" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Reproducible-environments-1"></a>
+<h2 class="section">8.2 Reproducible environments</h2>
+
+<p>The package works best when sessions can be re-run. For this to work, the command needs to be robust against changes in the environment. Since only a single command is run there can be no dependency to previously run commands in the same shell, when the session is created. If the command the user wants to run have such requirements the best thing to do is to create a shell script that can set up that environment, and execute that script instead.
+</p>
+<p>The tool &lsquo;<samp>direnv</samp>&rsquo; could ideally be used with &lsquo;<samp>detached</samp>&rsquo;, however there seems to be no way to make it work for remote processes. So the recommendation for that use-case is the same as above, create a shell script. For example a script named &lsquo;<samp>direnv_command</samp>&rsquo; with the following content:
+</p>
+<div class="example">
+<pre class="example">#!/usr/bin/env bash
+direnv exec . &quot;$@&quot;
+</pre></div>
+
+<p>Then the following command would be reproducible.
+</p>
+<div class="example">
+<pre class="example">direnv_command python foo.py
+</pre></div>
+
+<hr>
+<a name="Contributions"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Known-limitations" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Reproducible-environments" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Acknowledgments" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Acknowledgments" title="Next chapter"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Contributions-1"></a>
+<h1 class="chapter">9 Contributions</h1>
+
+<p>The package is part of <code>ELPA</code>, which means that if you want to contribute, you must have a <a href="https://www.gnu.org/software/emacs/manual/html_node/emacs/Copyright-Assignment.html">copyright assignement</a>.
+</p>
+<hr>
+<a name="Acknowledgments"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Contributions" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Contributions" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Top" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Code-contributors" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[ &gt;&gt; ]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Acknowledgments-1"></a>
+<h1 class="chapter">10 Acknowledgments</h1>
+
+<p>This package wouldn&rsquo;t have been were it is today without these contributors.
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#Code-contributors">10.1 Code contributors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#Idea-contributors">10.2 Idea contributors</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr>
+<a name="Code-contributors"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Acknowledgments" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Acknowledgments" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Acknowledgments" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[<a href="#Idea-contributors" title="Next section in reading order"> &gt; </a>]</td>
+<td valign="middle" align="left">[ &gt;&gt; ]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Code-contributors-1"></a>
+<h2 class="section">10.1 Code contributors</h2>
+
+<ul>
+<li>
+<a href="https://gitlab.com/rosetail">rosetail</a>
+</li><li>
+<a href="https://lists.sr.ht/~protesilaos">protesilaos</a>
+</li><li>
+<a href="https://www.iro.umontreal.ca/~monnier/">Stefan Monnier</a>
+</li></ul>
+
+<hr>
+<a name="Idea-contributors"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Acknowledgments" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Code-contributors" title="Previous section in reading order"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#Acknowledgments" title="Up section"> Up </a>]</td>
+<td valign="middle" align="left">[ &gt; ]</td>
+<td valign="middle" align="left">[ &gt;&gt; ]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<a name="Idea-contributors-1"></a>
+<h2 class="section">10.2 Idea contributors</h2>
+
+<ul>
+<li>
+<a href="https://gitlab.com/rosetail">rosetail</a> for all the great ideas and improvements to the package. Without those contributions &lsquo;detached.el&lsquo; would be a less sophisticated package.
+</li><li>
+<a href="https://gitlab.com/ntdef">Troy de Freitas</a> for solving the problem of getting &lsquo;detached.el&lsquo; to work with &lsquo;filenotify&lsquo; on macOS.
+</li><li>
+<a href="https://gitlab.com/minad">Daniel Mendler</a> for helping out in improving &lsquo;detached.el&lsquo;, among other things integration with other packages such as &lsquo;embark&lsquo; and &lsquo;consult&lsquo;.
+</li><li>
+<a href="https://gitlab.com/ambrevar">Ambrevar</a> who indirectly contributed by inspiring me with his <a href="https://www.reddit.com/r/emacs/comments/6y3q4k/yes_eshell_is_my_main_shell/">yes eshell is my main shell</a>. It was through that I discovered his <a href="https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el">package-eshell-detach</a> which got me into the idea of using &lsquo;dtach&lsquo; as a base for detached shell commands.
+</li></ul>
+
+<hr size="6">
+<a name="SEC_About"></a>
+<table class="header" cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td valign="middle" align="left">[Contents]</td>
+<td valign="middle" align="left">[Index]</td>
+<td valign="middle" align="left">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+</tr></table>
+<h1>About This Document</h1>
+
+<p>
+  This document was generated on <i>October 8, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 5.0</i></a>.
+</p>
+<p>
+  The buttons in the navigation panels have the following meaning:
+</p>
+<table border="1">
+  <tr>
+    <th> Button </th>
+    <th> Name </th>
+    <th> Go to </th>
+    <th> From 1.2.3 go to</th>
+  </tr>
+  <tr>
+    <td align="center"> [ &lt;&lt; ] </td>
+    <td align="center">FastBack</td>
+    <td>Beginning of this chapter or previous chapter</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td align="center"> [ &lt; ] </td>
+    <td align="center">Back</td>
+    <td>Previous section in reading order</td>
+    <td>1.2.2</td>
+  </tr>
+  <tr>
+    <td align="center"> [ Up ] </td>
+    <td align="center">Up</td>
+    <td>Up section</td>
+    <td>1.2</td>
+  </tr>
+  <tr>
+    <td align="center"> [ &gt; ] </td>
+    <td align="center">Forward</td>
+    <td>Next section in reading order</td>
+    <td>1.2.4</td>
+  </tr>
+  <tr>
+    <td align="center"> [ &gt;&gt; ] </td>
+    <td align="center">FastForward</td>
+    <td>Next chapter</td>
+    <td>2</td>
+  </tr>
+  <tr>
+    <td align="center"> [Top] </td>
+    <td align="center">Top</td>
+    <td>Cover (top) of document</td>
+    <td> &nbsp; </td>
+  </tr>
+  <tr>
+    <td align="center"> [Contents] </td>
+    <td align="center">Contents</td>
+    <td>Table of contents</td>
+    <td> &nbsp; </td>
+  </tr>
+  <tr>
+    <td align="center"> [Index] </td>
+    <td align="center">Index</td>
+    <td>Index</td>
+    <td> &nbsp; </td>
+  </tr>
+  <tr>
+    <td align="center"> [ ? ] </td>
+    <td align="center">About</td>
+    <td>About (help)</td>
+    <td> &nbsp; </td>
+  </tr>
+</table>
+
+<p>
+  where the <strong> Example </strong> assumes that the current position is at <strong> Subsubsection One-Two-Three </strong> of a document of the following structure:
+</p>
+
+<ul>
+  <li> 1. Section One
+    <ul>
+      <li>1.1 Subsection One-One
+        <ul>
+          <li>...</li>
+        </ul>
+      </li>
+      <li>1.2 Subsection One-Two
+        <ul>
+          <li>1.2.1 Subsubsection One-Two-One</li>
+          <li>1.2.2 Subsubsection One-Two-Two</li>
+          <li>1.2.3 Subsubsection One-Two-Three &nbsp; &nbsp;
+            <strong>&lt;== Current Position </strong></li>
+          <li>1.2.4 Subsubsection One-Two-Four</li>
+        </ul>
+      </li>
+      <li>1.3 Subsection One-Three
+        <ul>
+          <li>...</li>
+        </ul>
+      </li>
+      <li>1.4 Subsection One-Four</li>
+    </ul>
+  </li>
+</ul>
+
+<hr>
+<p>
+ <font size="-1">
+  This document was generated on <i>October 8, 2022</i> using <a href="http://www.nongnu.org/texi2html/"><i>texi2html 5.0</i></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>
