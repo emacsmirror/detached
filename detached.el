@@ -86,6 +86,11 @@
   :type 'string
   :group 'detached)
 
+(defcustom detached-tee-program "tee"
+  "The name of the tee program."
+  :type 'string
+  :group 'detached)
+
 (defcustom detached-shell-program shell-file-name
   "Path to the shell to run the dtach command in."
   :type 'string
@@ -1390,7 +1395,7 @@ If SESSION is degraded fallback to a command that doesn't rely on tee."
          (redirect
           (if (detached--session-degraded session)
               (format "&> %s" log)
-            (format "2>&1 | tee %s" log)))
+            (format "2>&1 | %s %s" detached-tee-program log)))
          (shell (format "%s -c" detached-shell-program))
          (command
           (shell-quote-argument
