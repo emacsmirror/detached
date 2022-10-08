@@ -91,6 +91,11 @@
   :type 'string
   :group 'detached)
 
+(defcustom detached-script-program "script"
+  "The name of the script program."
+  :type 'string
+  :group 'detached)
+
 (defcustom detached-shell-program shell-file-name
   "Path to the shell to run the dtach command in."
   :type 'string
@@ -1412,8 +1417,8 @@ If SESSION is degraded fallback to a command that doesn't rely on tee."
 (defun detached--get-terminal-data-command ()
   "Return terminal data command."
   (pcase detached-terminal-data-command
-    ('gnu/linux "script --quiet --flush --return --command \"%s\" /dev/null")
-    ('darwin "script -F -q /dev/null %s")
+    ('gnu/linux (concat detached-script-program " --quiet --flush --return --command \"%s\" /dev/null"))
+    ('darwin (concat detached-script-program " -F -q /dev/null %s"))
     ((and (pred stringp) command) command)
     (_ (error "Unable to determine script command, set `detached-terminal-data-command' properly"))))
 

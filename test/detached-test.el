@@ -211,8 +211,9 @@
 
 (ert-deftest detached-test-detached-command ()
   (let ((detached-shell-program "bash")
-        (detached-terminal-data-command "script --quiet --flush --return --command \"%s\" /dev/null")
+        (detached-script-program "script")
         (detached-tee-program "tee")
+        (detached-terminal-data-command "script --quiet --flush --return --command \"%s\" /dev/null")
         (terminal-data-session
          (detached--session-create :directory "/tmp/detached/"
                                    :working-directory "/home/user/"
