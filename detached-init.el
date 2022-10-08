@@ -90,18 +90,16 @@
     (define-key map "=" #'detached-diff-session)
     map))
 
-;;;; Support functions
-
-(defvar detached-init--package-integration '((compile . detached-init--compile)
-                                             (dired . detached-init--dired)
-                                             (dired-rsync . detached-init--dired-rsync)
-                                             (embark . detached-init--embark)
-                                             (eshell . detached-init--eshell)
-                                             (nano-modeline . detached-init--nano-modeline)
-                                             (org . detached-init--org)
-                                             (projectile . detached-init--projectile)
-                                             (shell . detached-init--shell)
-                                             (vterm . detached-init--vterm))
+(defvar detached-init-package-integration '((compile . detached-init--compile)
+                                            (dired . detached-init--dired)
+                                            (dired-rsync . detached-init--dired-rsync)
+                                            (embark . detached-init--embark)
+                                            (eshell . detached-init--eshell)
+                                            (nano-modeline . detached-init--nano-modeline)
+                                            (org . detached-init--org)
+                                            (projectile . detached-init--projectile)
+                                            (shell . detached-init--shell)
+                                            (vterm . detached-init--vterm))
   "Alist which contain names of packages and their initialization function.")
 
 ;;;; Functions
@@ -112,7 +110,7 @@
   (detached-init--detached)
   (detached-init--detached-list)
   (let ((init-functions
-         (thread-last detached-init--package-integration
+         (thread-last detached-init-package-integration
                       (seq-filter (lambda (it)
                                     (member (car it) detached-init-allow-list)))
                       (seq-remove (lambda (it)

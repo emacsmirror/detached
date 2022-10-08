@@ -9,3 +9,6 @@ emacs --batch --eval='(progn (setq make-backup-files nil) (make-directory-autolo
 
 # 3) Run tests
 emacs --batch --load=detached.el --load=test/detached-test.el --funcall=ert-run-tests-batch-and-exit
+
+# 4) Generate info manual
+emacs --batch --eval='(progn (setq make-backup-files nil) (find-file "doc/detached.org") (org-texinfo-export-to-info))'

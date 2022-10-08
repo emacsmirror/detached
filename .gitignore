@@ -1,3 +1,4 @@
 *.elc
 /detached-autoloads.el
 /detached-pkg.el
+/doc/detached.texi
