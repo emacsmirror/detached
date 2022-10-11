@@ -157,7 +157,7 @@
 
 (defun detached-init--vterm ()
   "Initialize integration with `vterm'."
-  (when (featurep 'vterm)
+  (with-eval-after-load 'vterm
     (add-hook 'vterm-mode-hook #'detached-vterm-mode)))
 
 (defun detached-init--embark ()
