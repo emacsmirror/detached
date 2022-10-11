@@ -111,6 +111,14 @@ If prefix-argument directly DETACH from the session."
                        (seq-filter (lambda (it) (eq 'active (detached--determine-session-state it)))))))
     (detached-completing-read sessions)))
 
+(cl-defmethod detached--detach-session ((_mode (derived-mode eshell-mode)))
+  "Detach from session when MODE is `eshell-mode'."
+  (when-let ((active-session (eq 'active (detached--determine-session-state detached--buffer-session)))
+             (dtach-process (detached-eshell--get-dtach-process)))
+    (setq detached--buffer-session nil)
+    (process-send-string dtach-process
+                         detached--dtach-detach-character)))
+
 ;;;; Minor mode
 
 (defvar detached-eshell-mode-map

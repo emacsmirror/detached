@@ -53,8 +53,6 @@
 (require 'subr-x)
 (require 'tramp)
 
-(declare-function detached-eshell--get-dtach-process "detached-eshell")
-
 ;;;; Variables
 
 ;;;;; Customizable
@@ -603,33 +601,8 @@ This command is only activated if `detached--buffer-session' is an
 active session.  For sessions created with `detached-compile' or
 `detached-shell-command', the command will also kill the window."
   (interactive)
-  (if (detached-session-p detached--buffer-session)
-      (if-let ((command-or-compile
-                (cond ((string-match detached--shell-command-buffer (buffer-name)) t)
-                      ((string-match "\*detached-compilation" (buffer-name)) t)
-                      ((eq major-mode 'detached-log-mode) t)
-                      (t nil))))
-          ;; `detached-shell-command' or `detached-compile'
-          (let ((kill-buffer-query-functions nil))
-            (when-let ((process (get-buffer-process (current-buffer))))
-              (comint-simple-send process detached--dtach-detach-character)
-              (message "[detached]"))
-            (setq detached--buffer-session nil)
-            (if (= (length (window-list)) 1)
-                (kill-buffer)
-              (kill-buffer-and-window)))
-        (if (eq 'active (detached--determine-session-state detached--buffer-session))
-            ;; `detached-eshell'
-            (if-let ((process (and (eq major-mode 'eshell-mode)
-                                   (detached-eshell--get-dtach-process))))
-                (progn
-                  (setq detached--buffer-session nil)
-                  (process-send-string process detached--dtach-detach-character))
-              ;; `detached-shell'
-              (let ((process (get-buffer-process (current-buffer))))
-                (comint-simple-send process detached--dtach-detach-character)
-                (setq detached--buffer-session nil)))
-          (message "No active detached-session found in buffer.")))
+  (if-let ((has-session (detached-session-p detached--buffer-session)))
+      (detached--detach-session major-mode)
     (message "No detached-session found in buffer.")))
 
 ;;;###autoload
@@ -1216,6 +1189,40 @@ Optionally make the path LOCAL to host."
   (if detached-local-session
       detached-session-directory
     (concat (file-remote-p default-directory) detached-session-directory)))
+
+(cl-defgeneric detached--detach-session (_mode)
+  "Default implementation."
+  (message "`detached' doesn't know how to detach from a session in this mode"))
+
+(cl-defmethod detached--detach-session ((_mode (derived-mode detached-log-mode)))
+  "Detach from session when MODE is `detached-log-mode'."
+  (detached--quit-session-buffer))
+
+(cl-defmethod detached--detach-session ((_mode (derived-mode shell-mode)))
+  "Detach from session when MODE is `shell-mode'."
+  (detached--detach-from-comint-process)
+  (when (string-match detached--shell-command-buffer (buffer-name))
+    (detached--quit-session-buffer)))
+
+(cl-defmethod detached--detach-session ((_mode (derived-mode comint-mode)))
+  "Detach from session when MODE is `comint-mode'."
+  (detached--detach-from-comint-process)
+  (detached--quit-session-buffer))
+
+(defun detached--detach-from-comint-process ()
+  "Detach from the underlying `comint' process."
+  (when-let ((active-session (eq 'active (detached--determine-session-state detached--buffer-session)))
+             (dtach-process (get-buffer-process (current-buffer))))
+    (setq detached--buffer-session nil)
+    (comint-simple-send dtach-process detached--dtach-detach-character)))
+
+(defun detached--quit-session-buffer ()
+  "Quit session buffer."
+  (message "[detached]")
+  (let ((kill-buffer-query-functions nil))
+    (if (= (length (window-list)) 1)
+        (kill-buffer)
+      (kill-buffer-and-window))))
 
 ;;;;; Database
 

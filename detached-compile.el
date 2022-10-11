@@ -148,6 +148,11 @@ Optionally EDIT-COMMAND."
       (when (re-search-forward (format "\n?%s\n" detached--dtach-eof-message) end t)
         (delete-region (match-beginning 0) (match-end 0))))))
 
+(cl-defmethod detached--detach-session ((_mode (derived-mode detached-compilation-mode)))
+  "Detach from session when MODE is `detached-compilation-mode'."
+  (detached--detach-from-comint-process)
+  (detached--quit-session-buffer))
+
 ;;;;; Major modes
 
 (defvar detached-compilation-mode-map

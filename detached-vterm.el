@@ -32,6 +32,7 @@
 (declare-function vterm-send-C-e "vterm")
 (declare-function vterm-send-return "vterm")
 (declare-function vterm-end-of-line "vterm")
+(declare-function vterm-beginning-of-line "vterm")
 
 (defvar vterm--process)
 
@@ -81,9 +82,8 @@ Optionally DETACH from it."
     (process-send-string vterm--process (detached--shell-command session t))
     (vterm-send-return)))
 
-(defun detached-vterm-detach ()
-  "Detach from a `detached' session."
-  (interactive)
+(cl-defmethod detached--detach-session ((_mode (derived-mode vterm-mode)))
+  "Detach from session when MODE is `vterm-mode'."
   (process-send-string
    vterm--process
    detached--dtach-detach-character))
@@ -94,7 +94,7 @@ Optionally DETACH from it."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "<S-return>") #'detached-vterm-send-input)
     (define-key map (kbd "<C-return>") #'detached-vterm-attach)
-    (define-key map (kbd detached-detach-key) #'detached-vterm-detach)
+    (define-key map (kbd detached-detach-key) #'detached-detach-session)
     map)
   "Keymap for `detached-vterm-mode'.")
 
