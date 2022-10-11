@@ -52,14 +52,17 @@
 
 Optionally DETACH from it."
   (interactive)
-  (vterm-send-C-a)
-  (let* ((input (buffer-substring-no-properties (point) (vterm-end-of-line)))
+  (let* ((input (buffer-substring-no-properties (vterm-beginning-of-line) (vterm-end-of-line)))
          (detached-session-origin 'vterm)
          (detached-session-action detached-vterm-session-action)
          (detached-session-mode
-          (if detach 'create 'create-and-attach)))
+          (if detach 'create 'create-and-attach))
+         (detached--current-session (detached-create-session input))
+         (command (detached--shell-command detached--current-session t)))
+    (vterm-send-C-a)
     (vterm-send-C-k)
-    (process-send-string vterm--process (detached--shell-command input t))
+    (process-send-string vterm--process command)
+    (setq detached--buffer-session detached--current-session)
     (vterm-send-C-e)
     (vterm-send-return)))
 
