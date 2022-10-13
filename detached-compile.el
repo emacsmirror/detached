@@ -158,6 +158,7 @@ Optionally EDIT-COMMAND."
 (defvar detached-compilation-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-k") #'detached-compile-kill)
+    (define-key map (kbd "C-c C-.") #'detached-describe-session)
     (define-key map (kbd detached-detach-key) #'detached-detach-session)
     map)
   "Keymap for `detached-compilation-mode'.")

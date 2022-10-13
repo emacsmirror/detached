@@ -644,6 +644,10 @@ If prefix-argument is provided unmark instead of mark."
             detached-list--filters)
     sessions))
 
+(cl-defmethod detached--get-session ((_mode (derived-mode detached-list-mode)))
+  "Return session when in `detached-list-mode'."
+  (tabulated-list-get-id))
+
 ;;;; Major mode
 
 (defvar detached-list-mode-map
@@ -680,6 +684,7 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "=") #'detached-list-diff-marked-sessions)
     (define-key map (kbd "-") #'detached-list-widen)
     (define-key map (kbd "!") #'detached-shell-command)
+    (define-key map (kbd ".") #'detached-describe-session)
     (define-key map (kbd "<backspace>") #'detached-list-remove-narrow-criterion)
     (define-key map (kbd "<return>") #'detached-list-open-session)
     map)

@@ -462,6 +462,14 @@ The session is compiled by opening its output and enabling
             (funcall run-fun command)
           (detached-start-session command))))))
 
+(defun detached-describe-session ()
+  "Describe current session."
+  (interactive)
+  (when-let ((session (detached--get-session major-mode)))
+    (message
+     (string-trim
+      (detached--session-header session)))))
+
 ;;;###autoload
 (defun detached-attach-session (session)
   "Attach to SESSION."
@@ -857,6 +865,10 @@ This function uses the `notifications' library."
     status))
 
 ;;;;; Other
+
+(cl-defgeneric detached--get-session (_mode)
+  "Return session."
+  detached--buffer-session)
 
 (cl-defgeneric detached--shell-command (entity &optional concat)
   "Return shell command for ENTITY optionally CONCAT.")
@@ -1670,6 +1682,7 @@ If event is cased by an update to the `detached' database, re-initialize
 (defvar detached-shell-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd detached-detach-key) #'detached-detach-session)
+    (define-key map (kbd "C-c C-.") #'detached-describe-session)
     map)
   "Keymap for `detached-shell-mode'.")
 
@@ -1690,6 +1703,7 @@ If event is cased by an update to the `detached' database, re-initialize
 (defvar detached-log-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd detached-detach-key) #'detached-detach-session)
+    (define-key map (kbd "C-c C-.") #'detached-describe-session)
     map)
   "Keymap for `detached-log-mode'.")
 

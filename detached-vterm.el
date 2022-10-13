@@ -95,6 +95,7 @@ Optionally DETACH from it."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "<S-return>") #'detached-vterm-send-input)
     (define-key map (kbd "<C-return>") #'detached-vterm-attach)
+    (define-key map (kbd "C-c C-.") #'detached-describe-session)
     (define-key map (kbd detached-detach-key) #'detached-detach-session)
     map)
   "Keymap for `detached-vterm-mode'.")

@@ -14,6 +14,7 @@
 - Implement mode-line indicator for criteria in =detached-list=
 - Add command for initializing a session directory
 - Add integration with =nano-modeline=
+- Add =detached-describe-session= command
   
 * Version 0.9.1 (2022-09-22)
 

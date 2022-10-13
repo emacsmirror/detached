@@ -125,6 +125,7 @@ If prefix-argument directly DETACH from the session."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "<S-return>") #'detached-eshell-send-input)
     (define-key map (kbd "<C-return>") #'detached-eshell-attach-session)
+    (define-key map (kbd "C-c C-.") #'detached-describe-session)
     (define-key map (kbd detached-detach-key) #'detached-detach-session)
     map)
   "Keymap for `detached-eshell-mode'.")
