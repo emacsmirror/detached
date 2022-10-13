@@ -79,6 +79,7 @@ Optionally DETACH from it."
                          (seq-filter (lambda (it) (eq 'active (detached--determine-session-state it)))))))
       (detached-completing-read sessions))))
   (let ((detached-session-mode 'attach))
+    (setq detached--buffer-session session)
     (process-send-string vterm--process (detached--shell-command session t))
     (vterm-send-return)))
 
