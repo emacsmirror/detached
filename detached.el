@@ -58,13 +58,13 @@
 ;;;;; Customizable
 
 (defcustom detached-session-directory
-  (expand-file-name "detached/sessions" user-emacs-directory)
+  (locate-user-emacs-file "detached/sessions")
   "The directory to store sessions."
   :type 'string
   :group 'detached)
 
 (defcustom detached-db-directory
-  (expand-file-name "detached" user-emacs-directory)
+  (locate-user-emacs-file "detached")
   "The directory to store the `detached' database."
   :type 'string
   :group 'detached)
