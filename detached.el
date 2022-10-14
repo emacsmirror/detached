@@ -1370,13 +1370,14 @@ Optionally make the path LOCAL to host."
     ('attach "-a")
     (_ (error "`detached-session-mode' has an unknown value"))))
 
-(defun detached--session-state-transition-update (session)
-  "Update SESSION due to state transition."
-  ;; Update session
+(defun detached--session-state-transition-update (session &optional approximate)
+  "Update SESSION due to state transition.
+
+Optionally specify if the end-time should be APPROXIMATE or not."
   (let ((session-size (file-attribute-size
                        (file-attributes
                         (detached--session-file session 'log))))
-        (session-time (detached--update-session-time session) )
+        (session-time (detached--update-session-time session approximate))
         (status-fun (or (plist-get (detached--session-action session) :status)
                         #'detached-session-exit-code-status)))
     (setf (detached--session-size session) session-size)
@@ -1547,7 +1548,7 @@ session and trigger a state transition."
 
   (if (detached--active-session-p session)
       (if (detached--state-transition-p session)
-          (detached--session-state-transition-update session)
+          (detached--session-state-transition-update session 'approximate)
         (detached--db-update-entry session)
         (detached--watch-session-directory (detached--session-directory session)))
     (if (detached--session-missing-p session)
