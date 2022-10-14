@@ -306,6 +306,20 @@
             (detached--working-dir-str
              (detached--session-create :working-directory "~/repo")))))
 
+(ert-deftest detached-test-verify-db-compatbility ()
+  ;; Database version is older than minimum version
+  (cl-letf (((symbol-function #'detached--db-session-version) (lambda () (format "0.9.1.1")))
+            (detached-minimum-session-version "0.9.1.2"))
+    (should (not (detached--verify-db-compatibility))))
+  ;; Database version is equal to minimum version
+  (cl-letf (((symbol-function #'detached--db-session-version) (lambda () (format "0.9.1.1")))
+            (detached-minimum-session-version "0.9.1.1"))
+    (should (detached--verify-db-compatibility)))
+  ;; Database version is newer than minimum version
+  (cl-letf (((symbol-function #'detached--db-session-version) (lambda () (format "0.9.1.2")))
+            (detached-minimum-session-version "0.9.1.1"))
+    (should (detached--verify-db-compatibility))))
+
 ;;;;; Output filters
 
 (ert-deftest detached-test-dtach-eof-message-filter ()

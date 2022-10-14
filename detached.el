@@ -241,6 +241,9 @@ Valid values are: create, new and attach")
   "The version of `detached-session'.
 This version is encoded as [package-version].[revision].")
 
+(defconst detached-minimum-session-version "0.9.1.1"
+  "The version of `detached-session' that the package is compatible with.")
+
 ;;;;; Faces
 
 (defgroup detached-faces nil
@@ -1245,9 +1248,11 @@ Optionally make the path LOCAL to host."
       (with-temp-buffer
         (insert-file-contents db)
         (cl-assert (bobp))
-        (when (string= (detached--db-session-version) detached-session-version)
+        (if (detached--verify-db-compatibility)
           (setq detached--sessions
-                (read (current-buffer))))))))
+                (read (current-buffer)))
+          (warn "Detached database has version %s while minimum version is %s"
+                (detached--db-session-version) detached-minimum-session-version))))))
 
 (defun detached--db-session-version ()
   "Return `detached-session-version' from database."
@@ -1360,7 +1365,37 @@ Optionally make the path LOCAL to host."
         (detached--db-get-session (detached--session-id session)))
     session))
 
+(defun detached--verify-db-compatibility ()
+  "Verify that the database version is compatible with the package."
+  (let ((minimum-version
+         (detached--decode-version-string detached-minimum-session-version))
+        (db-version
+         (detached--decode-version-string (detached--db-session-version))))
+    (if (> (plist-get db-version :major) (plist-get minimum-version :major))
+        t
+      (when (= (plist-get db-version :major) (plist-get minimum-version :major))
+        (if (> (plist-get db-version :minor) (plist-get minimum-version :minor))
+            t
+          (when (= (plist-get db-version :minor) (plist-get minimum-version :minor))
+            (if (> (plist-get db-version :patch) (plist-get minimum-version :patch))
+                t
+              (when (= (plist-get db-version :patch) (plist-get minimum-version :patch))
+                (>= (plist-get db-version :revision) (plist-get minimum-version :revision))))))))))
+
 ;;;;; Other
+
+(defun detached--decode-version-string (version)
+  "Return a decode property list of VERSION."
+  (let ((version-regexp
+         (rx (group (one-or-more digit)) "."
+             (group (one-or-more digit)) "."
+             (group (one-or-more digit)) "."
+             (group (one-or-more digit)))))
+    (when (string-match version-regexp version)
+      `(:major ,(string-to-number (match-string 1 version))
+        :minor ,(string-to-number (match-string 2 version))
+        :patch ,(string-to-number (match-string 3 version))
+        :revision ,(string-to-number (match-string 4 version))))))
 
 (defun detached--dtach-arg ()
   "Return dtach argument based on `detached-session-mode'."
