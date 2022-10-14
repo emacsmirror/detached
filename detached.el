@@ -484,7 +484,8 @@ The session is compiled by opening its output and enabling
       (erase-buffer)
       (insert
        (string-trim
-        (detached--session-header session))))))
+        (detached--session-header session)))
+      (goto-char (point-min)))))
 
 ;;;###autoload
 (defun detached-attach-session (session)
