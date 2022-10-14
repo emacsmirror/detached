@@ -1097,6 +1097,7 @@ Optionally CONCAT the command return command into a string."
      ,(format "Host: %s" (car (detached--session-host session)))
      ,(format "Id: %s" (symbol-name (detached--session-id session)))
      ,(format "Status: %s" (car (detached--session-status session)))
+     ,(format "Annotation: %s" (if-let ((annotation (detached--session-annotation session))) annotation ""))
      ,(format "Exit-code: %s" (cdr (detached--session-status session)))
      ,(format "Metadata: %s" (detached--metadata-str session))
      ,(format "Created at: %s" (detached--creation-str session))
