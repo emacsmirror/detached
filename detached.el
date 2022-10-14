@@ -205,6 +205,14 @@ If set to a non nil value the latest entry to
   :group 'detached
   :type 'sexp)
 
+(defcustom detached-session-info-buffer-action
+  '(display-buffer-in-side-window
+                 (side . bottom)
+                 (dedicated . t))
+  "The action used to display a information about a detached session."
+  :group 'detached
+  :type 'sexp)
+
 ;;;;; Public
 
 (defvar detached-enabled nil)
@@ -468,10 +476,15 @@ The session is compiled by opening its output and enabling
 (defun detached-describe-session ()
   "Describe current session."
   (interactive)
-  (when-let ((session (detached--get-session major-mode)))
-    (message
-     (string-trim
-      (detached--session-header session)))))
+  (when-let* ((session (detached--get-session major-mode))
+              (buffer (get-buffer-create "*detached-session-info*"))
+              (window (display-buffer buffer detached-session-info-buffer-action)))
+    (select-window window)
+    (with-current-buffer buffer
+      (erase-buffer)
+      (insert
+       (string-trim
+        (detached--session-header session))))))
 
 ;;;###autoload
 (defun detached-attach-session (session)
