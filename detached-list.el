@@ -255,48 +255,7 @@ Optionally SUPPRESS-OUTPUT."
     (detached-list-narrow-sessions
      `((,(concat "Output: " regexp) .
         ,(lambda (sessions)
-           (let* ((sessions-and-directories
-                   (thread-last sessions
-                                (seq-group-by #'detached--session-directory)
-                                (seq-filter (lambda (it)
-                                              ;; Filter out only accessible directories
-                                              (or (not (file-remote-p (car it)))
-                                                  (file-remote-p (car it) nil t))))))
-                  (session-ids
-                   (thread-last sessions-and-directories
-                                (seq-map
-                                 (lambda (it)
-                                   (pcase-let* ((`(,session-directory . ,sessions) it)
-                                                (default-directory session-directory)
-                                                (includes
-                                                 (seq-map (lambda (session)
-                                                            (format "--include=%s"
-                                                                    (file-name-nondirectory
-                                                                     (detached--session-file
-                                                                      session
-                                                                      'log))))
-                                                          sessions))
-                                                (grep-command
-                                                 (string-join `(,detached-grep-program
-                                                                "--files-with-matches"
-                                                                ,@includes
-                                                                "--no-messages"
-                                                                "--ignore-case"
-                                                                "--recursive"
-                                                                ,(format "\"%s\"" regexp))
-                                                              " ")))
-                                     (split-string
-                                      (with-connection-local-variables
-                                       (with-temp-buffer
-                                         (process-file-shell-command grep-command nil t)
-                                         (buffer-string)))
-                                      "\n" t))))
-                                (flatten-tree)
-                                (seq-remove #'null)
-                                (seq-map #'file-name-sans-extension))))
-             (seq-filter (lambda (it)
-                           (member (symbol-name (detached--session-id it)) session-ids))
-                         sessions))))
+           (detached--grep-sesssions-output sessions regexp)))
        ,@detached-list--filters))))
 
 (defun detached-list-narrow-regexp (regexp)
@@ -651,6 +610,51 @@ If prefix-argument is provided unmark instead of mark."
 (cl-defmethod detached--get-session ((_mode (derived-mode detached-list-mode)))
   "Return session when in `detached-list-mode'."
   (tabulated-list-get-id))
+
+(defun detached--grep-sesssions-output (sessions regexp)
+  "Return a narrowed list with SESSIONS containing REGEXP."
+  (let* ((sessions-and-directories
+          (thread-last sessions
+                       (seq-group-by #'detached--session-directory)
+                       (seq-filter (lambda (it)
+                                     ;; Filter out only accessible directories
+                                     (or (not (file-remote-p (car it)))
+                                         (file-remote-p (car it) nil t))))))
+         (session-ids
+          (thread-last sessions-and-directories
+                       (seq-map
+                        (lambda (it)
+                          (pcase-let* ((`(,session-directory . ,sessions) it)
+                                       (default-directory session-directory)
+                                       (includes
+                                        (seq-map (lambda (session)
+                                                   (format "--include=%s"
+                                                           (file-name-nondirectory
+                                                            (detached--session-file
+                                                             session
+                                                             'log))))
+                                                 sessions))
+                                       (grep-command
+                                        (string-join `(,detached-grep-program
+                                                       "--files-with-matches"
+                                                       ,@includes
+                                                       "--no-messages"
+                                                       "--ignore-case"
+                                                       "--recursive"
+                                                       ,(format "\"%s\"" regexp))
+                                                     " ")))
+                            (split-string
+                             (with-connection-local-variables
+                              (with-temp-buffer
+                                (process-file-shell-command grep-command nil t)
+                                (buffer-string)))
+                             "\n" t))))
+                       (flatten-tree)
+                       (seq-remove #'null)
+                       (seq-map #'file-name-sans-extension))))
+    (seq-filter (lambda (it)
+                  (member (symbol-name (detached--session-id it)) session-ids))
+                sessions)))
 
 ;;;; Major mode
 
