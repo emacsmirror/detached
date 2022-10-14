@@ -114,7 +114,7 @@ This is a a minimal ~use-package~ configuration.
 
 ** Integration with shells
 
-The package supports integration with =shell=, =eshell= and =vterm=. All of the integrations work similarly. In all cases a detached minor mode is provided. Each of the minor modes provides keybindings for the following operations:
+The package supports integration with =shell=, =eshell= and =vterm=. All of the these extensions work similarly, each implementing a detached minor mode, =detached-.*mode=. Each of the minor modes provides keybindings for the following operations:
 
 - Creating a session
 - Detaching from a session
@@ -135,6 +135,7 @@ The package offers two different interfaces for session management, =detached-op
 After opening =detached-list-sessions= the user can press =?= to view a list of all commands accessible in the buffer. Generally speaking there are commands to either operate on the session at point, such as rerunning it and deleting it. Or there are commands that operate on multiple sessions at once, such as marking sessions or narrow the list of sessions based on a criteria.
 
 Narrow criteria are composable so that they each take effect after each other. For example narrowing based on local sessions, narrows the list of candidates, which further can be narrowed to sessions where the command match a regular expression. The mode also features a command =detached-list-select-filter= which allows the user to select a preconfigured set of criteria defined in =detached-list-filters=.
+
 * Customization
 
 ** Notifications
@@ -145,6 +146,7 @@ The variable can be changed to:
 - a custom function, created by the user
 - the ~detached-state-transition-echo-message~, which uses the echo area
 - the ~detached-extra-alert-notification~, which relies on the 3rd-party package ~alert~
+
 ** Detached list
 
 The buffer created by ~detached-list-sessions~ can be customized in its appearance. This is done through the ~detached-list-display-buffer-action~. By default it will use:
@@ -212,6 +214,7 @@ Will unfortunately not be interpreted correctly. Instead the user needs to use s
 #+begin_src sh
   git shortlog --summary --numbered --all --no-merges --since='01 Jan 2022'
 #+end_src
+
 ** Reproducible environments
 
 The package works best when sessions can be re-run. For this to work, the command needs to be robust against changes in the environment. Since only a single command is run there can be no dependency to previously run commands in the same shell, when the session is created. If the command the user wants to run have such requirements the best thing to do is to create a shell script that can set up that environment, and execute that script instead.
@@ -228,6 +231,7 @@ Then the following command would be reproducible.
 #+begin_src sh
   direnv_command python foo.py
 #+end_src
+
 * Contributions
 
 The package is part of ~ELPA~, which means that if you want to contribute, you must have a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Copyright-Assignment.html][copyright assignement]].
@@ -241,10 +245,10 @@ This package wouldn't have been were it is today without these contributors.
 - [[https://gitlab.com/rosetail][rosetail]]
 - [[https://lists.sr.ht/~protesilaos][protesilaos]]
 - [[https://www.iro.umontreal.ca/~monnier/][Stefan Monnier]]
+
 ** Idea contributors
 
 - [[https://gitlab.com/rosetail][rosetail]] for all the great ideas and improvements to the package. Without those contributions `detached.el` would be a less sophisticated package.
 - [[https://gitlab.com/ntdef][Troy de Freitas]] for solving the problem of getting `detached.el` to work with `filenotify` on macOS.
 - [[https://gitlab.com/minad][Daniel Mendler]] for helping out in improving `detached.el`, among other things integration with other packages such as `embark` and `consult`.
 - [[https://gitlab.com/ambrevar][Ambrevar]] who indirectly contributed by inspiring me with his [[https://www.reddit.com/r/emacs/comments/6y3q4k/yes_eshell_is_my_main_shell/][yes eshell is my main shell]]. It was through that I discovered his [[https://github.com/Ambrevar/dotfiles/blob/master/.emacs.d/lisp/package-eshell-detach.el][package-eshell-detach]] which got me into the idea of using `dtach` as a base for detached shell commands.
-  

@@ -236,9 +236,9 @@ File: detached.info,  Node: Integration with shells,  Next: Integration with com
 ===========================
 
 The package supports integration with ‘shell’, ‘eshell’ and ‘vterm’.
-All of the integrations work similarly.  In all cases a detached minor
-mode is provided.  Each of the minor modes provides keybindings for the
-following operations:
+All of the these extensions work similarly, each implementing a detached
+minor mode, ‘detached-.*mode’.  Each of the minor modes provides
+keybindings for the following operations:
 
    • Creating a session
    • Detaching from a session
@@ -575,24 +575,24 @@ Node: Install from Guix5427
 Node: Configuration5690
 Node: Workflows6243
 Node: Integration with shells6471
-Node: Integration with compile and shell-command7501
-Node: Session management8109
-Node: Detached list sessions8732
-Node: Customization9684
-Node: Notifications9851
-Node: Detached list10512
-Node: Design11131
-Node: Sessions11269
-Node: Session creation11430
-Node: Session initialization12946
-Node: Session transition14184
-Node: Known limitations14880
-Node: Quotation marks15329
-Node: Reproducible environments15961
-Node: Contributions17021
-Node: Acknowledgments17364
-Node: Code contributors17616
-Node: Idea contributors17924
+Node: Integration with compile and shell-command7520
+Node: Session management8128
+Node: Detached list sessions8751
+Node: Customization9703
+Node: Notifications9870
+Node: Detached list10531
+Node: Design11150
+Node: Sessions11288
+Node: Session creation11449
+Node: Session initialization12965
+Node: Session transition14203
+Node: Known limitations14899
+Node: Quotation marks15348
+Node: Reproducible environments15980
+Node: Contributions17040
+Node: Acknowledgments17383
+Node: Code contributors17635
+Node: Idea contributors17943
 
 End Tag Table
 
