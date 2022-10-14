@@ -530,6 +530,10 @@ If prefix-argument is provided unmark instead of mark."
 
 ;;;; Support functions
 
+(defun detached--revert-selection-change (&rest _)
+  "Revert function to add to `window-selection-change-functions'."
+  (detached-list-revert))
+
 (defun detached-list--initialize-directory (directory)
   "Initialize sessions in DIRECTORY."
   (thread-last (detached-get-sessions)
@@ -711,6 +715,7 @@ If prefix-argument is provided unmark instead of mark."
   (hl-line-mode)
   (add-hook 'eldoc-documentation-functions #'detached-list-eldoc nil t)
   (add-hook 'tabulated-list-revert-hook #'detached-list--revert-sessions nil t)
+  (add-hook 'window-selection-change-functions #'detached--revert-selection-change nil t)
   (setq-local mode-line-position '((:eval (detached-list--mode-line-indicator))))
   (tabulated-list-init-header))
 
