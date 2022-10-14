@@ -171,7 +171,7 @@
   (with-eval-after-load 'nano-modeline
     (push `(detached-list-mode
             :mode-p (lambda () (derived-mode-p 'detached-list-mode))
-            :format (lambda () (nano-modeline-render "" (detached-list--mode-line-indicator) "" "")))
+            :format (lambda () (nano-modeline-render nil (detached-list--mode-line-indicator) "" "")))
           nano-modeline-mode-formats)))
 
 (defun detached-init--detached-list ()
