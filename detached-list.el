@@ -191,6 +191,14 @@ Optionally DELETE the session if prefix-argument is provided."
      (detached-list--get-marked-or-current-sessions))
     (detached-list-revert)))
 
+(defun detached-list-view-session (session)
+  "View SESSION."
+  (interactive
+   (list (detached--get-session major-mode)))
+  (let ((detached-open-session-display-buffer-action
+         detached-list-open-session-display-buffer-action))
+    (detached-view-dwim session)))
+
 (defun detached-list-rerun-session (session &optional suppress-output)
   "Rerun SESSION at point.
 
@@ -738,6 +746,7 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "T") #'detached-list-toggle-sessions)
     (define-key map (kbd "u") #'detached-list-unmark-session)
     (define-key map (kbd "U") #'detached-list-unmark-sessions)
+    (define-key map (kbd "v") #'detached-list-view-session)
     (define-key map (kbd "w") #'detached-list-copy-session-command)
     (define-key map (kbd "W") #'detached-list-copy-session-output)
     (define-key map (kbd "x") #'detached-list-detach-from-session)
