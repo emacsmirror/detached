@@ -88,7 +88,7 @@ Optionally EDIT-COMMAND."
            (detached-session-mode 'attach)
            (detached--current-session session)
            (default-directory
-             (detached--session-working-directory session)))
+             (detached--session-directory session)))
       (compilation-start (detached--session-command session)))))
 
 ;;;;; Support functions

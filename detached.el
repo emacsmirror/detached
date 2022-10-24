@@ -861,7 +861,7 @@ This function uses the `notifications' library."
          (inhibit-message t))
     (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
                (buffer (get-buffer-create detached--shell-command-buffer))
-               (default-directory (detached--session-working-directory session))
+               (default-directory (detached--session-directory session))
                (command (detached--shell-command session t)))
       (when (get-buffer-process buffer)
         (setq buffer (generate-new-buffer (buffer-name buffer))))
@@ -1502,7 +1502,9 @@ If SESSION is degraded fallback to a command that doesn't rely on tee."
 
 (defun detached--host ()
   "Return a cons with (host . type)."
-  (let ((remote (file-remote-p default-directory)))
+  (let ((remote
+         (and (file-remote-p default-directory)
+          (not detached-local-session))))
     `(,(if remote (file-remote-p default-directory 'host) (system-name)) . ,(if remote 'remote 'local))))
 
 (defun detached--update-session-time (session &optional approximate)
