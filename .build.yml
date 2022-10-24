@@ -2,6 +2,7 @@ image: guix
 packages:
 - dtach
 - emacs-minimal
+- texinfo
 environment:
   project: detached.el
 tasks:
