@@ -1129,8 +1129,9 @@ Optionally CONCAT the command return command into a string."
 Optionally CONCAT the command return command into a string."
   (detached-connection-local-variables
    (let* ((log (detached--session-file session 'log t))
-          (tail-command `(,detached-tail-program "--follow=name" "--retry"
-                                                 ,(concat "--lines=" detached-session-context-lines)
+          (tail-command `(,detached-tail-program "-F"
+                                                 "-n"
+                                                 ,(number-to-string detached-session-context-lines)
                                                  ,log)))
      (cond ((eq 'create detached-session-mode)
             (detached--dtach-command session))
@@ -1167,7 +1168,7 @@ Optionally CONCAT the command return command into a string."
          (if concat
              (string-join
               `(,(when detached-show-session-context
-                   (format  "%s --lines=%s %s;" detached-tail-program detached-session-context-lines log))
+                   (format  "%s -n %s %s;" detached-tail-program detached-session-context-lines log))
                 ,detached-dtach-program
                 ,dtach-arg
                 ,socket
@@ -1175,7 +1176,8 @@ Optionally CONCAT the command return command into a string."
               " ")
            (append
             (when detached-show-session-context
-              `(,detached-tail-program ,(format "--lines=%s" detached-session-context-lines)
+              `(,detached-tail-program "-n"
+                                       ,(number-to-string detached-session-context-lines)
                                        ,(concat log ";")))
             `(,detached-dtach-program ,dtach-arg ,socket "-r" "none")))
        (if concat

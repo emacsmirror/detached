@@ -87,6 +87,24 @@
 
 ;;;;; Other
 
+ (ert-deftest detached-test-tail-command ()
+   (detached-test--with-temp-database
+    (cl-letf* ((detached-tail-program "tail")
+               (session (detached-create-session "ls -la"))
+               (detached-show-session-context t)
+               (detached-session-context-lines 20)
+               ((symbol-function #'detached-create-session)
+                (lambda (_)
+                  session)))
+      (let* ((log (detached--session-file session 'log t))
+             (expected `(,detached-tail-program
+                         "-F" "-n" ,(number-to-string detached-session-context-lines)
+                         ,log))
+             (expected-concat (string-join expected " ")))
+        (let ((detached-session-mode 'create-and-attach))
+          (should (equal expected (detached--tail-command session)))
+          (should (equal expected-concat (detached--tail-command session t))))))))
+
 (ert-deftest detached-test-dtach-command ()
   (detached-test--with-temp-database
    (cl-letf* ((detached-dtach-program "dtach")
@@ -117,11 +135,12 @@
 	 (let* ((detached-session-mode 'attach)
 			(log (detached--session-file session 'log t))
 			(expected `(,detached-tail-program
-						,(format "--lines=%s" detached-session-context-lines)
+                        "-n"
+                        ,(number-to-string detached-session-context-lines)
 						,(format "%s;" log)
 						,detached-dtach-program "-a" ,(detached--session-file session 'socket t) "-r" "none"))
 			(expected-concat (format "%s %s; %s -a %s -r none"
-									 (format "%s --lines=%s" detached-tail-program detached-session-context-lines)
+                                     (format "%s -n %s" detached-tail-program detached-session-context-lines)
 									 log
 									 detached-dtach-program
 									 (detached--session-file session 'socket t))))
