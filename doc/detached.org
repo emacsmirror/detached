@@ -245,6 +245,7 @@ This package wouldn't have been were it is today without these contributors.
 - [[https://gitlab.com/rosetail][rosetail]]
 - [[https://lists.sr.ht/~protesilaos][protesilaos]]
 - [[https://www.iro.umontreal.ca/~monnier/][Stefan Monnier]]
+- dpettersson
 
 ** Idea contributors
 
