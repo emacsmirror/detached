@@ -244,9 +244,10 @@ This package wouldn't have been were it is today without these contributors.
 
 - [[https://gitlab.com/rosetail][rosetail]]
 - [[https://lists.sr.ht/~protesilaos][protesilaos]]
-- [[https://www.iro.umontreal.ca/~monnier/][Stefan Monnier]]
+- [[https://www.iro.umontreal.ca/~monnier][Stefan Monnier]]
 - dpettersson
-
+- [[http://technomadic.org][Greg Pfeil]]
+  
 ** Idea contributors
 
 - [[https://gitlab.com/rosetail][rosetail]] for all the great ideas and improvements to the package. Without those contributions `detached.el` would be a less sophisticated package.
