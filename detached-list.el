@@ -71,10 +71,10 @@ detached list implements."
 
 ;;;; Private
 
-(defvar-local detached-list--marked-sessions nil
+(defvar detached-list--marked-sessions nil
   "A list of marked session ids.")
-(defvar-local detached-list--filters nil
-  "A list of filters to apply when displaying the sessions.")
+(defvar detached-list--narrow-criteria nil
+  "A list of criteria to apply when displaying the sessions.")
 
 ;;;; Functions
 
@@ -137,15 +137,15 @@ Optionally initialize ALL session-directories."
 (defun detached-list-remove-narrow-criterion ()
   "Remove narrow criterion."
   (interactive)
-  (if detached-list--filters
+  (if detached-list--narrow-criteria
       (detached-list-narrow-sessions
-       (cdr detached-list--filters))
+       (cdr detached-list--narrow-criteria))
     (message "No criterion to remove")))
 
 (defun detached-list-widen ()
   "Remove all narrowing restrictions."
   (interactive)
-  (when detached-list--filters
+  (when detached-list--narrow-criteria
     (detached-list-narrow-sessions nil)))
 
 (defun detached-list-detach-from-session (session)
@@ -248,7 +248,7 @@ Optionally SUPPRESS-OUTPUT."
                                      (plist-get (detached--session-time it) :start))
                                   parsed-threshold))
                              sessions))))
-           ,@detached-list--filters))
+           ,@detached-list--narrow-criteria))
       (message "Cannot parse time"))))
 
 (defun detached-list-narrow-before-time (time-threshold)
@@ -267,7 +267,7 @@ Optionally SUPPRESS-OUTPUT."
                                    (plist-get (detached--session-time it) :start))
                                 parsed-threshold))
                            sessions))))
-         ,@detached-list--filters))
+         ,@detached-list--narrow-criteria))
       (message "Cannot parse time"))))
 
 (defun detached-list-narrow-host (hostname)
@@ -275,7 +275,7 @@ Optionally SUPPRESS-OUTPUT."
   (interactive
    (list
     (when-let* ((hostnames
-                 (thread-last (detached-list--get-filtered-sessions)
+                 (thread-last (detached-list--get-narrowed-sessions)
                               (seq-map #'detached--session-host)
                               (seq-map #'car)
                               (seq-uniq))))
@@ -290,7 +290,7 @@ Optionally SUPPRESS-OUTPUT."
                          (string-match hostname
                                        (car (detached--session-host it))))
                        sessions)))
-       ,@detached-list--filters))))
+       ,@detached-list--narrow-criteria))))
 
 (defun detached-list-narrow-output-regexp (regexp)
   "Narrow to sessions which output contain REGEXP."
@@ -302,7 +302,7 @@ Optionally SUPPRESS-OUTPUT."
      `((,(concat "Output: " regexp) .
         ,(lambda (sessions)
            (detached--grep-sesssions-output sessions regexp)))
-       ,@detached-list--filters))))
+       ,@detached-list--narrow-criteria))))
 
 (defun detached-list-narrow-regexp (regexp)
   "Narrow to sessions which command match REGEXP."
@@ -317,7 +317,7 @@ Optionally SUPPRESS-OUTPUT."
                          (string-match regexp
                                        (detached--session-command it)))
                        sessions)))
-       ,@detached-list--filters))))
+       ,@detached-list--narrow-criteria))))
 
 (defun detached-list-narrow-annotation-regexp (regexp)
   "Narrow to sessions which annotation match REGEXP."
@@ -332,7 +332,7 @@ Optionally SUPPRESS-OUTPUT."
                          (when-let ((annotation (detached--session-annotation it)))
                            (string-match regexp annotation)))
                        sessions)))
-       ,@detached-list--filters))))
+       ,@detached-list--narrow-criteria))))
 
 (defun detached-list-narrow-local ()
   "Narrow to local sessions."
@@ -341,7 +341,7 @@ Optionally SUPPRESS-OUTPUT."
    `(("Local" .
       ,(lambda (sessions)
          (seq-filter #'detached--local-session-p sessions)))
-     ,@detached-list--filters)))
+     ,@detached-list--narrow-criteria)))
 
 (defun detached-list-narrow-remote ()
   "Narrow to remote sessions."
@@ -350,22 +350,29 @@ Optionally SUPPRESS-OUTPUT."
    `(("Remote" .
       ,(lambda (sessions)
          (seq-filter #'detached--remote-session-p sessions)))
-     ,@detached-list--filters)))
+     ,@detached-list--narrow-criteria)))
 
 (defun detached-list-select-filter ()
-  "Select a `detached-list-filter' to apply."
+  "Select filter from `detached-list-filter' to apply."
   (interactive)
-  (when-let* ((filter-name (completing-read "Select filter: " detached-list-filters))
-              (filter (alist-get filter-name detached-list-filters nil nil #'string=)))
-    (setq detached-list--filters nil)
-    (seq-do (lambda (it) (apply it)) filter)))
+  (when-let* ((metadata `(metadata
+                          (category . detached)
+                          (display-sort-function . identity)))
+              (collection (lambda (string predicate action)
+                            (if (eq action 'metadata)
+                                metadata
+                              (complete-with-action action detached-list-filters string predicate))))
+              (filter-name
+               (completing-read "Select filter: " collection nil t)))
+    (detached-list--apply-filter
+     (alist-get filter-name detached-list-filters nil nil #'string=))))
 
 (defun detached-list-narrow-origin (origin)
   "Narrow to sessions with a specific ORIGIN."
   (interactive
    (list
     (when-let ((origins
-                (thread-last (detached-list--get-filtered-sessions)
+                (thread-last (detached-list--get-narrowed-sessions)
                              (seq-map #'detached--session-origin)
                              (seq-uniq)
                              (seq-remove #'null)
@@ -382,7 +389,7 @@ Optionally SUPPRESS-OUTPUT."
               (string-match origin
                             (symbol-name (detached--session-origin it))))
               sessions)))
-       ,@detached-list--filters))))
+       ,@detached-list--narrow-criteria))))
 
 (defun detached-list-narrow-active ()
   "Narrow to active sessions."
@@ -391,7 +398,7 @@ Optionally SUPPRESS-OUTPUT."
    `(("Active" .
       ,(lambda (sessions)
          (seq-filter #'detached--active-session-p sessions)))
-     ,@detached-list--filters)))
+     ,@detached-list--narrow-criteria)))
 
 (defun detached-list-narrow-inactive ()
   "Narrow to inactive sessions."
@@ -400,7 +407,7 @@ Optionally SUPPRESS-OUTPUT."
    `(("Inactive" .
       ,(lambda (sessions)
          (seq-remove #'detached--active-session-p sessions)))
-     ,@detached-list--filters)))
+     ,@detached-list--narrow-criteria)))
 
 (defun detached-list-narrow-success ()
   "Narrow to successful sessions."
@@ -411,7 +418,7 @@ Optionally SUPPRESS-OUTPUT."
          (seq-filter (lambda (it)
                        (eq 'success (car (detached--session-status it))))
                      sessions)))
-     ,@detached-list--filters)))
+     ,@detached-list--narrow-criteria)))
 
 (defun detached-list-narrow-failure ()
   "Narrow to failed sessions."
@@ -422,7 +429,7 @@ Optionally SUPPRESS-OUTPUT."
          (seq-filter (lambda (it)
                        (eq 'failure (car (detached--session-status it))))
                      sessions)))
-     ,@detached-list--filters)))
+     ,@detached-list--narrow-criteria)))
 
 (defun detached-list-mark-regexp (regexp)
   "Mark sessions which command match REGEXP.
@@ -522,18 +529,24 @@ If prefix-argument is provided unmark instead of mark."
       (detached-list-mode)
       (setq tabulated-list-entries
             (seq-map #'detached-list--get-entry
-                     (detached-list--get-filtered-sessions)))
+                     (detached-list--get-narrowed-sessions)))
       (tabulated-list-print t))))
 
-(defun detached-list-narrow-sessions (filters)
-  "Narrow session(s) based on FILTERS."
-  (setq detached-list--filters filters)
-  (setq tabulated-list-entries
-        (seq-map #'detached-list--get-entry
-                 (detached-list--get-filtered-sessions)))
-  (tabulated-list-print t))
+(defun detached-list-narrow-sessions (criteria)
+  "Narrow session(s) based on CRITERIA."
+  (setq detached-list--narrow-criteria criteria)
+  (when (eq major-mode 'detached-list-mode)
+    (setq tabulated-list-entries
+          (seq-map #'detached-list--get-entry
+                   (detached-list--get-narrowed-sessions)))
+    (tabulated-list-print t)))
 
 ;;;; Support functions
+
+(defun detached-list--apply-filter (filter)
+  "Apply FILTER."
+  (setq detached-list--narrow-criteria nil)
+  (seq-do (lambda (criteria) (apply criteria)) filter))
 
 (defun detached--revert-selection-change (&rest _)
   "Revert function to add to `window-selection-change-functions'."
@@ -575,7 +588,7 @@ If prefix-argument is provided unmark instead of mark."
   "Recompute `tabulated-list-entries'."
   (setq tabulated-list-entries
         (seq-map #'detached-list--get-entry
-                 (detached-list--get-filtered-sessions))))
+                 (detached-list--get-narrowed-sessions))))
 
 (defun detached-list--get-entry (session)
   "Return list entry based on SESSION."
@@ -658,12 +671,13 @@ If prefix-argument is provided unmark instead of mark."
   (or detached-list--marked-sessions
       `(,(tabulated-list-get-id))))
 
-(defun detached-list--get-filtered-sessions ()
-  "Return a list of filtered sessions."
+(defun detached-list--get-narrowed-sessions ()
+  "Return a list of narrowed sessions."
   (let ((sessions (detached-get-sessions)))
-    (seq-do (lambda (filter)
-              (setq sessions (funcall (cdr filter) sessions)))
-            detached-list--filters)
+    (seq-do (lambda (it)
+              (pcase-let ((`(,_identifier . ,criteria) it))
+                (setq sessions (funcall criteria sessions))))
+            detached-list--narrow-criteria)
     sessions))
 
 (cl-defmethod detached--get-session ((_mode (derived-mode detached-list-mode)))
@@ -762,9 +776,9 @@ If prefix-argument is provided unmark instead of mark."
 
 (defun detached-list--mode-line-indicator ()
   "Return the mode line indicator based on narrow criteria."
-  (if detached-list--filters
+  (if detached-list--narrow-criteria
       (string-join
-       (thread-last detached-list--filters
+       (thread-last detached-list--narrow-criteria
                     (seq-reverse)
                     (seq-map #'car))
        " > ")

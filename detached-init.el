@@ -47,6 +47,7 @@
 (declare-function detached-extra-projectile-run-compilation "detached-extra")
 (declare-function detached-extra-dired-rsync "detached-extra")
 (declare-function detached-list--db-update "detached-list")
+(declare-function detached-list--apply-filter "detached-list")
 (declare-function detached-org-babel-sh "detached-org")
 (declare-function detached-shell-override-history "detached-shell")
 (declare-function detached-shell-save-history-on-kill "detached-shell")
@@ -57,6 +58,8 @@
 (declare-function dired-rsync "dired-rsync")
 (declare-function projectile "projectile")
 (declare-function vterm "vterm")
+
+(defvar detached-list-filters)
 
 (defvar embark-general-map)
 (defvar embark-keymap-alist)
@@ -178,6 +181,8 @@
   "Initialize `detached-list'."
   ;; Trigger initialization of sessions upon load of `detached-list'
   (with-eval-after-load 'detached-list
+    (detached-list--apply-filter
+          (cdr (car detached-list-filters)))
     (add-hook 'detached-update-db-hooks #'detached-list--db-update)))
 
 (defun detached-init--detached ()
