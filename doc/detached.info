@@ -539,6 +539,7 @@ File: detached.info,  Node: Code contributors,  Next: Idea contributors,  Up: Ac
    • rosetail (https://gitlab.com/rosetail)
    • protesilaos (https://lists.sr.ht/~protesilaos)
    • Stefan Monnier (https://www.iro.umontreal.ca/~monnier/)
+   • dpettersson
 
 
 File: detached.info,  Node: Idea contributors,  Prev: Code contributors,  Up: Acknowledgments
@@ -592,7 +593,7 @@ Node: Reproducible environments15980
 Node: Contributions17040
 Node: Acknowledgments17383
 Node: Code contributors17635
-Node: Idea contributors17943
+Node: Idea contributors17962
 
 End Tag Table
 
