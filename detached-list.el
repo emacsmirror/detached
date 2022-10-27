@@ -32,9 +32,8 @@
 ;;;; Variables
 
 (defcustom detached-list-config
-    (:name "State" :function detached-list--state-str :length 10 :face detached-state-face)
-    (:name "Status" :function detached-list--status-str :length 10 :face detached-failure-face)
   `((:name "Command" :function detached-list--command-str :length 60)
+    (:name "Status" :function detached-list--status-str :length 10)
     (:name "Host" :function detached--host-str :length 15 :face detached-host-face)
     (:name "Directory" :function detached--working-dir-str :length 40 :face detached-working-dir-face)
     (:name "Metadata" :function detached--metadata-str :length 30 :face detached-metadata-face)
@@ -74,6 +73,16 @@ detached list implements."
   "The function to use for identifying a session."
   :group 'detached
   :type 'sexp)
+
+(defcustom detached-list-state-symbols
+  '((active . "*")
+    (failure . "!")
+    (success . " ")
+    (initially-attached . "o")
+    (initially-detached . " "))
+  "An alist of symbols to use to communicate different states."
+  :group 'detached
+  :type '(alist :key-type symbol :value-type string))
 
 ;;;; Private
 
@@ -748,12 +757,35 @@ If prefix-argument is provided unmark instead of mark."
 
 (defun detached-list--status-str (session)
   "Return a string representation of SESSION's status."
-  (let ((status (detached-session-status session)))
-    (symbol-name status)))
-
-(defun detached-list--state-str (session)
-  "Return a string representation of SESSION's state."
-  (symbol-name (detached--session-state session)))
+  (let* ((status (detached-session-status session))
+         (status-str
+          (if (detached--active-session-p session)
+              (alist-get 'active detached-list-state-symbols "?")
+            (if (eq status 'failure)
+                (alist-get 'failure detached-list-state-symbols "?")
+              (alist-get 'success detached-list-state-symbols "?"))))
+         (status-face
+          (cond ((and (detached--uninitialized-session-p session)
+                      (detached--active-session-p session))
+                 'detached-identifier-face)
+                ((detached--active-session-p session) 'font-lock-type-face)
+                ((eq status 'failure) 'detached-failure-face)
+                ((eq status 'success) 'detached-state-face)
+                (t 'detached-identifier-face)))
+         (attach-str
+          (cond ((eq 'create-and-attach (detached--session-initial-mode session))
+                 (alist-get 'initially-attached detached-list-state-symbols "?"))
+                ((eq 'create (detached--session-initial-mode session))
+                 (alist-get 'initially-detached detached-list-state-symbols "?"))
+                (t "?")))
+         (initial-mode-face
+          (cond ((eq 'create-and-attach (detached--session-initial-mode session)) 'detached-identifier-face)
+                ((eq 'create (detached--session-initial-mode session)) 'detached-identifier-face)
+                (t "?"))))
+    (string-join
+     `(,(propertize status-str 'face status-face)
+       ,(propertize attach-str 'face initial-mode-face))
+     " ")))
 
 (defun detached-list--command-str (session)
   "Return command string for SESSION."
