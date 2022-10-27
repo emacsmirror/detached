@@ -401,6 +401,7 @@ Optionally SUPPRESS-OUTPUT."
                          (string-match session-directory
                                        (detached--session-directory it)))
                        sessions)))))))
+
 (defun detached-list-narrow-annotation (regexp)
   "Narrow to sessions which annotation match REGEXP."
   (interactive
@@ -823,19 +824,21 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "j") #'imenu)
     (define-key map (kbd "k") #'detached-list-kill-session)
     (define-key map (kbd "m") #'detached-list-mark-session)
-    (define-key map (kbd "n a") #'detached-list-narrow-active)
-    (define-key map (kbd "n h") #'detached-list-narrow-host)
-    (define-key map (kbd "n f") #'detached-list-narrow-failure)
-    (define-key map (kbd "n i") #'detached-list-narrow-inactive)
-    (define-key map (kbd "n l") #'detached-list-narrow-local)
-    (define-key map (kbd "n o") #'detached-list-narrow-origin)
-    (define-key map (kbd "n r") #'detached-list-narrow-remote)
-    (define-key map (kbd "n s") #'detached-list-narrow-success)
     ;; Narrow
     (define-key map (kbd "n c") #'detached-list-narrow-command)
     (define-key map (kbd "n d") #'detached-list-narrow-session-directory)
+    ;; Host
+    (define-key map (kbd "n h h") #'detached-list-narrow-host)
+    (define-key map (kbd "n h l") #'detached-list-narrow-local)
+    (define-key map (kbd "n h r") #'detached-list-narrow-remote)
     (define-key map (kbd "n n") #'detached-list-narrow-annotation)
     (define-key map (kbd "n o") #'detached-list-narrow-output)
+    (define-key map (kbd "n O") #'detached-list-narrow-origin)
+    ;; State
+    (define-key map (kbd "n s a") #'detached-list-narrow-active)
+    (define-key map (kbd "n s f") #'detached-list-narrow-failure)
+    (define-key map (kbd "n s i") #'detached-list-narrow-inactive)
+    (define-key map (kbd "n s s") #'detached-list-narrow-success)
     (define-key map (kbd "n u") #'detached-list-narrow-unique)
     (define-key map (kbd "n w") #'detached-list-narrow-working-directory)
     (define-key map (kbd "n +") #'detached-list-narrow-after-time)
