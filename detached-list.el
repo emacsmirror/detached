@@ -329,7 +329,7 @@ Optionally SUPPRESS-OUTPUT."
                                        (car (detached--session-host it))))
                        sessions)))))))
 
-(defun detached-list-narrow-output-regexp (regexp)
+(defun detached-list-narrow-output (regexp)
   "Narrow to sessions which output contain REGEXP."
   (interactive
    (list (read-regexp
@@ -341,7 +341,7 @@ Optionally SUPPRESS-OUTPUT."
         ,(lambda (sessions)
            (detached--grep-sesssions-output sessions regexp)))))))
 
-(defun detached-list-narrow-regexp (regexp)
+(defun detached-list-narrow-command (regexp)
   "Narrow to sessions which command match REGEXP."
   (interactive
    (list
@@ -361,7 +361,7 @@ Optionally SUPPRESS-OUTPUT."
                                        (detached--session-command it)))
                        sessions)))))))
 
-(defun detached-list-narrow-annotation-regexp (regexp)
+(defun detached-list-narrow-annotation (regexp)
   "Narrow to sessions which annotation match REGEXP."
   (interactive
    (list (read-regexp
@@ -791,12 +791,13 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "n o") #'detached-list-narrow-origin)
     (define-key map (kbd "n r") #'detached-list-narrow-remote)
     (define-key map (kbd "n s") #'detached-list-narrow-success)
+    ;; Narrow
+    (define-key map (kbd "n c") #'detached-list-narrow-command)
+    (define-key map (kbd "n n") #'detached-list-narrow-annotation)
+    (define-key map (kbd "n o") #'detached-list-narrow-output)
     (define-key map (kbd "n u") #'detached-list-narrow-unique)
     (define-key map (kbd "n +") #'detached-list-narrow-after-time)
     (define-key map (kbd "n -") #'detached-list-narrow-before-time)
-    (define-key map (kbd "n /") #'detached-list-narrow-output-regexp)
-    (define-key map (kbd "n % a") #'detached-list-narrow-annotation-regexp)
-    (define-key map (kbd "n % c") #'detached-list-narrow-regexp)
     (define-key map (kbd "q") #'detached-list-quit)
     (define-key map (kbd "r") #'detached-list-rerun-session)
     (define-key map (kbd "t") #'detached-list-toggle-mark-session)
