@@ -518,8 +518,7 @@ The session is compiled by opening its output and enabling
   "Copy SESSION's command."
   (interactive
    (list (detached-completing-read (detached-get-sessions))))
-  (when (detached-valid-session session)
-    (kill-new (detached--session-command session))))
+  (kill-new (detached--session-command session)))
 
 ;;;###autoload
 (defun detached-insert-session-command (session)
