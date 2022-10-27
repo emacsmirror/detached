@@ -407,6 +407,8 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
   (let* ((detached-session-origin (or detached-session-origin 'shell-command))
          (detached-session-action (or detached-session-action
                                       detached-shell-command-session-action))
+         (detached-session-mode (or detached-session-mode
+                                 (if suppress-output 'create 'create-and-attach)))
          (detached--current-session (detached-create-session command)))
     (detached-start-session command suppress-output)))
 
@@ -464,7 +466,8 @@ The session is compiled by opening its output and enabling
   (when (detached-valid-session session)
     (let* ((default-directory
              (detached--session-working-directory session))
-           (detached-session-mode (detached--session-initial-mode session))
+           (detached-session-mode (or detached-session-mode
+                                      (detached--session-initial-mode session)))
            (detached-session-action (detached--session-action session))
            (command (detached--session-command session)))
       (if suppress-output

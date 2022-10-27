@@ -213,19 +213,25 @@ Optionally DELETE the session if prefix-argument is provided."
          detached-list-open-session-display-buffer-action))
     (detached-view-dwim session)))
 
-(defun detached-list-rerun-session (session &optional suppress-output)
+(defun detached-list-rerun-session (session &optional toggle-suppress-output)
   "Rerun SESSION at point.
 
-Optionally SUPPRESS-OUTPUT."
+Optionally TOGGLE-SUPPRESS-OUTPUT."
   (interactive
    (list (tabulated-list-get-id)
          current-prefix-arg))
-  (when (eq 'create-and-attach (detached--session-initial-mode session))
-    (when-let ((single-window (> (length (window-list)) 1))
-               (buffer (current-buffer)))
-      (delete-window (get-buffer-window))
-      (bury-buffer buffer)))
-  (detached-rerun-session session suppress-output))
+  (let ((detached-session-mode
+         (if toggle-suppress-output
+             (if (eq 'create (detached--session-initial-mode session))
+                 'create-and-attach
+               'create)
+           (detached--session-initial-mode session))))
+    (unless (eq detached-session-mode 'create)
+      (when-let ((single-window (> (length (window-list)) 1))
+                 (buffer (current-buffer)))
+        (delete-window (get-buffer-window))
+        (bury-buffer buffer)))
+    (detached-rerun-session session)))
 
 (defun detached-list-diff-marked-sessions ()
   "Diff two sessions."
