@@ -217,7 +217,12 @@ Optionally SUPPRESS-OUTPUT."
   "Diff two sessions."
   (interactive)
   (if (= (length detached-list--marked-sessions) 2)
-      (apply #'detached-diff-session detached-list--marked-sessions)
+      (progn
+        (when-let ((single-window (> (length (window-list)) 1))
+                 (buffer (current-buffer)))
+        (delete-window (get-buffer-window))
+        (bury-buffer buffer))
+        (apply #'detached-diff-session detached-list--marked-sessions))
     (message "Mark two sessions")))
 
 (defun detached-list-open-session ()
