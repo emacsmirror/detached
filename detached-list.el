@@ -32,9 +32,9 @@
 ;;;; Variables
 
 (defcustom detached-list-config
-  `((:name "Command" :function detached--session-command :length 60)
     (:name "State" :function detached-list--state-str :length 10 :face detached-state-face)
     (:name "Status" :function detached-list--status-str :length 10 :face detached-failure-face)
+  `((:name "Command" :function detached-list--command-str :length 60)
     (:name "Host" :function detached--host-str :length 15 :face detached-host-face)
     (:name "Directory" :function detached--working-dir-str :length 40 :face detached-working-dir-face)
     (:name "Metadata" :function detached--metadata-str :length 30 :face detached-metadata-face)
@@ -754,6 +754,13 @@ If prefix-argument is provided unmark instead of mark."
 (defun detached-list--state-str (session)
   "Return a string representation of SESSION's state."
   (symbol-name (detached--session-state session)))
+
+(defun detached-list--command-str (session)
+  "Return command string for SESSION."
+  (let ((command-str (detached--session-command session)))
+    (if (detached--uninitialized-session-p session)
+        (propertize command-str 'face 'detached-uninitialized-face)
+      command-str)))
 
 (defun detached-list--get-marked-or-current-sessions ()
   "Return a list of relevant sessions."

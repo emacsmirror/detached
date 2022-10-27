@@ -303,6 +303,11 @@ This version is encoded as [package-version].[revision].")
   '((t :inherit font-lock-comment-face))
   "Face used to highlight the annotation of a session in `eldoc-mode'.")
 
+(defface detached-uninitialized-face
+  '((t :inherit font-lock-comment-face))
+  "Face used to highlight that a session is uninitialized.")
+
+
 ;;;;; Private
 
 (defvar detached--sessions-initialized nil
