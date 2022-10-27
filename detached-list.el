@@ -361,6 +361,46 @@ Optionally SUPPRESS-OUTPUT."
                                        (detached--session-command it)))
                        sessions)))))))
 
+(defun detached-list-narrow-working-directory (regexp)
+  "Narrow to sessions with working directory matching REGEXP."
+  (interactive
+   (list
+    (if current-prefix-arg
+        (regexp-quote
+         (detached--session-working-directory
+          (detached--get-session major-mode)))
+        (read-regexp
+              "Filter session working directories containing (regexp): "))))
+  (when regexp
+    (detached-list-narrow-sessions
+     `(,@detached-list--narrow-criteria
+       (,(concat "Working-Directory: " regexp) .
+        ,(lambda (sessions)
+           (seq-filter (lambda (it)
+                         (string-match regexp
+                                       (detached--session-working-directory it)))
+                       sessions)))))))
+
+(defun detached-list-narrow-session-directory (session-directory)
+  "Narrow to sessions with SESSION-DIRECTORY."
+  (interactive
+   (list
+    (when-let* ((directories
+                 (thread-last (detached-list--get-narrowed-sessions)
+                              (seq-map #'detached--session-directory)
+                              (seq-uniq))))
+      (completing-read
+       "Select session directory: "
+       directories))))
+  (when session-directory
+    (detached-list-narrow-sessions
+     `(,@detached-list--narrow-criteria
+       (,(concat "Session-Directory: " session-directory) .
+        ,(lambda (sessions)
+           (seq-filter (lambda (it)
+                         (string-match session-directory
+                                       (detached--session-directory it)))
+                       sessions)))))))
 (defun detached-list-narrow-annotation (regexp)
   "Narrow to sessions which annotation match REGEXP."
   (interactive
@@ -793,9 +833,11 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "n s") #'detached-list-narrow-success)
     ;; Narrow
     (define-key map (kbd "n c") #'detached-list-narrow-command)
+    (define-key map (kbd "n d") #'detached-list-narrow-session-directory)
     (define-key map (kbd "n n") #'detached-list-narrow-annotation)
     (define-key map (kbd "n o") #'detached-list-narrow-output)
     (define-key map (kbd "n u") #'detached-list-narrow-unique)
+    (define-key map (kbd "n w") #'detached-list-narrow-working-directory)
     (define-key map (kbd "n +") #'detached-list-narrow-after-time)
     (define-key map (kbd "n -") #'detached-list-narrow-before-time)
     (define-key map (kbd "q") #'detached-list-quit)
