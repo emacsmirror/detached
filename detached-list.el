@@ -108,9 +108,9 @@ detached list implements."
   "A member of `eldoc-documentation-functions', for signatures."
   (let ((session (tabulated-list-get-id)))
     (when (detached-session-p session)
-      (let ((strs `(,(detached--session-command session)
-                    ,(when-let  ((annotation (detached--session-annotation session)))
-                       (propertize annotation 'face 'detached-annotation-face)))))
+      (let ((strs `(,(when-let  ((annotation (detached--session-annotation session)))
+                       (propertize annotation 'face 'detached-annotation-face))
+                    ,(detached--session-command session))))
         (string-join (seq-remove #'null strs) "\n")))))
 
 (defun detached-list-session-identifier (session)
