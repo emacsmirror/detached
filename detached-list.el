@@ -870,13 +870,13 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "k") #'detached-list-kill-session)
     (define-key map (kbd "m") #'detached-list-mark-session)
     ;; Narrow
+    (define-key map (kbd "n a") #'detached-list-narrow-annotation)
     (define-key map (kbd "n c") #'detached-list-narrow-command)
     (define-key map (kbd "n d") #'detached-list-narrow-session-directory)
     ;; Host
     (define-key map (kbd "n h h") #'detached-list-narrow-host)
     (define-key map (kbd "n h l") #'detached-list-narrow-local)
     (define-key map (kbd "n h r") #'detached-list-narrow-remote)
-    (define-key map (kbd "n n") #'detached-list-narrow-annotation)
     (define-key map (kbd "n o") #'detached-list-narrow-output)
     (define-key map (kbd "n O") #'detached-list-narrow-origin)
     ;; State
