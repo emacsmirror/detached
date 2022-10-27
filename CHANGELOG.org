@@ -15,6 +15,7 @@
 - Add command for initializing a session directory
 - Add integration with =nano-modeline=
 - Add =detached-describe-session= command
+- Add unique narrow criteria
   
 * Version 0.9.1 (2022-09-22)
 

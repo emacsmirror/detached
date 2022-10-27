@@ -69,6 +69,12 @@ detached list implements."
   :group 'detached
   :type '(alist :key-type string))
 
+(defcustom detached-list-session-identifier-function
+  #'detached-list-session-identifier
+  "The function to use for identifying a session."
+  :group 'detached
+  :type 'sexp)
+
 ;;;; Private
 
 (defvar detached-list--marked-sessions nil
@@ -97,6 +103,14 @@ detached list implements."
                     ,(when-let  ((annotation (detached--session-annotation session)))
                        (propertize annotation 'face 'detached-annotation-face)))))
         (string-join (seq-remove #'null strs) "\n")))))
+
+(defun detached-list-session-identifier (session)
+  "Return a string identifier for SESSION."
+  (string-join
+   `(,(detached--session-command session)
+     ,(detached--host-str session)
+     ,(detached--session-directory session))
+   ", "))
 
 ;;;; Commands
 
@@ -236,6 +250,24 @@ Optionally SUPPRESS-OUTPUT."
       (delete-window (get-buffer-window))
       (bury-buffer buffer))
     (detached-open-session session)))
+
+(defun detached-list-narrow-unique ()
+  "Narrow to unique sessions."
+  (interactive)
+  (when detached-list-session-identifier-function
+    (detached-list-narrow-sessions
+     `(,@detached-list--narrow-criteria
+       ("Unique" .
+        ,(lambda (sessions)
+           (thread-last sessions
+                        (seq-group-by detached-list-session-identifier-function)
+                        (seq-map (lambda (it)
+                                   (pcase-let ((`(,_identifier . ,duplicate-sessions) it))
+                                     (car duplicate-sessions))))
+                        (seq-sort-by
+                         (lambda (it)
+                           (plist-get (detached--session-time it) :start))
+                         #'>))))))))
 
 (defun detached-list-narrow-after-time (time-threshold)
   "Narrow to session's created after TIME-THRESHOLD."
@@ -759,6 +791,7 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "n o") #'detached-list-narrow-origin)
     (define-key map (kbd "n r") #'detached-list-narrow-remote)
     (define-key map (kbd "n s") #'detached-list-narrow-success)
+    (define-key map (kbd "n u") #'detached-list-narrow-unique)
     (define-key map (kbd "n +") #'detached-list-narrow-after-time)
     (define-key map (kbd "n -") #'detached-list-narrow-before-time)
     (define-key map (kbd "n /") #'detached-list-narrow-output-regexp)
