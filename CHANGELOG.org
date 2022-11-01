@@ -4,6 +4,8 @@
 
 * Development
 
+* Version 0.9.2 (2022-11-01)
+
 - Use =display-buffer= in =detached-list= in order for users to more easily customize the display of the buffer.
 - Add concept of =filters= to quickly apply a set of narrow criteria.
 - Speed up initialization of sessions.

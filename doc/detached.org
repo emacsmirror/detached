@@ -4,8 +4,8 @@
 #+language: en
 #+options: ':t toc:nil author:t email:t
 
-#+macro: version 0.9.1
-#+macro: updated last updated 8 October 2022
+#+macro: version 0.9.2
+#+macro: updated last updated 1 November 2022
 
 #+texinfo_filename: detached.info
 #+texinfo_dir_category: Emacs misc features

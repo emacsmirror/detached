@@ -1,8 +1,8 @@
 This is detached.info, produced by makeinfo version 6.7 from
 detached.texi.
 
-This manual describes the design of the ‘detached’ (version 0.9.1, last
-updated 8 October 2022) package, as well as its options and
+This manual describes the design of the ‘detached’ (version 0.9.2, last
+updated 1 November 2022) package, as well as its options and
 customizations.
 
    Copyright © 2020-2022 Free Software Foundation, Inc.
@@ -25,8 +25,8 @@ File: detached.info,  Node: Top,  Next: Overview,  Up: (dir)
 Detached processes for GNU Emacs
 ********************************
 
-This manual describes the design of the ‘detached’ (version 0.9.1, last
-updated 8 October 2022) package, as well as its options and
+This manual describes the design of the ‘detached’ (version 0.9.2, last
+updated 1 November 2022) package, as well as its options and
 customizations.
 
    Copyright © 2020-2022 Free Software Foundation, Inc.
@@ -567,34 +567,34 @@ File: detached.info,  Node: Idea contributors,  Prev: Code contributors,  Up: Ac
 
 
 Tag Table:
-Node: Top852
-Node: Overview2363
-Node: Dependencies3654
-Node: Installation4166
-Node: Install from source4557
-Node: Install from package archives4974
-Node: Install from Guix5427
-Node: Configuration5690
-Node: Workflows6243
-Node: Integration with shells6471
-Node: Integration with compile and shell-command7520
-Node: Session management8128
-Node: Detached list sessions8751
-Node: Customization9703
-Node: Notifications9870
-Node: Detached list10531
-Node: Design11150
-Node: Sessions11288
-Node: Session creation11449
-Node: Session initialization12965
-Node: Session transition14203
-Node: Known limitations14899
-Node: Quotation marks15348
-Node: Reproducible environments15980
-Node: Contributions17040
-Node: Acknowledgments17383
-Node: Code contributors17635
-Node: Idea contributors18004
+Node: Top853
+Node: Overview2365
+Node: Dependencies3656
+Node: Installation4168
+Node: Install from source4559
+Node: Install from package archives4976
+Node: Install from Guix5429
+Node: Configuration5692
+Node: Workflows6245
+Node: Integration with shells6473
+Node: Integration with compile and shell-command7522
+Node: Session management8130
+Node: Detached list sessions8753
+Node: Customization9705
+Node: Notifications9872
+Node: Detached list10533
+Node: Design11152
+Node: Sessions11290
+Node: Session creation11451
+Node: Session initialization12967
+Node: Session transition14205
+Node: Known limitations14901
+Node: Quotation marks15350
+Node: Reproducible environments15982
+Node: Contributions17042
+Node: Acknowledgments17385
+Node: Code contributors17637
+Node: Idea contributors18006
 
 End Tag Table
 
