@@ -463,6 +463,26 @@ The session is compiled by opening its output and enabling
          (display-buffer buffer-name detached-open-session-display-buffer-action))))))
 
 ;;;###autoload
+(defun detached-edit-and-run-session (session &optional suppress-output)
+  "Edit SESSION and run, optionally SUPPRESS-OUTPUT."
+  (interactive
+   (list (detached-completing-read (detached-get-sessions))
+         current-prefix-arg))
+  (when (detached-valid-session session)
+    (let* ((default-directory
+             (detached--session-working-directory session))
+           (detached-session-mode (or detached-session-mode
+                                      (detached--session-initial-mode session)))
+           (detached-session-action (detached--session-action session))
+           (command
+            (read-string "Edit command: " (detached--session-command session))))
+      (if suppress-output
+          (detached-start-session command suppress-output)
+        (if-let ((run-fun (plist-get (detached--session-action session) :run)))
+            (funcall run-fun command)
+          (detached-start-session command))))))
+
+;;;###autoload
 (defun detached-rerun-session (session &optional suppress-output)
   "Rerun SESSION, optionally SUPPRESS-OUTPUT."
   (interactive

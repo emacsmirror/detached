@@ -222,6 +222,26 @@ Optionally DELETE the session if prefix-argument is provided."
          detached-list-open-session-display-buffer-action))
     (detached-view-dwim session)))
 
+(defun detached-list-edit-and-run-session (session &optional toggle-suppress-output)
+  "Edit and run SESSION at point.
+
+Optionally TOGGLE-SUPPRESS-OUTPUT."
+  (interactive
+   (list (tabulated-list-get-id)
+         current-prefix-arg))
+  (let ((detached-session-mode
+         (if toggle-suppress-output
+             (if (eq 'create (detached--session-initial-mode session))
+                 'create-and-attach
+               'create)
+           (detached--session-initial-mode session))))
+    (unless (eq detached-session-mode 'create)
+      (when-let ((single-window (> (length (window-list)) 1))
+                 (buffer (current-buffer)))
+        (delete-window (get-buffer-window))
+        (bury-buffer buffer)))
+    (detached-edit-and-run-session session)))
+
 (defun detached-list-rerun-session (session &optional toggle-suppress-output)
   "Rerun SESSION at point.
 
@@ -863,6 +883,7 @@ If prefix-argument is provided unmark instead of mark."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "a") #'detached-list-edit-annotation)
     (define-key map (kbd "d") #'detached-list-delete-session)
+    (define-key map (kbd "e") #'detached-list-edit-and-run-session)
     (define-key map (kbd "f") #'detached-list-select-filter)
     (define-key map (kbd "g") #'detached-list-revert)
     (define-key map (kbd "i") #'detached-list-initialize-session-directory)
