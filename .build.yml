@@ -3,9 +3,10 @@ packages:
 - dtach
 - emacs-minimal
 - texinfo
+- make
 environment:
   project: detached.el
 tasks:
 - guix: |
     cd $project
-    ./build-package
+    make all
