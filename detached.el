@@ -207,8 +207,8 @@ If set to a non nil value the latest entry to
 
 (defcustom detached-session-info-buffer-action
   '(display-buffer-in-side-window
-                 (side . bottom)
-                 (dedicated . t))
+    (side . bottom)
+    (dedicated . t))
   "The action used to display a information about a detached session."
   :group 'detached
   :type 'sexp)
@@ -413,7 +413,7 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
          (detached-session-action (or detached-session-action
                                       detached-shell-command-session-action))
          (detached-session-mode (or detached-session-mode
-                                 (if suppress-output 'create 'create-and-attach)))
+                                    (if suppress-output 'create 'create-and-attach)))
          (detached--current-session (detached-create-session command)))
     (detached-start-session command suppress-output)))
 
@@ -507,13 +507,13 @@ The session is compiled by opening its output and enabling
   (when-let* ((session (detached--get-session major-mode))
               (buffer (get-buffer-create "*detached-session-info*"))
               (window (display-buffer buffer detached-session-info-buffer-action)))
-    (select-window window)
-    (with-current-buffer buffer
-      (erase-buffer)
-      (insert
-       (string-trim
-        (detached--session-header session)))
-      (goto-char (point-min)))))
+	     (select-window window)
+	     (with-current-buffer buffer
+	       (erase-buffer)
+	       (insert
+		(string-trim
+		 (detached--session-header session)))
+	       (goto-char (point-min)))))
 
 ;;;###autoload
 (defun detached-attach-session (session)
@@ -577,7 +577,7 @@ Optionally DELETE the session if prefix-argument is provided."
   (when (detached-valid-session session)
     (when-let* ((default-directory (detached--session-directory session))
                 (pid (detached--session-pid session)))
-      (detached--kill-processes pid))
+	       (detached--kill-processes pid))
     (when delete
       (detached--db-remove-entry session))))
 
@@ -878,7 +878,7 @@ This function uses the `notifications' library."
                (thread-last (detached--uninitialized-sessions)
                             (seq-filter #'detached--session-accessible-p)
                             (seq-do #'detached--initialize-session))))
-    (detached--db-update-sessions))
+	     (detached--db-update-sessions))
   (detached--db-get-sessions))
 
 (defun detached-shell-command-attach-session (session)
@@ -1291,8 +1291,8 @@ Optionally make the path LOCAL to host."
         (insert-file-contents db)
         (cl-assert (bobp))
         (if (detached--verify-db-compatibility)
-          (setq detached--sessions
-                (read (current-buffer)))
+            (setq detached--sessions
+                  (read (current-buffer)))
           (warn "Detached database has version %s while minimum version is %s"
                 (detached--db-session-version) detached-minimum-session-version))))))
 
@@ -1435,9 +1435,9 @@ Optionally make the path LOCAL to host."
              (group (one-or-more digit)))))
     (when (string-match version-regexp version)
       `(:major ,(string-to-number (match-string 1 version))
-        :minor ,(string-to-number (match-string 2 version))
-        :patch ,(string-to-number (match-string 3 version))
-        :revision ,(string-to-number (match-string 4 version))))))
+               :minor ,(string-to-number (match-string 2 version))
+               :patch ,(string-to-number (match-string 3 version))
+               :revision ,(string-to-number (match-string 4 version))))))
 
 (defun detached--dtach-arg ()
   "Return dtach argument based on `detached-session-mode'."
@@ -1531,7 +1531,7 @@ If SESSION is degraded fallback to a command that doesn't rely on tee."
   "Return a cons with (host . type)."
   (let ((remote
          (and (file-remote-p default-directory)
-          (not detached-local-session))))
+              (not detached-local-session))))
     `(,(if remote (file-remote-p default-directory 'host) (system-name)) . ,(if remote 'remote 'local))))
 
 (defun detached--update-session-time (session &optional approximate)
@@ -1594,25 +1594,25 @@ session and trigger a state transition."
                   (is-primary
                    (detached--primary-detached-emacs-p session)))
 
-        ;; Remove from unvalidated sessions
-        (setq detached--unvalidated-sessions
-              (assq-delete-all id detached--unvalidated-sessions))
+		 ;; Remove from unvalidated sessions
+		 (setq detached--unvalidated-sessions
+		       (assq-delete-all id detached--unvalidated-sessions))
 
-        ;; Update session
-        (detached--session-state-transition-update session)
+		 ;; Update session
+		 (detached--session-state-transition-update session)
 
-        ;; Remove session directory from `detached--watch-session-directory'
-        ;; if there is no active session associated with the directory
-        (unless
-            (thread-last (detached--db-get-sessions)
-                         (seq-filter (lambda (it) (eq 'active (detached--session-state it))))
-                         (seq-map #'detached--session-directory)
-                         (seq-uniq)
-                         (seq-filter (lambda (it) (string= it session-directory))))
-          (file-notify-rm-watch
-           (alist-get session-directory detached--watched-session-directories nil nil #'string=))
-          (setq detached--watched-session-directories
-                (assoc-delete-all session-directory detached--watched-session-directories)))))))
+		 ;; Remove session directory from `detached--watch-session-directory'
+		 ;; if there is no active session associated with the directory
+		 (unless
+		     (thread-last (detached--db-get-sessions)
+				  (seq-filter (lambda (it) (eq 'active (detached--session-state it))))
+				  (seq-map #'detached--session-directory)
+				  (seq-uniq)
+				  (seq-filter (lambda (it) (string= it session-directory))))
+		   (file-notify-rm-watch
+		    (alist-get session-directory detached--watched-session-directories nil nil #'string=))
+		   (setq detached--watched-session-directories
+			 (assoc-delete-all session-directory detached--watched-session-directories)))))))
 
 (defun detached--initialize-session (session)
   "Initialize SESSION."
@@ -1637,7 +1637,7 @@ session and trigger a state transition."
 (defun detached--uninitialized-sessions ()
   "Return a list of uninitialized sessions."
   (seq-filter #'detached--uninitialized-session-p
-   (detached--db-get-sessions)))
+              (detached--db-get-sessions)))
 
 (defun detached--uninitialized-session-p (session)
   "Return t if SESSION is uninitialized."

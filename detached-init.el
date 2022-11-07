@@ -182,7 +182,7 @@
   ;; Trigger initialization of sessions upon load of `detached-list'
   (with-eval-after-load 'detached-list
     (detached-list--apply-filter
-          (cdr (car detached-list-filters)))
+     (cdr (car detached-list-filters)))
     (add-hook 'detached-update-db-hooks #'detached-list--db-update)))
 
 (defun detached-init--detached ()

@@ -1,6 +1,9 @@
 byte-compile:
 	emacs --batch --load=detached.el --eval='(progn (setq byte-compile-error-on-warn t) (batch-byte-compile))' ./*.el
 
+style:
+	emacs --batch --eval="(let ((make-backup-files nil) (files (directory-files-recursively default-directory \"detached.*\.el\"))) (seq-do (lambda (it) (find-file it) (indent-region (point-min) (point-max)) (save-buffer)) files))"
+
 autoloads:
 	emacs --batch --eval='(progn (setq make-backup-files nil) (make-directory-autoloads default-directory "detached-autoloads.el"))'
 

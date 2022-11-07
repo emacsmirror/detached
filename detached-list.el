@@ -129,26 +129,26 @@ detached list implements."
 Optionally initialize ALL session-directories."
   (interactive "P")
   (if-let* ((uninitialized-directories
-               (thread-last (detached-get-sessions)
-                            (seq-filter #'detached--uninitialized-session-p)
-                            (seq-map #'detached--session-directory)
-                            (seq-uniq))))
-    (if all
-        (seq-do #'detached-list--initialize-directory uninitialized-directories)
-      (when-let ((directory (completing-read "Initialize directory: " uninitialized-directories)))
-        (detached-list--initialize-directory directory)))
-    (message "All session directories have been initialized")))
+             (thread-last (detached-get-sessions)
+                          (seq-filter #'detached--uninitialized-session-p)
+                          (seq-map #'detached--session-directory)
+                          (seq-uniq))))
+	   (if all
+               (seq-do #'detached-list--initialize-directory uninitialized-directories)
+             (when-let ((directory (completing-read "Initialize directory: " uninitialized-directories)))
+               (detached-list--initialize-directory directory)))
+	   (message "All session directories have been initialized")))
 
 (defun detached-list-edit-annotation (session)
   "Edit SESSION's annotation."
   (interactive
    (list (tabulated-list-get-id)))
   (when-let* ((initial-value (or
-                     (detached--session-annotation session)
-                     ""))
+                              (detached--session-annotation session)
+                              ""))
               (annotation (read-string "Annotation: " initial-value)))
-    (setf (detached--session-annotation session) annotation)
-    (detached--db-update-entry session)))
+	     (setf (detached--session-annotation session) annotation)
+	     (detached--db-update-entry session)))
 
 (defun detached-list-quit ()
   "Quit command."
@@ -176,10 +176,10 @@ Optionally initialize ALL session-directories."
   (interactive
    (list (tabulated-list-get-id)))
   (when-let* ((buffer (detached-list--attached-p session)))
-    (unless (get-buffer-window buffer)
-      (pop-to-buffer buffer))
-    (with-selected-window (get-buffer-window buffer)
-      (detached-detach-session))))
+	     (unless (get-buffer-window buffer)
+	       (pop-to-buffer buffer))
+	     (with-selected-window (get-buffer-window buffer)
+	       (detached-detach-session))))
 
 (defun detached-list-jump-to-directory (session)
   "Jump to SESSION at point's directory."
@@ -268,9 +268,9 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
   (if (= (length detached-list--marked-sessions) 2)
       (progn
         (when-let ((single-window (> (length (window-list)) 1))
-                 (buffer (current-buffer)))
-        (delete-window (get-buffer-window))
-        (bury-buffer buffer))
+                   (buffer (current-buffer)))
+          (delete-window (get-buffer-window))
+          (bury-buffer buffer))
         (apply #'detached-diff-session detached-list--marked-sessions))
     (message "Mark two sessions")))
 
@@ -330,16 +330,16 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
     (read-string "Enter time: ")))
   (when time-threshold
     (if-let ((parsed-threshold (detached--list-parse-time time-threshold)))
-      (detached-list-narrow-sessions
-       `(,@detached-list--narrow-criteria
-         (,(format "-%s" time-threshold) .
-          ,(lambda (sessions)
-             (let ((current-time (time-to-seconds (current-time))))
-               (seq-filter (lambda (it)
-                             (> (- current-time
-                                   (plist-get (detached--session-time it) :start))
-                                parsed-threshold))
-                           sessions))))))
+        (detached-list-narrow-sessions
+         `(,@detached-list--narrow-criteria
+           (,(format "-%s" time-threshold) .
+            ,(lambda (sessions)
+               (let ((current-time (time-to-seconds (current-time))))
+                 (seq-filter (lambda (it)
+                               (> (- current-time
+                                     (plist-get (detached--session-time it) :start))
+                                  parsed-threshold))
+                             sessions))))))
       (message "Cannot parse time"))))
 
 (defun detached-list-narrow-host (hostname)
@@ -351,9 +351,9 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
                               (seq-map #'detached--session-host)
                               (seq-map #'car)
                               (seq-uniq))))
-      (completing-read
-       "Select host: "
-       hostnames))))
+	       (completing-read
+		"Select host: "
+		hostnames))))
   (when hostname
     (detached-list-narrow-sessions
      `(,@detached-list--narrow-criteria
@@ -384,8 +384,8 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
         (regexp-quote
          (detached--session-command
           (detached--get-session major-mode)))
-        (read-regexp
-              "Filter session commands containing (regexp): "))))
+      (read-regexp
+       "Filter session commands containing (regexp): "))))
   (when regexp
     (detached-list-narrow-sessions
      `(,@detached-list--narrow-criteria
@@ -404,8 +404,8 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
         (regexp-quote
          (detached--session-working-directory
           (detached--get-session major-mode)))
-        (read-regexp
-              "Filter session working directories containing (regexp): "))))
+      (read-regexp
+       "Filter session working directories containing (regexp): "))))
   (when regexp
     (detached-list-narrow-sessions
      `(,@detached-list--narrow-criteria
@@ -424,9 +424,9 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
                  (thread-last (detached-list--get-narrowed-sessions)
                               (seq-map #'detached--session-directory)
                               (seq-uniq))))
-      (completing-read
-       "Select session directory: "
-       directories))))
+	       (completing-read
+		"Select session directory: "
+		directories))))
   (when session-directory
     (detached-list-narrow-sessions
      `(,@detached-list--narrow-criteria
@@ -482,8 +482,8 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
                               (complete-with-action action detached-list-filters string predicate))))
               (filter-name
                (completing-read "Select filter: " collection nil t)))
-    (detached-list--apply-filter
-     (alist-get filter-name detached-list-filters nil nil #'string=))))
+	     (detached-list--apply-filter
+	      (alist-get filter-name detached-list-filters nil nil #'string=))))
 
 (defun detached-list-narrow-origin (origin)
   "Narrow to sessions with a specific ORIGIN."
@@ -507,7 +507,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
             (lambda (it)
               (string-match origin
                             (symbol-name (detached--session-origin it))))
-              sessions)))))))
+            sessions)))))))
 
 (defun detached-list-narrow-active ()
   "Narrow to active sessions."
