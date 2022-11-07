@@ -457,9 +457,9 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
   (interactive)
   (detached-list-narrow-sessions
    `(,@detached-list--narrow-criteria
-     ("Local" .
+     ("Localhost" .
       ,(lambda (sessions)
-         (seq-filter #'detached--local-session-p sessions))))))
+         (seq-filter #'detached--localhost-session-p sessions))))))
 
 (defun detached-list-narrow-remote ()
   "Narrow to remote sessions."

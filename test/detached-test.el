@@ -137,20 +137,20 @@
 
 (ert-deftest detached-test-host ()
   (cl-letf (((symbol-function #'system-name) (lambda () "localhost")))
-    (should (equal '("localhost" . local) (detached--host))))
+    (should (equal '("localhost" . localhost) (detached--host))))
   (let ((default-directory "/ssh:remotehost:/home/user/git"))
-    (should (equal '("remotehost" . remote) (detached--host)))))
+    (should (equal '("remotehost" . remotehost) (detached--host)))))
 
 (ert-deftest detached-test-session-active-p ()
   (detached-test--with-temp-database
-   (let ((session (detached-test--create-session :command "foo" :host '("bar" . local))))
+   (let ((session (detached-test--create-session :command "foo" :host '("bar" . localhost))))
      (should (eq 'active (detached--determine-session-state session)))
      (detached-test--change-session-state session 'deactivate)
      (should (eq 'inactive (detached--determine-session-state session))))))
 
 (ert-deftest detached-test-session-dead-p ()
   (detached-test--with-temp-database
-   (let ((session (detached-test--create-session :command "foo" :host '("bar" . local))))
+   (let ((session (detached-test--create-session :command "foo" :host '("bar" . localhost))))
      (should (not (detached--session-missing-p session)))
      (detached-test--change-session-state session 'deactivate)
      (should (not (detached--session-missing-p session)))
@@ -159,10 +159,10 @@
 
 (ert-deftest detached-test-cleanup-host-sessions ()
   (detached-test--with-temp-database
-   (cl-letf* ((session1 (detached-test--create-session :command "foo" :host '("remotehost" . remote)))
-              (session2 (detached-test--create-session :command "bar" :host '("localhost" . local)))
-              (session3 (detached-test--create-session :command "baz" :host '("localhost" . local)))
-              (host '("localhost" . local))
+   (cl-letf* ((session1 (detached-test--create-session :command "foo" :host '("remotehost" . remotehost)))
+              (session2 (detached-test--create-session :command "bar" :host '("localhost" . localhost)))
+              (session3 (detached-test--create-session :command "baz" :host '("localhost" . localhost)))
+              (host '("localhost" . localhost))
               ((symbol-function #'detached--host) (lambda () host)))
      ;; One inactive, one missing, one active
      (detached-test--change-session-state session1 'deactivate)
@@ -187,20 +187,20 @@
 
 (ert-deftest detached-test-db-insert-session ()
   (detached-test--with-temp-database
-   (let* ((session (detached-test--create-session :command "foo" :host '("localhost" . local))))
+   (let* ((session (detached-test--create-session :command "foo" :host '("localhost" . localhost))))
      (should (equal (detached--db-get-sessions) `(,session))))))
 
 (ert-deftest detached-test-db-remove-session ()
   (detached-test--with-temp-database
-   (let* ((session1 (detached-test--create-session :command "foo" :host '("host" . local)))
-          (session2 (detached-test--create-session :command "bar" :host '("host" . local))))
+   (let* ((session1 (detached-test--create-session :command "foo" :host '("host" . localhost)))
+          (session2 (detached-test--create-session :command "bar" :host '("host" . localhost))))
      (should (seq-set-equal-p `(,session1 ,session2) (detached--db-get-sessions)))
      (detached--db-remove-entry session1)
      (should (seq-set-equal-p `(,session2) (detached--db-get-sessions))))))
 
 (ert-deftest detached-test-db-update-session ()
   (detached-test--with-temp-database
-   (let* ((session (detached-test--create-session :command "foo" :host '("host" . local)))
+   (let* ((session (detached-test--create-session :command "foo" :host '("host" . localhost)))
           (id (detached--session-id session))
           (copy))
      (setq copy (copy-detached-session session))

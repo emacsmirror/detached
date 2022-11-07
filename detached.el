@@ -245,11 +245,11 @@ Valid values are: create, new and attach")
 (defvar detached-session-annotation nil
   "An annotation string.")
 
-(defconst detached-session-version "0.9.2.0"
+(defconst detached-session-version "0.9.2.1"
   "The version of `detached-session'.
 This version is encoded as [package-version].[revision].")
 
-(defconst detached-minimum-session-version "0.9.2.0"
+(defconst detached-minimum-session-version "0.9.2.1"
   "The version of `detached-session' that the package is compatible with.")
 
 ;;;;; Faces
@@ -1097,17 +1097,17 @@ Optionally CONCAT the command return command into a string."
 
 (defun detached--remote-session-p (session)
   "Return t if SESSION is a remote session."
-  (eq 'remote
+  (eq 'remotehost
       (cdr (detached--session-host session))))
 
-(defun detached--local-session-p (session)
+(defun detached--localhost-session-p (session)
   "Return t if SESSION is a local session."
-  (eq 'local
+  (eq 'localhost
       (cdr (detached--session-host session))))
 
 (defun detached--session-accessible-p (session)
   "Return t if SESSION is accessible."
-  (or (detached--local-session-p session)
+  (or (detached--localhost-session-p session)
       (file-remote-p (detached--session-directory session) nil t)))
 
 (defun detached--watched-session-directory-p (directory)
@@ -1537,7 +1537,7 @@ If SESSION is degraded fallback to a command that doesn't rely on tee."
   (let ((remote
          (and (file-remote-p default-directory)
               (not detached-local-session))))
-    `(,(if remote (file-remote-p default-directory 'host) (system-name)) . ,(if remote 'remote 'local))))
+    `(,(if remote (file-remote-p default-directory 'host) (system-name)) . ,(if remote 'remotehost 'localhost))))
 
 (defun detached--update-session-time (session &optional approximate)
   "Update SESSION's time property.

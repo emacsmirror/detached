@@ -158,7 +158,7 @@ See `consult-multi' for a description of the source values."
                (mapcar #'car
                        (seq-filter
                         (lambda (x)
-                          (eq 'local (cdr (detached--session-host (cdr x)))))
+                          (eq 'localhost (cdr (detached--session-host (cdr x)))))
                         (detached-session-candidates (detached-get-sessions)))))
             "Local host `detached' sessions as a source for `consult'."))
 
@@ -173,7 +173,7 @@ See `consult-multi' for a description of the source values."
                (mapcar #'car
                        (seq-filter
                         (lambda (x)
-                          (eq 'remote (cdr (detached--session-host (cdr x)))))
+                          (eq 'remotehost (cdr (detached--session-host (cdr x)))))
                         (detached-session-candidates (detached-get-sessions))))))
   "Remote host `detached' sessions as a source for `consult'.")
 
