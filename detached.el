@@ -249,7 +249,7 @@ Valid values are: create, new and attach")
   "The version of `detached-session'.
 This version is encoded as [package-version].[revision].")
 
-(defconst detached-minimum-session-version "0.9.1.1"
+(defconst detached-minimum-session-version "0.9.2.0"
   "The version of `detached-session' that the package is compatible with.")
 
 ;;;;; Faces
@@ -373,6 +373,7 @@ This version is encoded as [package-version].[revision].")
   (degraded nil :read-only t)
   (env nil :read-only t)
   (action nil :read-only t)
+  (local nil :read-only t)
   (annotation)
   (time nil)
   (status nil)
@@ -469,7 +470,8 @@ The session is compiled by opening its output and enabling
    (list (detached-completing-read (detached-get-sessions))
          current-prefix-arg))
   (when (detached-valid-session session)
-    (let* ((default-directory
+    (let* ((detached-local-session (detached--session-local session))
+           (default-directory
              (detached--session-working-directory session))
            (detached-session-mode (or detached-session-mode
                                       (detached--session-initial-mode session)))
@@ -489,7 +491,8 @@ The session is compiled by opening its output and enabling
    (list (detached-completing-read (detached-get-sessions))
          current-prefix-arg))
   (when (detached-valid-session session)
-    (let* ((default-directory
+    (let* ((detached-local-session (detached--session-local session))
+           (default-directory
              (detached--session-working-directory session))
            (detached-session-mode (or detached-session-mode
                                       (detached--session-initial-mode session)))
@@ -688,6 +691,7 @@ active session.  For sessions created with `detached-compile' or
                                     :time `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0)
                                     :status '(unknown . 0)
                                     :annotation detached-session-annotation
+                                    :local detached-local-session
                                     :size 0
                                     :directory (detached--get-session-directory)
                                     :env (detached--env command)
@@ -888,7 +892,8 @@ This function uses the `notifications' library."
          (inhibit-message t))
     (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
                (buffer (get-buffer-create detached--shell-command-buffer))
-               (default-directory (detached--session-directory session))
+               (detached-local-session (detached--session-local session))
+               (default-directory (detached--session-working-directory session))
                (command (detached--shell-command session t)))
       (when (get-buffer-process buffer)
         (setq buffer (generate-new-buffer (buffer-name buffer))))
