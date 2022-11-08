@@ -452,8 +452,8 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
                            (string-match regexp annotation)))
                        sessions)))))))
 
-(defun detached-list-narrow-local ()
-  "Narrow to local sessions."
+(defun detached-list-narrow-localhost ()
+  "Narrow to local-host sessions."
   (interactive)
   (detached-list-narrow-sessions
    `(,@detached-list--narrow-criteria
@@ -461,14 +461,26 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
       ,(lambda (sessions)
          (seq-filter #'detached--localhost-session-p sessions))))))
 
-(defun detached-list-narrow-remote ()
-  "Narrow to remote sessions."
+(defun detached-list-narrow-remotehost ()
+  "Narrow to remote-host sessions."
   (interactive)
   (detached-list-narrow-sessions
    `(,@detached-list--narrow-criteria
-     ("Remote" .
+     ("Remotehost" .
       ,(lambda (sessions)
          (seq-filter #'detached--remote-session-p sessions))))))
+
+(defun detached-list-narrow-currenthost ()
+  "Narrow to current-host sessions."
+  (interactive)
+  (detached-list-narrow-sessions
+   `(,@detached-list--narrow-criteria
+     ("Currenthost" .
+      ,(lambda (sessions)
+         (let ((current-host (car (detached--host))))
+           (seq-filter (lambda (it)
+                         (string= (car (detached--session-host it)) current-host))
+                       sessions)))))))
 
 (defun detached-list-select-filter ()
   "Select filter from `detached-list-filter' to apply."
@@ -637,12 +649,14 @@ If prefix-argument is provided unmark instead of mark."
 (defun detached-list-sessions ()
   "Open list of `detached'."
   (interactive)
-  (let* ((buffer (get-buffer-create "*detached-list*"))
+  (let* ((current-directory default-directory)
+         (buffer (get-buffer-create "*detached-list*"))
          (window
           (or
            (get-buffer-window buffer)
            (display-buffer buffer detached-list-display-buffer-action))))
     (select-window window)
+    (setq-local default-directory current-directory)
     (unless (eq major-mode 'detached-list-mode)
       (detached-list-mode)
       (setq tabulated-list-entries
@@ -896,8 +910,9 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "n d") #'detached-list-narrow-session-directory)
     ;; Host
     (define-key map (kbd "n h h") #'detached-list-narrow-host)
-    (define-key map (kbd "n h l") #'detached-list-narrow-local)
-    (define-key map (kbd "n h r") #'detached-list-narrow-remote)
+    (define-key map (kbd "n h c") #'detached-list-narrow-currenthost)
+    (define-key map (kbd "n h l") #'detached-list-narrow-localhost)
+    (define-key map (kbd "n h r") #'detached-list-narrow-remotehost)
     (define-key map (kbd "n o") #'detached-list-narrow-output)
     (define-key map (kbd "n O") #'detached-list-narrow-origin)
     ;; State
