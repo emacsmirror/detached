@@ -907,14 +907,15 @@ This function uses the `notifications' library."
   "Return content of SESSION's output."
   (let* ((filename (detached--session-file session 'log))
          (detached-message
-          (rx (regexp "\n.*\\[detached-exit-code: .*\\]"))))
+          (rx (regexp "\\[detached-exit-code: .*\\]"))))
     (with-temp-buffer
       (insert-file-contents filename)
       (detached--maybe-watch-session session)
-      (goto-char (point-min))
-      (let ((beginning (point))
-            (end (if (search-forward-regexp detached-message nil t)
-                     (match-beginning 0)
+      (goto-char (point-max))
+      (forward-line -1)
+      (let ((beginning (point-min))
+            (end (if (string-match detached-message (thing-at-point 'line t))
+                     (and (forward-line -1) (point))
                    (point-max))))
         (buffer-substring beginning end)))))
 
