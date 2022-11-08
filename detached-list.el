@@ -32,7 +32,7 @@
 ;;;; Variables
 
 (defcustom detached-list-config
-  `((:name "Command" :function detached-list--command-str :length 60)
+  `((:name "Command" :function detached-list--command-str :length 90)
     (:name "Status" :function detached-list--status-str :length 10)
     (:name "Host" :function detached--host-str :length 15 :face detached-host-face)
     (:name "Directory" :function detached--working-dir-str :length 40 :face detached-working-dir-face)
@@ -459,7 +459,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
    `(,@detached-list--narrow-criteria
      ("Localhost" .
       ,(lambda (sessions)
-         (seq-filter #'detached--localhost-session-p sessions))))))
+         (seq-filter #'detached-session-localhost-p sessions))))))
 
 (defun detached-list-narrow-remotehost ()
   "Narrow to remote-host sessions."
@@ -468,7 +468,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
    `(,@detached-list--narrow-criteria
      ("Remotehost" .
       ,(lambda (sessions)
-         (seq-filter #'detached--remote-session-p sessions))))))
+         (seq-filter #'detached-session-remotehost-p sessions))))))
 
 (defun detached-list-narrow-currenthost ()
   "Narrow to current-host sessions."
@@ -528,7 +528,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
    `(,@detached-list--narrow-criteria
      ("Active" .
       ,(lambda (sessions)
-         (seq-filter #'detached--active-session-p sessions))))))
+         (seq-filter #'detached-session-active-p sessions))))))
 
 (defun detached-list-narrow-inactive ()
   "Narrow to inactive sessions."
@@ -537,7 +537,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
    `(,@detached-list--narrow-criteria
      ("Inactive" .
       ,(lambda (sessions)
-         (seq-remove #'detached--active-session-p sessions))))))
+         (seq-remove #'detached-session-active-p sessions))))))
 
 (defun detached-list-narrow-success ()
   "Narrow to successful sessions."
@@ -793,16 +793,16 @@ If prefix-argument is provided unmark instead of mark."
   "Return a string representation of SESSION's status."
   (let* ((status (detached-session-status session))
          (status-str
-          (if (detached--active-session-p session)
+          (if (detached-session-active-p session)
               (alist-get 'active detached-list-state-symbols "?")
             (if (eq status 'failure)
                 (alist-get 'failure detached-list-state-symbols "?")
               (alist-get 'success detached-list-state-symbols "?"))))
          (status-face
           (cond ((and (detached--uninitialized-session-p session)
-                      (detached--active-session-p session))
+                      (detached-session-active-p session))
                  'detached-identifier-face)
-                ((detached--active-session-p session) 'font-lock-type-face)
+                ((detached-session-active-p session) 'font-lock-type-face)
                 ((eq status 'failure) 'detached-failure-face)
                 ((eq status 'success) 'detached-state-face)
                 (t 'detached-identifier-face)))
