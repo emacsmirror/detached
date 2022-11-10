@@ -80,29 +80,29 @@
 
 (defvar detached-action-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "a" #'detached-attach-session)
-    (define-key map "c" #'detached-compile-session)
-    (define-key map "d" #'detached-delete-session)
-    (define-key map "i" #'detached-insert-session-command)
-    (define-key map "f" #'detached-open-session-directory)
-    (define-key map "k" #'detached-kill-session)
-    (define-key map "r" #'detached-rerun-session)
-    (define-key map "v" #'detached-view-session)
-    (define-key map "w" #'detached-copy-session-command)
-    (define-key map "W" #'detached-copy-session)
-    (define-key map "=" #'detached-diff-session)
-    map))
+	(define-key map "a" #'detached-attach-session)
+	(define-key map "c" #'detached-compile-session)
+	(define-key map "d" #'detached-delete-session)
+	(define-key map "i" #'detached-insert-session-command)
+	(define-key map "f" #'detached-open-session-directory)
+	(define-key map "k" #'detached-kill-session)
+	(define-key map "r" #'detached-rerun-session)
+	(define-key map "v" #'detached-view-session)
+	(define-key map "w" #'detached-copy-session-command)
+	(define-key map "W" #'detached-copy-session)
+	(define-key map "=" #'detached-diff-session)
+	map))
 
 (defvar detached-init-package-integration '((compile . detached-init--compile)
-                                            (dired . detached-init--dired)
-                                            (dired-rsync . detached-init--dired-rsync)
-                                            (embark . detached-init--embark)
-                                            (eshell . detached-init--eshell)
-                                            (nano-modeline . detached-init--nano-modeline)
-                                            (org . detached-init--org)
-                                            (projectile . detached-init--projectile)
-                                            (shell . detached-init--shell)
-                                            (vterm . detached-init--vterm))
+											(dired . detached-init--dired)
+											(dired-rsync . detached-init--dired-rsync)
+											(embark . detached-init--embark)
+											(eshell . detached-init--eshell)
+											(nano-modeline . detached-init--nano-modeline)
+											(org . detached-init--org)
+											(projectile . detached-init--projectile)
+											(shell . detached-init--shell)
+											(vterm . detached-init--vterm))
   "Alist which contain names of packages and their initialization function.")
 
 ;;;; Functions
@@ -113,14 +113,14 @@
   (detached-init--detached)
   (detached-init--detached-list)
   (let ((init-functions
-         (thread-last detached-init-package-integration
-                      (seq-filter (lambda (it)
-                                    (member (car it) detached-init-allow-list)))
-                      (seq-remove (lambda (it)
-                                    (member (car it) detached-init-block-list)))
-                      (seq-map #'cdr))))
-    (dolist (init-function init-functions)
-      (funcall init-function))))
+		 (thread-last detached-init-package-integration
+					  (seq-filter (lambda (it)
+									(member (car it) detached-init-allow-list)))
+					  (seq-remove (lambda (it)
+									(member (car it) detached-init-block-list)))
+					  (seq-map #'cdr))))
+	(dolist (init-function init-functions)
+	  (funcall init-function))))
 
 ;;;; Support functions
 
@@ -141,55 +141,55 @@
 (defun detached-init--org ()
   "Initialize integration with `org'."
   (advice-add 'org-babel-sh-evaluate
-              :around #'detached-org-babel-sh))
+			  :around #'detached-org-babel-sh))
 
 (defun detached-init--dired ()
   "Initialize integration with `dired'."
   (advice-add 'dired-do-shell-command
-              :around #'detached-dired-do-shell-command))
+			  :around #'detached-dired-do-shell-command))
 
 (defun detached-init--dired-rsync ()
   "Initialize integration with `dired-rsync'."
   (advice-add 'dired-rsync--do-run
-              :override #'detached-extra-dired-rsync))
+			  :override #'detached-extra-dired-rsync))
 
 (defun detached-init--projectile ()
   "Initialize integration with `projectile'."
   (advice-add 'projectile-run-compilation
-              :override #'detached-extra-projectile-run-compilation))
+			  :override #'detached-extra-projectile-run-compilation))
 
 (defun detached-init--vterm ()
   "Initialize integration with `vterm'."
   (with-eval-after-load 'vterm
-    (add-hook 'vterm-mode-hook #'detached-vterm-mode)))
+	(add-hook 'vterm-mode-hook #'detached-vterm-mode)))
 
 (defun detached-init--embark ()
   "Initialize integration with `embark'."
   (with-eval-after-load 'embark
-    (defvar embark-detached-map (make-composed-keymap detached-action-map embark-general-map))
-    (add-to-list 'embark-keymap-alist '(detached . embark-detached-map))))
+	(defvar embark-detached-map (make-composed-keymap detached-action-map embark-general-map))
+	(add-to-list 'embark-keymap-alist '(detached . embark-detached-map))))
 
 (defun detached-init--nano-modeline ()
   "Initialize integration with `nano-modeline'."
   (with-eval-after-load 'nano-modeline
-    (push `(detached-list-mode
-            :mode-p (lambda () (derived-mode-p 'detached-list-mode))
-            :format (lambda () (nano-modeline-render nil (detached-list--mode-line-indicator) "" "")))
-          nano-modeline-mode-formats)))
+	(push `(detached-list-mode
+			:mode-p (lambda () (derived-mode-p 'detached-list-mode))
+			:format (lambda () (nano-modeline-render nil (detached-list--mode-line-indicator) "" "")))
+		  nano-modeline-mode-formats)))
 
 (defun detached-init--detached-list ()
   "Initialize `detached-list'."
   ;; Trigger initialization of sessions upon load of `detached-list'
   (with-eval-after-load 'detached-list
-    (detached-list--apply-filter
-     (cdr (car detached-list-filters)))
-    (add-hook 'detached-update-db-hooks #'detached-list--db-update)))
+	(detached-list--apply-filter
+	 (cdr (car detached-list-filters)))
+	(add-hook 'detached-update-db-hooks #'detached-list--db-update)))
 
 (defun detached-init--detached ()
   "Initialize `detached'."
   ;; Trigger initialization of sessions upon load of `detached'
   (with-eval-after-load 'detached
-    (detached-initialize-sessions))
+	(detached-initialize-sessions))
   ;; Required for `detached-shell-command' which is always provided
   (add-hook 'shell-mode-hook #'detached-shell-mode))
 

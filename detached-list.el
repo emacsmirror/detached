@@ -38,7 +38,7 @@
     (:name "Host" :function detached--host-str :length 15 :face detached-host-face)
     (:name "Directory" :function detached--working-dir-str :length 40 :face detached-working-dir-face)
     (:name "Metadata" :function detached--metadata-str :length 30 :face detached-metadata-face)
-    (:name "Duration" :function detached--duration-str :length 20 :face detached-duration-face)
+    (:name "Duration" :function detached--duration-str :length 10 :face detached-duration-face)
     (:name "Created" :function detached--creation-str :length 20 :face detached-creation-face))
   "Configuration for `detached' list mode."
   :type '(repeat (plist :options ((:name symbol)
@@ -70,7 +70,7 @@ detached list implements."
   :type '(alist :key-type string))
 
 (defcustom detached-list-session-identifier-function
-  #'detached-list-session-identifier
+  #'detached-session-identifier
   "The function to use for identifying a session."
   :group 'detached
   :type 'sexp)
@@ -114,15 +114,19 @@ detached list implements."
                     ,(detached--session-command session))))
         (string-join (seq-remove #'null strs) "\n")))))
 
-(defun detached-list-session-identifier (session)
-  "Return a string identifier for SESSION."
-  (string-join
-   `(,(detached--session-command session)
-     ,(detached--host-str session)
-     ,(detached--session-directory session))
-   ", "))
-
 ;;;; Commands
+
+(defun detached-list-describe-duration (session)
+  "Describe the SESSION's duration statistics."
+  (interactive
+   (list (detached--get-session major-mode)))
+  (let ((mean (detached-session-mean-duration session))
+        (std (detached-session-std-duration session)))
+    (message "%s: %s %s: %s"
+             (propertize "μ" 'face 'detached-mark-face)
+             (if mean (detached--duration-str2 mean) "-")
+             (propertize "σ" 'face 'detached-mark-face)
+             (if std (detached--duration-str2 std) "-"))))
 
 (defun detached-list-initialize-session-directory (&optional all)
   "Initialize a session-directory.
@@ -931,7 +935,9 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "=") #'detached-list-diff-marked-sessions)
     (define-key map (kbd "-") #'detached-list-widen)
     (define-key map (kbd "!") #'detached-shell-command)
-    (define-key map (kbd ".") #'detached-describe-session)
+    ;; Describe
+    (define-key map (kbd ". s") #'detached-describe-session)
+    (define-key map (kbd ". d") #'detached-list-describe-duration)
     (define-key map (kbd "<backspace>") #'detached-list-remove-narrow-criterion)
     (define-key map (kbd "<return>") #'detached-list-open-session)
     map)

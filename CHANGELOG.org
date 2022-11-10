@@ -6,6 +6,7 @@
 
 - Add =edit-and-run= command, which is convenient when a session command needs to be tweaked before re-running.
 - Fix bug caused by incorrect adaptation to detached-local-session
+- Implement mean and std duration for sessions
 
 * Version 0.9.2 (2022-11-01)
 

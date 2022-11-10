@@ -42,29 +42,29 @@
 
 Optionally USE-COMINT-MODE"
   (if (functionp cmd)
-      (funcall cmd)
-    (let ((detached-session-origin 'projectile))
-      (detached-compile cmd use-comint-mode))))
+	  (funcall cmd)
+	(let ((detached-session-origin 'projectile))
+	  (detached-compile cmd use-comint-mode))))
 
 ;;;###autoload
 (defun detached-extra-dired-rsync (command _details)
   "Run COMMAND with `detached'."
   (let ((detached-local-session t)
-        (detached-session-origin 'rsync))
-    (detached-start-session command t)))
+		(detached-session-origin 'rsync))
+	(detached-start-session command t)))
 
 ;;;###autoload
 (defun detached-extra-alert-notification (session)
   "Send an `alert' notification when SESSION becomes inactive."
   (let ((status (detached-session-status session))
-        (host (detached-session-host-name session)))
-    (alert (detached--session-command session)
-           :title (pcase status
-                    ('success (format "Detached finished [%s]" host))
-                    ('failure (format "Detached failed [%s]" host)))
-           :severity (pcase status
-                       ('success 'moderate)
-                       ('failure 'high)))))
+		(host (detached-session-host-name session)))
+	(alert (detached--session-command session)
+		   :title (pcase status
+					('success (format "Detached finished [%s]" host))
+					('failure (format "Detached failed [%s]" host)))
+		   :severity (pcase status
+					   ('success 'moderate)
+					   ('failure 'high)))))
 
 (provide 'detached-extra)
 

@@ -310,6 +310,9 @@ This version is encoded as [package-version].[revision].")
 
 ;;;;; Private
 
+(defvar detached--session-durations nil
+  "An hash-table with duration sessions.")
+
 (defvar detached--sessions-initialized nil
   "Sessions are initialized.")
 
@@ -802,6 +805,9 @@ Optionally SUPPRESS-OUTPUT."
                     sessions)
             ht))
 
+    ;; Hash sessions and their duration times
+    (detached--initialize-sessions-duration-hashtable)
+
     ;; Initialize accessible sessions
     (let ((detached--current-emacsen (detached--active-detached-emacsen)))
       (detached--update-detached-emacsen)
@@ -963,6 +969,20 @@ This function uses the `notifications' library."
        (detached--session-time session) :duration)
     (- (time-to-seconds) (detached-session-start-time session))))
 
+(defun detached-session-mean-duration (session)
+  "Return SESSION's mean duration."
+  (when-let* ((duration-statistics
+               (gethash (detached-session-identifier session)
+                        detached--session-durations nil)))
+    (plist-get duration-statistics :mean)))
+
+(defun detached-session-std-duration (session)
+  "Return SESSION's std duration."
+  (when-let* ((duration-statistics
+               (gethash (detached-session-identifier session)
+                        detached--session-durations nil)))
+    (plist-get duration-statistics :std)))
+
 (defun detached-session-host-type (session)
   "Return the type of SESSION's host."
   (pcase-let ((`(,_name . ,type)
@@ -978,6 +998,14 @@ This function uses the `notifications' library."
 (defun detached-session-id (session)
   "Return SESSION's id."
   (detached--session-id session))
+
+(defun detached-session-identifier (session)
+  "Return SESSION's identifier string."
+  (string-join
+   `(,(detached--session-command session)
+     ,(detached--host-str session)
+     ,(detached--session-directory session))
+   ", "))
 
 (defun detached-session-view-function (session)
   "Return SESSION's view function."
@@ -1390,6 +1418,35 @@ Optionally make the path LOCAL to host."
     (if (= (length (window-list)) 1)
         (kill-buffer)
       (kill-buffer-and-window))))
+
+(defun detached--initialize-sessions-duration-hashtable ()
+  "Initialize the `detached--session-durations'."
+  (let* ((sessions (detached-get-sessions))
+         (grouped-sessions
+          (thread-last sessions
+                       (seq-filter #'detached-session-inactive-p)
+                       (seq-remove #'detached-session-failed-p)
+                       (seq-group-by #'detached-session-identifier))))
+    (setq detached--session-durations
+          (make-hash-table :test #'equal :size (seq-length grouped-sessions)))
+    (thread-last grouped-sessions
+                 (seq-do (lambda (it)
+                           (pcase-let* ((`(,identifier . ,sessions) it))
+                             (puthash identifier
+                                      (detached--get-duration-statistics sessions)
+                                      detached--session-durations)))))))
+
+(defun detached--get-duration-statistics (sessions)
+  "Return a plist of duration statistics for SESSIONS."
+  (let* ((durations (seq-map #'detached-session-duration sessions))
+         (mean (/ (seq-reduce #'+ durations 0) (seq-length durations)))
+         (std (sqrt (/ (seq-reduce (lambda (sum duration)
+                                     (+ sum (* (- duration mean)
+                                               (- duration mean))))
+                                   durations
+                                   0.0)
+                       (seq-length durations)))))
+    `(:durations ,durations :mean ,mean :std ,std)))
 
 ;;;;; Database
 
@@ -1823,7 +1880,11 @@ start searching at NUMBER offset."
 
 (defun detached--duration-str (session)
   "Return SESSION's duration time."
-  (let* ((duration (round (detached-session-duration session)))
+  (detached--duration-str2 (detached-session-duration session)))
+
+(defun detached--duration-str2 (duration)
+  "Return propertized DURATION."
+  (let* ((duration (round duration))
          (hours (/ duration 3600))
          (minutes (/ (mod duration 3600) 60))
          (seconds (mod duration 60)))

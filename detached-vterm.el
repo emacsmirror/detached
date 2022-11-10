@@ -40,8 +40,8 @@
 
 (defcustom detached-vterm-session-action
   '(:attach detached-shell-command-attach-session
-            :view detached-view-dwim
-            :run detached-shell-command)
+			:view detached-view-dwim
+			:run detached-shell-command)
   "Actions for a session created with `detached-vterm'."
   :group 'detached
   :type 'plist)
@@ -54,18 +54,18 @@
 Optionally DETACH from it."
   (interactive)
   (let* ((input (buffer-substring-no-properties (vterm-beginning-of-line) (vterm-end-of-line)))
-         (detached-session-origin 'vterm)
-         (detached-session-action detached-vterm-session-action)
-         (detached-session-mode
-          (if detach 'create 'create-and-attach))
-         (detached--current-session (detached-create-session input))
-         (command (detached--shell-command detached--current-session t)))
-    (vterm-send-C-a)
-    (vterm-send-C-k)
-    (process-send-string vterm--process command)
-    (setq detached--buffer-session detached--current-session)
-    (vterm-send-C-e)
-    (vterm-send-return)))
+		 (detached-session-origin 'vterm)
+		 (detached-session-action detached-vterm-session-action)
+		 (detached-session-mode
+		  (if detach 'create 'create-and-attach))
+		 (detached--current-session (detached-create-session input))
+		 (command (detached--shell-command detached--current-session t)))
+	(vterm-send-C-a)
+	(vterm-send-C-k)
+	(process-send-string vterm--process command)
+	(setq detached--buffer-session detached--current-session)
+	(vterm-send-C-e)
+	(vterm-send-return)))
 
 (defun detached-vterm-attach (session)
   "Attach to an active `detached' SESSION."
@@ -79,9 +79,9 @@ Optionally DETACH from it."
                          (seq-filter #'detached-session-active-p))))
       (detached-completing-read sessions))))
   (let ((detached-session-mode 'attach))
-    (setq detached--buffer-session session)
-    (process-send-string vterm--process (detached--shell-command session t))
-    (vterm-send-return)))
+	(setq detached--buffer-session session)
+	(process-send-string vterm--process (detached--shell-command session t))
+	(vterm-send-return)))
 
 (cl-defmethod detached--detach-session ((_mode (derived-mode vterm-mode)))
   "Detach from session when MODE is `vterm-mode'."
@@ -93,11 +93,11 @@ Optionally DETACH from it."
 
 (defvar detached-vterm-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "<S-return>") #'detached-vterm-send-input)
-    (define-key map (kbd "<C-return>") #'detached-vterm-attach)
-    (define-key map (kbd "C-c C-.") #'detached-describe-session)
-    (define-key map (kbd detached-detach-key) #'detached-detach-session)
-    map)
+	(define-key map (kbd "<S-return>") #'detached-vterm-send-input)
+	(define-key map (kbd "<C-return>") #'detached-vterm-attach)
+	(define-key map (kbd "C-c C-.") #'detached-describe-session)
+	(define-key map (kbd detached-detach-key) #'detached-detach-session)
+	map)
   "Keymap for `detached-vterm-mode'.")
 
 ;;;###autoload
@@ -105,7 +105,7 @@ Optionally DETACH from it."
   "Integrate `detached' in `vterm'."
   :lighter " detached-vterm"
   :keymap (let ((map (make-sparse-keymap)))
-            map))
+			map))
 
 (provide 'detached-vterm)
 

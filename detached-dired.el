@@ -34,13 +34,13 @@
 (defun detached-dired-do-shell-command (dired-do-shell-command &rest args)
   "Ensure `detached' is used before running DIRED-DO-SHELL-COMMAND with ARGS."
   (cl-letf* ((detached-session-origin 'dired)
-             ((symbol-function #'dired-run-shell-command)
-              (lambda (command)
-                (detached-start-session command)
-                nil)))
-    (pcase-let* ((`(,command ,arg ,file-list) args)
-                 (modified-args `(,(string-remove-suffix " &" command) ,arg ,file-list)))
-      (apply dired-do-shell-command modified-args))))
+			 ((symbol-function #'dired-run-shell-command)
+			  (lambda (command)
+				(detached-start-session command)
+				nil)))
+	(pcase-let* ((`(,command ,arg ,file-list) args)
+				 (modified-args `(,(string-remove-suffix " &" command) ,arg ,file-list)))
+	  (apply dired-do-shell-command modified-args))))
 
 (provide 'detached-dired)
 

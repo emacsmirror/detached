@@ -33,8 +33,8 @@
 
 (defcustom detached-org-session-action
   '(:attach detached-shell-command-attach-session
-            :view detached-view-dwim
-            :run detached-shell-command)
+			:view detached-view-dwim
+			:run detached-shell-command)
   "Actions for a session created with `detached-org'."
   :group 'detached
   :type 'plist)
@@ -49,21 +49,21 @@ This function modifies the full-body in ARGS and replaces it with a
 `detached' command.  The functionality is enabled by setting a header
 property of :detached t in the org babel src block."
   (pcase-let* ((`(,session ,full-body ,params ,stdin ,cmdline) args))
-    (if (alist-get :detached params)
-        (cl-letf* ((detached-session-origin 'org)
-                   (detached-session-action detached-org-session-action)
-                   (detached-session-mode 'create)
-                   (new-command (replace-regexp-in-string "\n" " && " full-body))
-                   (dtach-command
-                    (if (string= "none" (alist-get :session params))
-                        (detached--dtach-command new-command t)
-                      (format "%s\necho \"[detached]\"" (detached--dtach-command new-command t))))
-                   ((symbol-function #'org-babel-eval)
-                    (lambda (_ command)
-                      (start-file-process-shell-command "detached-org" nil command)
-                      "[detached]")))
-          (apply org-babel-sh-evaluate-fun `(,session ,dtach-command ,params ,stdin ,cmdline)))
-      (apply org-babel-sh-evaluate-fun args))))
+	(if (alist-get :detached params)
+		(cl-letf* ((detached-session-origin 'org)
+				   (detached-session-action detached-org-session-action)
+				   (detached-session-mode 'create)
+				   (new-command (replace-regexp-in-string "\n" " && " full-body))
+				   (dtach-command
+					(if (string= "none" (alist-get :session params))
+						(detached--dtach-command new-command t)
+					  (format "%s\necho \"[detached]\"" (detached--dtach-command new-command t))))
+				   ((symbol-function #'org-babel-eval)
+					(lambda (_ command)
+					  (start-file-process-shell-command "detached-org" nil command)
+					  "[detached]")))
+		  (apply org-babel-sh-evaluate-fun `(,session ,dtach-command ,params ,stdin ,cmdline)))
+	  (apply org-babel-sh-evaluate-fun args))))
 
 (provide 'detached-org)
 

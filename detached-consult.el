@@ -41,14 +41,14 @@
 
 (defcustom detached-consult-sources
   '(detached-consult--source-session
-    detached-consult--source-active-session
-    detached-consult--source-inactive-session
-    detached-consult--source-hidden-session
-    detached-consult--source-success-session
-    detached-consult--source-failure-session
-    detached-consult--source-local-session
-    detached-consult--source-remote-session
-    detached-consult--source-current-session)
+	detached-consult--source-active-session
+	detached-consult--source-inactive-session
+	detached-consult--source-hidden-session
+	detached-consult--source-success-session
+	detached-consult--source-failure-session
+	detached-consult--source-local-session
+	detached-consult--source-remote-session
+	detached-consult--source-current-session)
   "Sources used by `detached-consult-session'.
 
 See `consult-multi' for a description of the source values."
@@ -57,34 +57,34 @@ See `consult-multi' for a description of the source values."
 
 (defvar detached-consult--source-session
   `(:category detached
-              :annotate detached-session-annotation
-              :action (lambda (x) (detached-open-session (detached--decode-session x)))
-              :items
-              ,(lambda ()
-                 (mapcar #'car
-                         (seq-remove
-                          (lambda (x)
-                            (seq-find (lambda (predicate)
-                                        (apply predicate `(,(cdr x))))
-                                      detached-consult-hidden-predicates))
-                          (detached-session-candidates (detached-get-sessions))))))
+			  :annotate detached-session-annotation
+			  :action (lambda (x) (detached-open-session (detached--decode-session x)))
+			  :items
+			  ,(lambda ()
+				 (mapcar #'car
+						 (seq-remove
+						  (lambda (x)
+							(seq-find (lambda (predicate)
+										(apply predicate `(,(cdr x))))
+									  detached-consult-hidden-predicates))
+						  (detached-session-candidates (detached-get-sessions))))))
   "All `detached' sessions as a source for `consult'.")
 
 (defvar detached-consult--source-hidden-session
   `(:narrow (?\s . "Hidden")
-            :hidden t
-            :category detached
-            :annotate detached-session-annotation
-            :action (lambda (x) (detached-open-session (detached--decode-session x)))
-            :items
-            ,(lambda ()
-               (mapcar #'car
-                       (seq-filter
-                        (lambda (x)
-                          (seq-find (lambda (predicate)
-                                      (apply predicate `(,(cdr x))))
-                                    detached-consult-hidden-predicates))
-                        (detached-session-candidates (detached-get-sessions))))))
+			:hidden t
+			:category detached
+			:annotate detached-session-annotation
+			:action (lambda (x) (detached-open-session (detached--decode-session x)))
+			:items
+			,(lambda ()
+			   (mapcar #'car
+					   (seq-filter
+						(lambda (x)
+						  (seq-find (lambda (predicate)
+									  (apply predicate `(,(cdr x))))
+									detached-consult-hidden-predicates))
+						(detached-session-candidates (detached-get-sessions))))))
   "Active `detached' sessions as a source for `consult'.")
 
 (defvar detached-consult--source-active-session
@@ -195,11 +195,11 @@ See `consult-multi' for a description of the source values."
   "Enhanced `detached-open-session' command."
   (interactive)
   (unless (require 'consult nil 'noerror)
-    (error "Install Consult to use detached-consult"))
+	(error "Install Consult to use detached-consult"))
   (consult--multi detached-consult-sources
-                  :prompt "Select session: "
-                  :require-match t
-                  :sort nil))
+				  :prompt "Select session: "
+				  :require-match t
+				  :sort nil))
 
 (provide 'detached-consult)
 

@@ -34,8 +34,8 @@
 
 (defcustom detached-compile-session-action
   '(:attach detached-compile-attach
-            :view detached-compile-session
-            :run detached-compile)
+			:view detached-compile-session
+			:run detached-compile)
   "Actions for a session created with `detached-compile'."
   :group 'detached
   :type 'plist)
@@ -48,18 +48,18 @@
 Optionally enable COMINT if prefix-argument is provided."
   (interactive
    (list
-    (let ((command (eval compile-command t)))
-      (if (or compilation-read-command current-prefix-arg)
-          (compilation-read-command command)
-        command))
-    (consp current-prefix-arg)))
+	(let ((command (eval compile-command t)))
+	  (if (or compilation-read-command current-prefix-arg)
+		  (compilation-read-command command)
+		command))
+	(consp current-prefix-arg)))
   (let* ((detached-enabled t)
-         (detached-session-origin (or detached-session-origin 'compile))
-         (detached-session-action (or detached-session-action
-                                      detached-compile-session-action))
-         (detached-session-mode (or detached-session-mode 'create-and-attach))
-         (detached--current-session (detached-create-session command)))
-    (compile command comint)))
+		 (detached-session-origin (or detached-session-origin 'compile))
+		 (detached-session-action (or detached-session-action
+									  detached-compile-session-action))
+		 (detached-session-mode (or detached-session-mode 'create-and-attach))
+		 (detached--current-session (detached-create-session command)))
+	(compile command comint)))
 
 ;;;###autoload
 (defun detached-compile-recompile (&optional edit-command)
@@ -67,11 +67,11 @@ Optionally enable COMINT if prefix-argument is provided."
 Optionally EDIT-COMMAND."
   (interactive "P")
   (let* ((detached-enabled t)
-         (detached-session-action detached-compile-session-action)
-         (detached-session-origin 'compile)
-         (detached-session-mode 'create-and-attach)
-         (detached--current-session edit-command))
-    (recompile edit-command)))
+		 (detached-session-action detached-compile-session-action)
+		 (detached-session-origin 'compile)
+		 (detached-session-mode 'create-and-attach)
+		 (detached--current-session edit-command))
+	(recompile edit-command)))
 
 (defun detached-compile-kill ()
   "Kill a 'detached' session."
@@ -110,42 +110,42 @@ Optionally EDIT-COMMAND."
 (defun detached-compile--compilation-start (compilation-start &rest args)
   "Create a `detached' session before running COMPILATION-START with ARGS."
   (if detached-enabled
-      (pcase-let ((`(,_command ,mode ,name-function ,highlight-regexp) args))
-        (if (eq detached-session-mode 'create)
-            (detached-start-detached-session detached--current-session)
-          (apply compilation-start `(,(detached--shell-command detached--current-session t)
-                                     ,(or mode 'detached-compilation-mode)
-                                     ,name-function
-                                     ,highlight-regexp))))
-    (apply compilation-start args)))
+	  (pcase-let ((`(,_command ,mode ,name-function ,highlight-regexp) args))
+		(if (eq detached-session-mode 'create)
+			(detached-start-detached-session detached--current-session)
+		  (apply compilation-start `(,(detached--shell-command detached--current-session t)
+									 ,(or mode 'detached-compilation-mode)
+									 ,name-function
+									 ,highlight-regexp))))
+	(apply compilation-start args)))
 
 (defun detached-compile--replace-modesetter ()
   "Replace the modsetter inserted by `compilation-start'."
   (save-excursion
-    (let ((inhibit-read-only t)
-          (regexp (rx (regexp "^dtach ") (or "-c" "-a") (regexp ".*\.socket.*$"))))
-      (goto-char (point-min))
-      (when (re-search-forward regexp nil t)
-        (delete-region (match-beginning 0) (match-end 0))
-        (insert (detached--session-command detached--current-session))))))
+	(let ((inhibit-read-only t)
+		  (regexp (rx (regexp "^dtach ") (or "-c" "-a") (regexp ".*\.socket.*$"))))
+	  (goto-char (point-min))
+	  (when (re-search-forward regexp nil t)
+		(delete-region (match-beginning 0) (match-end 0))
+		(insert (detached--session-command detached--current-session))))))
 
 (defun detached-compile--compilation-detached-filter ()
   "Filter to modify the output in a compilation buffer."
   (let ((begin compilation-filter-start)
-        (end (copy-marker (point))))
-    (save-excursion
-      (goto-char begin)
-      (when (re-search-forward "\n?Detached session.*\n?" end t)
-        (delete-region (match-beginning 0) (match-end 0))))))
+		(end (copy-marker (point))))
+	(save-excursion
+	  (goto-char begin)
+	  (when (re-search-forward "\n?Detached session.*\n?" end t)
+		(delete-region (match-beginning 0) (match-end 0))))))
 
 (defun detached-compile--compilation-eof-filter ()
   "Filter to modify the output in a compilation buffer."
   (let ((begin compilation-filter-start)
-        (end (copy-marker (point))))
-    (save-excursion
-      (goto-char begin)
-      (when (re-search-forward (format "\n?%s\n" detached--dtach-eof-message) end t)
-        (delete-region (match-beginning 0) (match-end 0))))))
+		(end (copy-marker (point))))
+	(save-excursion
+	  (goto-char begin)
+	  (when (re-search-forward (format "\n?%s\n" detached--dtach-eof-message) end t)
+		(delete-region (match-beginning 0) (match-end 0))))))
 
 (cl-defmethod detached--detach-session ((_mode (derived-mode detached-compilation-mode)))
   "Detach from session when MODE is `detached-compilation-mode'."
@@ -156,10 +156,10 @@ Optionally EDIT-COMMAND."
 
 (defvar detached-compilation-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "C-c C-k") #'detached-compile-kill)
-    (define-key map (kbd "C-c C-.") #'detached-describe-session)
-    (define-key map (kbd detached-detach-key) #'detached-detach-session)
-    map)
+	(define-key map (kbd "C-c C-k") #'detached-compile-kill)
+	(define-key map (kbd "C-c C-.") #'detached-describe-session)
+	(define-key map (kbd detached-detach-key) #'detached-detach-session)
+	map)
   "Keymap for `detached-compilation-mode'.")
 
 ;;;###autoload
