@@ -98,8 +98,8 @@ If prefix-argument directly DETACH from the session."
 (defun detached-eshell--get-dtach-process ()
   "Return `eshell' process if `detached' is running."
   (when-let* ((process (and eshell-process-list (caar eshell-process-list))))
-	     (and (string= (process-name process) "dtach")
-		  process)))
+    (and (string= (process-name process) "dtach")
+         process)))
 
 (defun detached-eshell--select-session ()
   "Return selected session."

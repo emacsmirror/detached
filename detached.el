@@ -510,13 +510,13 @@ The session is compiled by opening its output and enabling
   (when-let* ((session (detached--get-session major-mode))
               (buffer (get-buffer-create "*detached-session-info*"))
               (window (display-buffer buffer detached-session-info-buffer-action)))
-	     (select-window window)
-	     (with-current-buffer buffer
-	       (erase-buffer)
-	       (insert
-		(string-trim
-		 (detached--session-header session)))
-	       (goto-char (point-min)))))
+    (select-window window)
+    (with-current-buffer buffer
+      (erase-buffer)
+      (insert
+       (string-trim
+        (detached--session-header session)))
+      (goto-char (point-min)))))
 
 ;;;###autoload
 (defun detached-attach-session (session)
@@ -580,7 +580,7 @@ Optionally DELETE the session if prefix-argument is provided."
   (when (detached-valid-session session)
     (when-let* ((default-directory (detached--session-directory session))
                 (pid (detached-session-pid session)))
-	       (detached--kill-processes pid))
+      (detached--kill-processes pid))
     (when delete
       (detached--db-remove-entry session))))
 
@@ -882,7 +882,7 @@ This function uses the `notifications' library."
                (thread-last (detached--uninitialized-sessions)
                             (seq-filter #'detached--session-accessible-p)
                             (seq-do #'detached--initialize-session))))
-	     (detached--db-update-sessions))
+    (detached--db-update-sessions))
   (detached--db-get-sessions))
 
 (defun detached-shell-command-attach-session (session)
@@ -1642,25 +1642,25 @@ session and trigger a state transition."
                   (is-primary
                    (detached--primary-detached-emacs-p session)))
 
-		 ;; Remove from unvalidated sessions
-		 (setq detached--unvalidated-sessions
-		       (assq-delete-all id detached--unvalidated-sessions))
+        ;; Remove from unvalidated sessions
+        (setq detached--unvalidated-sessions
+              (assq-delete-all id detached--unvalidated-sessions))
 
-		 ;; Update session
-		 (detached--session-state-transition-update session)
+        ;; Update session
+        (detached--session-state-transition-update session)
 
-		 ;; Remove session directory from `detached--watch-session-directory'
-		 ;; if there is no active session associated with the directory
-		 (unless
-		     (thread-last (detached--db-get-sessions)
-				  (seq-filter (lambda (it) (eq 'active (detached--session-state it))))
-				  (seq-map #'detached--session-directory)
-				  (seq-uniq)
-				  (seq-filter (lambda (it) (string= it session-directory))))
-		   (file-notify-rm-watch
-		    (alist-get session-directory detached--watched-session-directories nil nil #'string=))
-		   (setq detached--watched-session-directories
-			 (assoc-delete-all session-directory detached--watched-session-directories)))))))
+        ;; Remove session directory from `detached--watch-session-directory'
+        ;; if there is no active session associated with the directory
+        (unless
+            (thread-last (detached--db-get-sessions)
+                         (seq-filter (lambda (it) (eq 'active (detached--session-state it))))
+                         (seq-map #'detached--session-directory)
+                         (seq-uniq)
+                         (seq-filter (lambda (it) (string= it session-directory))))
+          (file-notify-rm-watch
+           (alist-get session-directory detached--watched-session-directories nil nil #'string=))
+          (setq detached--watched-session-directories
+                (assoc-delete-all session-directory detached--watched-session-directories)))))))
 
 (defun detached--initialize-session (session)
   "Initialize SESSION."

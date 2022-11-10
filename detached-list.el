@@ -133,11 +133,11 @@ Optionally initialize ALL session-directories."
                           (seq-filter #'detached--uninitialized-session-p)
                           (seq-map #'detached--session-directory)
                           (seq-uniq))))
-	   (if all
-               (seq-do #'detached-list--initialize-directory uninitialized-directories)
-             (when-let ((directory (completing-read "Initialize directory: " uninitialized-directories)))
-               (detached-list--initialize-directory directory)))
-	   (message "All session directories have been initialized")))
+      (if all
+          (seq-do #'detached-list--initialize-directory uninitialized-directories)
+        (when-let ((directory (completing-read "Initialize directory: " uninitialized-directories)))
+          (detached-list--initialize-directory directory)))
+    (message "All session directories have been initialized")))
 
 (defun detached-list-edit-annotation (session)
   "Edit SESSION's annotation."
@@ -147,8 +147,8 @@ Optionally initialize ALL session-directories."
                               (detached--session-annotation session)
                               ""))
               (annotation (read-string "Annotation: " initial-value)))
-	     (setf (detached--session-annotation session) annotation)
-	     (detached--db-update-entry session)))
+    (setf (detached--session-annotation session) annotation)
+    (detached--db-update-entry session)))
 
 (defun detached-list-quit ()
   "Quit command."
@@ -176,10 +176,10 @@ Optionally initialize ALL session-directories."
   (interactive
    (list (tabulated-list-get-id)))
   (when-let* ((buffer (detached-list--attached-p session)))
-	     (unless (get-buffer-window buffer)
-	       (pop-to-buffer buffer))
-	     (with-selected-window (get-buffer-window buffer)
-	       (detached-detach-session))))
+    (unless (get-buffer-window buffer)
+      (pop-to-buffer buffer))
+    (with-selected-window (get-buffer-window buffer)
+      (detached-detach-session))))
 
 (defun detached-list-jump-to-directory (session)
   "Jump to SESSION at point's directory."
@@ -350,9 +350,9 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
                  (thread-last (detached-list--get-narrowed-sessions)
                               (seq-map #'detached-session-host-name)
                               (seq-uniq))))
-	       (completing-read
-		"Select host: "
-		hostnames))))
+      (completing-read
+       "Select host: "
+       hostnames))))
   (when hostname
     (detached-list-narrow-sessions
      `(,@detached-list--narrow-criteria
@@ -423,9 +423,9 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
                  (thread-last (detached-list--get-narrowed-sessions)
                               (seq-map #'detached--session-directory)
                               (seq-uniq))))
-	       (completing-read
-		"Select session directory: "
-		directories))))
+      (completing-read
+       "Select session directory: "
+       directories))))
   (when session-directory
     (detached-list-narrow-sessions
      `(,@detached-list--narrow-criteria
@@ -493,8 +493,8 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
                               (complete-with-action action detached-list-filters string predicate))))
               (filter-name
                (completing-read "Select filter: " collection nil t)))
-	     (detached-list--apply-filter
-	      (alist-get filter-name detached-list-filters nil nil #'string=))))
+    (detached-list--apply-filter
+     (alist-get filter-name detached-list-filters nil nil #'string=))))
 
 (defun detached-list-narrow-origin (origin)
   "Narrow to sessions with a specific ORIGIN."
