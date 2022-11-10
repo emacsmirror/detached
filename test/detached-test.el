@@ -167,7 +167,7 @@
      ;; One inactive, one missing, one active
      (detached-test--change-session-state session1 'deactivate)
      (detached-test--change-session-state session2 'kill)
-     (detached--cleanup-host-sessions host)
+     (detached--cleanup-host-sessions "localhost")
      (detached--db-get-sessions)
      (should (seq-set-equal-p
               (detached--db-get-sessions)

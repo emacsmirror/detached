@@ -58,8 +58,8 @@ Optionally USE-COMINT-MODE"
 ;;;###autoload
 (defun detached-extra-alert-notification (session)
   "Send an `alert' notification when SESSION becomes inactive."
-  (let ((status (car (detached--session-status session)))
-        (host (car (detached--session-host session))))
+  (let ((status (detached-session-status session))
+        (host (detached-session-host-name session)))
     (alert (detached--session-command session)
            :title (pcase status
                     ('success (format "Detached finished [%s]" host))

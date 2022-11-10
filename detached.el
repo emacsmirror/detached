@@ -668,7 +668,7 @@ active session.  For sessions created with `detached-compile' or
          (sessions (if all-hosts
                        (detached-get-sessions)
                      (seq-filter (lambda (it)
-                                   (string= (car (detached--session-host it)) host-name))
+                                   (string= (detached-session-host-name it) host-name))
                                  (detached-get-sessions)))))
     (seq-do #'detached--db-remove-entry sessions)))
 
@@ -823,9 +823,9 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
   (when (detached-session-p session)
     (if (not (detached--session-missing-p session))
         t
-      (let ((host (detached--session-host session)))
-        (message "Session does not exist. Initiate session cleanup on host %s" (car host))
-        (detached--cleanup-host-sessions host)
+      (let ((hostname (detached-session-host-name session)))
+        (message "Session does not exist. Initiate session cleanup on host %s" hostname)
+        (detached--cleanup-host-sessions hostname)
         nil))))
 
 (defun detached-session-exit-code-status (session)
@@ -844,16 +844,16 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
 (defun detached-state-transitionion-echo-message (session)
   "Issue a notification when SESSION transitions from active to inactive.
 This function uses the echo area."
-  (let ((status (pcase (car (detached--session-status session))
+  (let ((status (pcase (car (detached-session-status session))
                   ('success "Detached finished")
                   ('failure "Detached failed"))))
-    (message "%s [%s]: %s" status (car (detached--session-host session)) (detached--session-command session))))
+    (message "%s [%s]: %s" status (detached-session-host-name session) (detached--session-command session))))
 
 (defun detached-state-transition-notifications-message (session)
   "Issue a notification when SESSION transitions from active to inactive.
 This function uses the `notifications' library."
-  (let ((status (car (detached--session-status session)))
-        (host (car (detached--session-host session))))
+  (let ((status (detached-session-status session))
+        (host (detached-session-host-name session)))
     (notifications-notify
      :title (pcase status
               ('success (format "Detached finished [%s]" host))
@@ -865,7 +865,7 @@ This function uses the `notifications' library."
 
 (defun detached-view-dwim (session)
   "View SESSION in a do what I mean fashion."
-  (let ((status (car (detached--session-status session))))
+  (let ((status (detached-session-status session)))
     (cond ((eq 'success status)
            (detached-view-session session))
           ((eq 'failure status)
@@ -972,6 +972,10 @@ This function uses the `notifications' library."
   (pcase-let ((`(,_status . ,exit-code)
                (detached--session-status session)))
     exit-code))
+
+(defun detached-session-failed-p (session)
+  "Return t if SESSION failed."
+  (eq 'failure (detached-session-status session)))
 
 (defun detached-session-remotehost-p (session)
   "Return t if SESSION is running on a remote host."
@@ -1182,7 +1186,7 @@ Optionally CONCAT the command return command into a string."
   (string-join
    `(,(format "Command: %s" (detached--session-command session))
      ,(format "Working directory: %s" (detached--working-dir-str session))
-     ,(format "Host: %s" (car (detached--session-host session)))
+     ,(format "Host: %s" (detached-session-host-name session))
      ,(format "Id: %s" (symbol-name (detached--session-id session)))
      ,(format "Status: %s" (car (detached--session-status session)))
      ,(format "Annotation: %s" (if-let ((annotation (detached--session-annotation session))) annotation ""))
@@ -1257,13 +1261,12 @@ Optionally make the path LOCAL to host."
         remote-local-path
       full-path)))
 
-(defun detached--cleanup-host-sessions (host)
-  "Run cleanup on HOST sessions."
-  (let ((host-name (car host)))
-    (thread-last (detached--db-get-sessions)
-                 (seq-filter (lambda (it) (string= host-name (car (detached--session-host it)))))
-                 (seq-filter #'detached--session-missing-p)
-                 (seq-do #'detached--db-remove-entry))))
+(defun detached--cleanup-host-sessions (hostname)
+  "Run cleanup on HOSTNAME sessions."
+  (thread-last (detached--db-get-sessions)
+               (seq-filter (lambda (it) (string= hostname (detached-session-host-name it))))
+               (seq-filter #'detached--session-missing-p)
+               (seq-do #'detached--db-remove-entry)))
 
 (defun detached--maybe-watch-session (session)
   "Maybe watch SESSION."
@@ -1788,7 +1791,7 @@ start searching at NUMBER offset."
 
 (defun detached--status-str (session)
   "Return string if SESSION has failed."
-  (pcase (car (detached--session-status session))
+  (pcase (detached-session-status session)
     ('failure "!")
     ('success "")
     ('unknown "")))
@@ -1812,7 +1815,7 @@ start searching at NUMBER offset."
 
 (defun detached--host-str (session)
   "Return host name of SESSION."
-  (car (detached--session-host session)))
+  (detached-session-host-name session))
 
 ;;;; Minor modes
 

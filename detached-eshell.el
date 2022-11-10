@@ -107,7 +107,7 @@ If prefix-argument directly DETACH from the session."
          (sessions
           (thread-last (detached-get-sessions)
                        (seq-filter (lambda (it)
-                                     (string= (car (detached--session-host it)) host-name)))
+                                     (string= (detached-session-host-name it) host-name)))
                        (seq-filter (lambda (it) (eq 'active (detached--determine-session-state it)))))))
     (detached-completing-read sessions)))
 

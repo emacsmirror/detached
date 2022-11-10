@@ -348,8 +348,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
    (list
     (when-let* ((hostnames
                  (thread-last (detached-list--get-narrowed-sessions)
-                              (seq-map #'detached--session-host)
-                              (seq-map #'car)
+                              (seq-map #'detached-session-host-name)
                               (seq-uniq))))
 	       (completing-read
 		"Select host: "
@@ -361,7 +360,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
         ,(lambda (sessions)
            (seq-filter (lambda (it)
                          (string-match hostname
-                                       (car (detached--session-host it))))
+                                       (detached-session-host-name it)))
                        sessions)))))))
 
 (defun detached-list-narrow-output (regexp)
@@ -479,7 +478,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
       ,(lambda (sessions)
          (let ((current-host (car (detached--host))))
            (seq-filter (lambda (it)
-                         (string= (car (detached--session-host it)) current-host))
+                         (string= (detached-session-host-name it) current-host))
                        sessions)))))))
 
 (defun detached-list-select-filter ()
