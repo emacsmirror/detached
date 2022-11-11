@@ -15,6 +15,7 @@ docs:
 
 clean:
 	rm *.elc
+	rm detached-autoloads.el
 	rm doc/*.texi
 
-all: byte-compile autoloads tests docs clean style
+all: byte-compile autoloads tests docs clean
