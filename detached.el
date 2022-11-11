@@ -893,12 +893,13 @@ This function uses the `notifications' library."
     (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
                (buffer (get-buffer-create detached--shell-command-buffer))
                (detached-local-session (detached--session-local session))
-               (default-directory (detached--session-working-directory session))
+               (default-directory (detached--session-directory session))
                (command (detached--shell-command session t)))
       (when (get-buffer-process buffer)
         (setq buffer (generate-new-buffer (buffer-name buffer))))
       (funcall #'async-shell-command command buffer)
       (with-current-buffer buffer
+        (setq-local default-directory (detached--session-working-directory session))
         (setq detached--buffer-session detached--current-session)))))
 
 ;;;;; Public session functions
