@@ -425,7 +425,7 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
    (list (detached-completing-read (detached-get-sessions))))
   (when (detached-valid-session session)
     (let ((initialized-session (detached--get-initialized-session session)))
-      (if (eq 'active (detached--session-state initialized-session))
+      (if (detached-session-active-p initialized-session)
           (detached-attach-session initialized-session)
         (if-let ((view-fun (plist-get (detached--session-action initialized-session) :view)))
             (funcall view-fun initialized-session)
@@ -525,7 +525,7 @@ The session is compiled by opening its output and enabling
    (list (detached-completing-read (detached-get-sessions))))
   (when (detached-valid-session session)
     (let ((initialized-session (detached--get-initialized-session session)))
-      (if (eq 'inactive (detached--session-state initialized-session))
+      (if (detached-session-inactive-p initialized-session)
           (detached-open-session initialized-session)
         (if-let ((attach-fun (plist-get (detached--session-action initialized-session) :attach)))
             (funcall attach-fun initialized-session)
@@ -844,7 +844,7 @@ If session is not valid trigger an automatic cleanup on SESSION's host."
 (defun detached-state-transitionion-echo-message (session)
   "Issue a notification when SESSION transitions from active to inactive.
 This function uses the echo area."
-  (let ((status (pcase (car (detached-session-status session))
+  (let ((status (pcase (detached-session-status session)
                   ('success "Detached finished")
                   ('failure "Detached failed"))))
     (message "%s [%s]: %s" status (detached-session-host-name session) (detached--session-command session))))
@@ -1188,9 +1188,9 @@ Optionally CONCAT the command return command into a string."
      ,(format "Working directory: %s" (detached--working-dir-str session))
      ,(format "Host: %s" (detached-session-host-name session))
      ,(format "Id: %s" (symbol-name (detached--session-id session)))
-     ,(format "Status: %s" (car (detached--session-status session)))
+     ,(format "Status: %s" (detached-session-status session))
      ,(format "Annotation: %s" (if-let ((annotation (detached--session-annotation session))) annotation ""))
-     ,(format "Exit-code: %s" (cdr (detached--session-status session)))
+     ,(format "Exit-code: %s" (detached-session-exit-code session))
      ,(format "Metadata: %s" (detached--metadata-str session))
      ,(format "Created at: %s" (detached--creation-str session))
      ,(format "Duration: %s\n" (detached--duration-str session))
@@ -1653,7 +1653,7 @@ session and trigger a state transition."
         ;; if there is no active session associated with the directory
         (unless
             (thread-last (detached--db-get-sessions)
-                         (seq-filter (lambda (it) (eq 'active (detached--session-state it))))
+                         (seq-filter #'detached-session-active-p)
                          (seq-map #'detached--session-directory)
                          (seq-uniq)
                          (seq-filter (lambda (it) (string= it session-directory))))
@@ -1779,12 +1779,11 @@ start searching at NUMBER offset."
   "Return SESSION's creation time."
   (format-time-string
    "%b %d %H:%M"
-   (plist-get
-    (detached--session-time session) :start)))
+   (detached-session-start-time session)))
 
 (defun detached--size-str (session)
   "Return the size of SESSION's output."
-  (if (eq 'active (detached--session-state session))
+  (if (detached-session-active-p session)
       ""
     (file-size-human-readable
      (detached--session-size session))))

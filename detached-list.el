@@ -299,10 +299,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
                         (seq-map (lambda (it)
                                    (pcase-let ((`(,_identifier . ,duplicate-sessions) it))
                                      (car duplicate-sessions))))
-                        (seq-sort-by
-                         (lambda (it)
-                           (plist-get (detached--session-time it) :start))
-                         #'>))))))))
+                        (seq-sort-by #'detached-session-start-time #'>))))))))
 
 (defun detached-list-narrow-after-time (time-threshold)
   "Narrow to session's created after TIME-THRESHOLD."
@@ -318,7 +315,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
                (let ((current-time (time-to-seconds (current-time))))
                  (seq-filter (lambda (it)
                                (< (- current-time
-                                     (plist-get (detached--session-time it) :start))
+                                     (detached-session-start-time it))
                                   parsed-threshold))
                              sessions))))))
       (message "Cannot parse time"))))
@@ -337,7 +334,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
                (let ((current-time (time-to-seconds (current-time))))
                  (seq-filter (lambda (it)
                                (> (- current-time
-                                     (plist-get (detached--session-time it) :start))
+                                     (detached-session-start-time it))
                                   parsed-threshold))
                              sessions))))))
       (message "Cannot parse time"))))
@@ -545,9 +542,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
    `(,@detached-list--narrow-criteria
      ("Success" .
       ,(lambda (sessions)
-         (seq-filter (lambda (it)
-                       (eq 'success (car (detached--session-status it))))
-                     sessions))))))
+         (seq-remove #'detached-session-failed-p sessions))))))
 
 (defun detached-list-narrow-failure ()
   "Narrow to failed sessions."
@@ -556,9 +551,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
    `(,@detached-list--narrow-criteria
      ("Failure" .
       ,(lambda (sessions)
-         (seq-filter (lambda (it)
-                       (eq 'failure (car (detached--session-status it))))
-                     sessions))))))
+         (seq-filter #'detached-session-failed-p sessions))))))
 
 (defun detached-list-mark-regexp (regexp)
   "Mark sessions which command match REGEXP.
