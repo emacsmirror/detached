@@ -130,7 +130,7 @@ Optionally initialize ALL session-directories."
   (interactive "P")
   (if-let* ((uninitialized-directories
              (thread-last (detached-get-sessions)
-                          (seq-filter #'detached--uninitialized-session-p)
+                          (seq-filter #'detached-session-uninitialized-p)
                           (seq-map #'detached--session-directory)
                           (seq-uniq))))
       (if all
@@ -791,7 +791,7 @@ If prefix-argument is provided unmark instead of mark."
                 (alist-get 'failure detached-list-state-symbols "?")
               (alist-get 'success detached-list-state-symbols "?"))))
          (status-face
-          (cond ((and (detached--uninitialized-session-p session)
+          (cond ((and (detached-session-uninitialized-p session)
                       (detached-session-active-p session))
                  'detached-identifier-face)
                 ((detached-session-active-p session) 'font-lock-type-face)
@@ -816,7 +816,7 @@ If prefix-argument is provided unmark instead of mark."
 (defun detached-list--command-str (session)
   "Return command string for SESSION."
   (let ((command-str (detached--session-command session)))
-    (if (detached--uninitialized-session-p session)
+    (if (detached-session-uninitialized-p session)
         (propertize command-str 'face 'detached-uninitialized-face)
       command-str)))
 

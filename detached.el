@@ -1001,6 +1001,16 @@ This function uses the `notifications' library."
   "Return t if SESSION is forced to run locally."
   (detached--session-local session))
 
+(defun detached-session-uninitialized-p (session)
+  "Return t if SESSION is uninitialized."
+  (eq 'uninitialized
+      (gethash (detached--session-id session) detached--hashed-sessions)))
+
+(defun detached-session-initialized-p (session)
+  "Return t if SESSION is initialized."
+  (eq 'initialized
+      (gethash (detached--session-id session) detached--hashed-sessions)))
+
 ;;;;; Other
 
 (cl-defgeneric detached--get-session (_mode)
@@ -1448,7 +1458,7 @@ Optionally make the path LOCAL to host."
 
 (defun detached--get-initialized-session (session)
   "Return an initialized copy of SESSION."
-  (if (detached--uninitialized-session-p session)
+  (if (detached-session-uninitialized-p session)
       (progn
         (detached--initialize-session session)
         (detached--db-update-sessions)
@@ -1684,13 +1694,8 @@ session and trigger a state transition."
 
 (defun detached--uninitialized-sessions ()
   "Return a list of uninitialized sessions."
-  (seq-filter #'detached--uninitialized-session-p
+  (seq-filter #'detached-session-uninitialized-p
               (detached--db-get-sessions)))
-
-(defun detached--uninitialized-session-p (session)
-  "Return t if SESSION is uninitialized."
-  (eq 'uninitialized
-      (gethash (detached--session-id session) detached--hashed-sessions)))
 
 (defun detached--db-directory-event (event)
   "Act on EVENT in `detached-db-directory'.
