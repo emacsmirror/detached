@@ -27,6 +27,7 @@
 
 (require 'detached)
 (require 'hl-line)
+(require 'imenu)
 (require 'tabulated-list)
 
 ;;;; Variables
