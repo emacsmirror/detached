@@ -180,10 +180,12 @@ See `consult-multi' for a description of the source values."
             :items
             ,(lambda ()
                (let ((host-name (car (detached--host))))
-                 (mapcar #'car (seq-filter
-                                (lambda (x)
-                                  (string= (car (detached--session-host (cdr x))) host-name))
-                                (detached-session-candidates (detached-get-sessions)))))))
+                 (mapcar #'car
+                         (thread-last (detached-session-candidates (detached-get-sessions))
+                                      (seq-map #'cdr)
+                                      (seq-filter
+                                       (lambda (x)
+                                         (string= (detached-session-host-name x) host-name))))))))
   "Current host `detached' sessions as a source for `consult'.")
 
 ;;;; Commands
