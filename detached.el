@@ -1012,6 +1012,11 @@ This function uses the `notifications' library."
   (eq 'initialized
       (gethash (detached--session-id session) detached--hashed-sessions)))
 
+(defun detached-session-watched-p (session)
+  "Return t if SESSION is being watched."
+  (detached--watched-session-directory-p
+   (detached--session-directory session)))
+
 ;;;;; Other
 
 (cl-defgeneric detached--get-session (_mode)
@@ -1281,10 +1286,10 @@ Optionally make the path LOCAL to host."
 
 (defun detached--maybe-watch-session (session)
   "Maybe watch SESSION."
-  (let ((session-directory (detached--session-directory session)))
-    (and (detached-session-active-p session)
-         (not (detached--watched-session-directory-p session-directory))
-         (detached--watch-session-directory session-directory))))
+  (and (detached-session-active-p session)
+       (not (detached-session-watched-p session))
+       (detached--watch-session-directory
+        (detached--session-directory session))))
 
 (defun detached--create-session-directory ()
   "Create session directory if it doesn't exist."

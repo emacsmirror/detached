@@ -66,6 +66,27 @@
 
 ;;;; Tests
 
+;;;;; Session interface
+
+(ert-deftest detached-test-session-status ()
+  (let ((failed-session (detached--session-create :status `(failure . 128))))
+    (should (detached-session-failed-p failed-session))
+    (should (= 128 (detached-session-exit-code failed-session)))))
+
+(ert-deftest detached-test-session-host ()
+  ;; Remotehost session
+  (let ((remote-session (detached--session-create :host `("foo" . remotehost))))
+    (should (detached-session-remotehost-p remote-session))
+    (should (not (detached-session-localhost-p remote-session)))
+    (should (string= "foo" (detached-session-host-name remote-session))))
+  ;; Localhost session
+  (let ((local-session (detached--session-create :host `("bar" . localhost))))
+    (should (not (detached-session-remotehost-p local-session)))
+    (should (detached-session-localhost-p local-session))
+    (should (string= "bar" (detached-session-host-name local-session)))))
+
+;;;;; Other
+
 (ert-deftest detached-test-dtach-command ()
   (detached-test--with-temp-database
    (cl-letf* ((detached-dtach-program "dtach")
