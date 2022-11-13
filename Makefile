@@ -14,8 +14,8 @@ docs:
 	emacs --batch --eval='(progn (setq make-backup-files nil) (find-file "doc/detached.org") (org-texinfo-export-to-info))'
 
 clean:
-	rm *.elc
-	rm detached-autoloads.el
-	rm doc/*.texi
+	rm -f *.elc
+	rm -f doc/*.texi
+	rm -f detached-autoloads.el
 
 all: byte-compile autoloads tests docs clean
