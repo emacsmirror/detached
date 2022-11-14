@@ -45,7 +45,7 @@
 
 ;;;###autoload
 (defun detached-eshell-external-command (orig-fun &rest args)
-  "Advice `eshell-external-command' to optionally use `detached'."
+  "Advice ORIG-FUN to optionally use `detached' on ARGS."
   (let* ((detached-session-action detached-eshell-session-action)
          (command (string-trim-right (string-join (flatten-list args) " ")))
          (session (detached-create-session command))
