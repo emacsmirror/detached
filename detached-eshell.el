@@ -74,7 +74,7 @@ If prefix-argument directly DETACH from the session."
   (interactive
    (list (detached-eshell--select-session)))
   (when (detached-valid-session session)
-    (if (eq 'active (detached--determine-session-state session))
+    (if (detached-session-active-p session)
         (cl-letf* ((detached-session-mode 'attach)
                    (input
                     (detached--shell-command session t))
@@ -108,12 +108,12 @@ If prefix-argument directly DETACH from the session."
           (thread-last (detached-get-sessions)
                        (seq-filter (lambda (it)
                                      (string= (detached-session-host-name it) host-name)))
-                       (seq-filter (lambda (it) (eq 'active (detached--determine-session-state it)))))))
+                       (seq-filter #'detached-session-active-p))))
     (detached-completing-read sessions)))
 
 (cl-defmethod detached--detach-session ((_mode (derived-mode eshell-mode)))
   "Detach from session when MODE is `eshell-mode'."
-  (when-let ((active-session (eq 'active (detached--determine-session-state detached--buffer-session)))
+  (when-let ((active-session (detached-session-active-p detached--buffer-session))
              (dtach-process (detached-eshell--get-dtach-process)))
     (setq detached--buffer-session nil)
     (process-send-string dtach-process

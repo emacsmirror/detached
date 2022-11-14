@@ -560,7 +560,7 @@ The session is compiled by opening its output and enabling
   (interactive
    (list (detached-completing-read (detached-get-sessions))))
   (when (detached-valid-session session)
-    (if (eq 'active (detached--determine-session-state session))
+    (if (detached-session-active-p session)
         (message "Kill session first before removing it.")
       (detached--db-remove-entry session))))
 
@@ -930,6 +930,12 @@ This function uses the `notifications' library."
         (buffer-string))
       "\n" t))))
 
+(defun detached-session-state (session)
+  "Return SESSION's state."
+  (if (detached-session-validated-p session)
+      (detached--session-state session)
+    'unknown))
+
 (defun detached-session-status (session)
   "Return status for SESSION."
   (pcase-let ((`(,status . ,_exit-code)
@@ -1003,6 +1009,12 @@ This function uses the `notifications' library."
    (plist-get (detached--session-action session) :status)
    #'detached-session-exit-code-status))
 
+(defun detached-session-validated-p (session)
+  "Return t if SESSION has been validated."
+  (not
+   (alist-get (detached-session-id session)
+              detached--unvalidated-sessions)))
+
 (defun detached-session-failed-p (session)
   "Return t if SESSION failed."
   (eq 'failure (detached-session-status session)))
@@ -1017,11 +1029,11 @@ This function uses the `notifications' library."
 
 (defun detached-session-active-p (session)
   "Return t if SESSION is active."
-  (eq 'active (detached--session-state session)))
+  (eq 'active (detached-session-state session)))
 
 (defun detached-session-inactive-p (session)
   "Return t if SESSION is inactive."
-  (eq 'inactive (detached--session-state session)))
+  (eq 'inactive (detached-session-state session)))
 
 (defun detached-session-degraded-p (session)
   "Return t if SESSION is degraded."
@@ -1366,7 +1378,7 @@ Optionally make the path LOCAL to host."
 
 (defun detached--detach-from-comint-process ()
   "Detach from the underlying `comint' process."
-  (when-let ((active-session (eq 'active (detached--determine-session-state detached--buffer-session)))
+  (when-let ((active-session (detached-session-active-p detached--buffer-session))
              (dtach-process (get-buffer-process (current-buffer))))
     (setq detached--buffer-session nil)
     (comint-simple-send dtach-process detached--dtach-detach-character)))
@@ -1841,7 +1853,7 @@ start searching at NUMBER offset."
 
 (defun detached--state-str (session)
   "Return string based on SESSION state."
-  (pcase (detached--session-state session)
+  (pcase (detached-session-state session)
     ('active (if (detached--session-accessible-p session)
                  "*"
                "?"))

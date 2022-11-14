@@ -75,7 +75,7 @@ cluttering the `comint-history' with dtach commands."
   (interactive
    (list (detached-shell--select-session)))
   (when (detached-valid-session session)
-    (if (eq 'active (detached--determine-session-state session))
+    (if (detached-session-active-p session)
         (cl-letf ((detached--current-session session)
                   (comint-input-sender #'detached-shell--attach-input-sender)
                   ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
@@ -95,7 +95,7 @@ cluttering the `comint-history' with dtach commands."
           (thread-last (detached-get-sessions)
                        (seq-filter (lambda (it)
                                      (string= (detached-session-host-name it) host-name)))
-                       (seq-filter (lambda (it) (eq 'active (detached--determine-session-state it)))))))
+                       (seq-filter #'detached-session-active-p))))
     (detached-completing-read sessions)))
 
 (defun detached-shell--attach-input-sender (proc _string)
