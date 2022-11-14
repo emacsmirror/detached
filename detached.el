@@ -734,7 +734,7 @@ Optionally SUPPRESS-OUTPUT."
 
 (defun detached-start-detached-session (session)
   "Start SESSION in detached mode."
-  (if detached-local-session
+  (if (detached-session-local-p session)
       (apply #'start-process-shell-command
              `("detached" nil ,(detached--dtach-command session t)))
     (apply #'start-file-process-shell-command
@@ -904,6 +904,33 @@ This function uses the `notifications' library."
         (setq detached--buffer-session detached--current-session)))))
 
 ;;;;; Public session functions
+
+(defun detached-session-start-command (session &optional concat)
+  "Return command to start SESSION.
+
+Optionally return concatenated string when CONCAT."
+  (detached-connection-local-variables
+   (let* ((socket (detached--session-file session 'socket t))
+          (log (detached--session-file session 'log t)))
+     (if (detached-session-degraded-p session)
+         (let ((tail-command
+                `(,detached-tail-program
+                  "--follow=name"
+                  "--retry"
+                  ,(concat "--lines=" detached-session-context-lines)
+                  ,log)))
+           (when (eq 'create-and-attach
+                     (detached--session-initial-mode session))
+             (detached-start-detached-session session))
+           (if concat (string-join tail-command " ") tail-command))
+       (let ((dtach-command
+              `(,detached-dtach-program
+                ,(detached--dtach-arg) ,socket "-z"
+                ,detached-shell-program "-c"
+                ,(if concat
+                     (shell-quote-argument (detached--detached-command session))
+                   (detached--detached-command session)))))
+         (if concat (string-join dtach-command " ") dtach-command))))))
 
 (defun detached-session-output (session)
   "Return content of SESSION's output."

@@ -110,7 +110,8 @@ cluttering the `comint-history' with dtach commands."
   (with-connection-local-variables
    (let* ((session
            (detached-create-session (substring-no-properties string)))
-          (command (detached--shell-command session t)))
+          (command
+           (detached-session-start-command session 'concat)))
      (setq detached--buffer-session session)
      (comint-simple-send proc command))))
 

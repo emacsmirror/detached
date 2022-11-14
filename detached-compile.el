@@ -113,7 +113,9 @@ Optionally EDIT-COMMAND."
 	  (pcase-let ((`(,_command ,mode ,name-function ,highlight-regexp) args))
 		(if (eq detached-session-mode 'create)
 			(detached-start-detached-session detached--current-session)
-		  (apply compilation-start `(,(detached--shell-command detached--current-session t)
+		  (apply compilation-start `(,(if (eq detached-session-mode 'attach)
+                                          (detached--shell-command detached--current-session t)
+                                        (detached-session-start-command detached--current-session 'concat))
 									 ,(or mode 'detached-compilation-mode)
 									 ,name-function
 									 ,highlight-regexp))))
