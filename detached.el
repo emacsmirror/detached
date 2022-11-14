@@ -427,9 +427,9 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
     (let ((initialized-session (detached--get-initialized-session session)))
       (if (detached-session-active-p initialized-session)
           (detached-attach-session initialized-session)
-        (if-let ((view-fun (plist-get (detached--session-action initialized-session) :view)))
-            (funcall view-fun initialized-session)
-          (detached-view-dwim initialized-session))))))
+        (funcall
+         (detached-session-view-function initialized-session)
+         initialized-session)))))
 
 ;;;###autoload
 (defun detached-compile-session (session)
@@ -480,9 +480,7 @@ The session is compiled by opening its output and enabling
             (read-string "Edit command: " (detached--session-command session))))
       (if suppress-output
           (detached-start-session command suppress-output)
-        (if-let ((run-fun (plist-get (detached--session-action session) :run)))
-            (funcall run-fun command)
-          (detached-start-session command))))))
+        (funcall (detached-session-run-function session) command)))))
 
 ;;;###autoload
 (defun detached-rerun-session (session &optional suppress-output)
@@ -500,9 +498,7 @@ The session is compiled by opening its output and enabling
            (command (detached--session-command session)))
       (if suppress-output
           (detached-start-session command suppress-output)
-        (if-let ((run-fun (plist-get (detached--session-action session) :run)))
-            (funcall run-fun command)
-          (detached-start-session command))))))
+        (funcall (detached-session-run-function session) command)))))
 
 (defun detached-describe-session ()
   "Describe current session."
@@ -527,9 +523,8 @@ The session is compiled by opening its output and enabling
     (let ((initialized-session (detached--get-initialized-session session)))
       (if (detached-session-inactive-p initialized-session)
           (detached-open-session initialized-session)
-        (if-let ((attach-fun (plist-get (detached--session-action initialized-session) :attach)))
-            (funcall attach-fun initialized-session)
-          (detached-shell-command-attach-session initialized-session))))))
+        (funcall (detached-session-attach-function initialized-session)
+                 initialized-session)))))
 
 ;;;###autoload
 (defun detached-copy-session (session)
@@ -977,6 +972,36 @@ This function uses the `notifications' library."
 (defun detached-session-id (session)
   "Return SESSION's id."
   (detached--session-id session))
+
+(defun detached-session-view-function (session)
+  "Return SESSION's view function."
+  (or
+   (plist-get (detached--session-action session) :view)
+   #'detached-view-dwim))
+
+(defun detached-session-attach-function (session)
+  "Return SESSION's attach function."
+  (or
+   (plist-get (detached--session-action session) :attach)
+   #'detached-shell-command-attach-session))
+
+(defun detached-session-run-function (session)
+  "Return SESSION's run function."
+  (or
+   (plist-get (detached--session-action session) :run)
+   #'detached-start-session))
+
+(defun detached-session-callback-function (session)
+  "Return SESSION's callback function."
+  (or
+   (plist-get (detached--session-action session) :callback)
+   #'ignore))
+
+(defun detached-session-status-function (session)
+  "Return SESSION's status function."
+  (or
+   (plist-get (detached--session-action session) :status)
+   #'detached-session-exit-code-status))
 
 (defun detached-session-failed-p (session)
   "Return t if SESSION failed."
@@ -1528,8 +1553,7 @@ Optionally specify if the end-time should be APPROXIMATE or not."
                        (file-attributes
                         (detached--session-file session 'log))))
         (session-time (detached--update-session-time session approximate))
-        (status-fun (or (plist-get (detached--session-action session) :status)
-                        #'detached-session-exit-code-status)))
+        (status-fun (detached-session-status-function session)))
     (setf (detached--session-size session) session-size)
     (setf (detached--session-time session) session-time)
     (setf (detached--session-state session) 'inactive)
@@ -1542,8 +1566,8 @@ Optionally specify if the end-time should be APPROXIMATE or not."
   (detached--db-update-entry session)
 
   ;; Execute callback
-  (when-let ((callback (plist-get (detached--session-action session) :callback)))
-    (funcall callback session)))
+  (funcall (detached-session-callback-function session)
+           session))
 
 (defun detached--kill-processes (pid)
   "Kill PID and all of its children."
