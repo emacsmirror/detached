@@ -222,7 +222,7 @@
 (ert-deftest detached-test-db-update-session ()
   (detached-test--with-temp-database
    (let* ((session (detached-test--create-session :command "foo" :host '("host" . localhost)))
-          (id (detached--session-id session))
+          (id (detached-session-id session))
           (copy))
      (setq copy (copy-detached-session session))
      (setf (detached--session-state copy) nil)

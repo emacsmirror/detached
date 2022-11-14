@@ -803,7 +803,7 @@ Optionally SUPPRESS-OUTPUT."
           (let* ((sessions (detached--db-get-sessions))
                  (ht (make-hash-table :test #'equal :size (length sessions))))
             (seq-do (lambda (session)
-                      (puthash (detached--session-id session) 'uninitialized ht))
+                      (puthash (detached-session-id session) 'uninitialized ht))
                     sessions)
             ht))
 
@@ -921,10 +921,10 @@ This function uses the `notifications' library."
         (buffer-substring beginning end)))))
 
 (defun detached-session-pid (session)
-  "Return SESSION's pid."
+  "Return SESSION's process id."
   (let* ((socket
           (expand-file-name
-           (concat (symbol-name (detached--session-id session)) ".socket")
+           (concat (symbol-name (detached-session-id session)) ".socket")
            (or
             (file-remote-p default-directory 'localname)
             default-directory))))
@@ -974,6 +974,10 @@ This function uses the `notifications' library."
                (detached--session-status session)))
     exit-code))
 
+(defun detached-session-id (session)
+  "Return SESSION's id."
+  (detached--session-id session))
+
 (defun detached-session-failed-p (session)
   "Return t if SESSION failed."
   (eq 'failure (detached-session-status session)))
@@ -1005,12 +1009,13 @@ This function uses the `notifications' library."
 (defun detached-session-uninitialized-p (session)
   "Return t if SESSION is uninitialized."
   (eq 'uninitialized
-      (gethash (detached--session-id session) detached--hashed-sessions)))
+      (gethash (detached-session-id session) detached--hashed-sessions)))
 
 (defun detached-session-initialized-p (session)
   "Return t if SESSION is initialized."
   (eq 'initialized
-      (gethash (detached--session-id session) detached--hashed-sessions)))
+      (gethash (detached-session-id session) detached--hashed-sessions)))
+
 
 (defun detached-session-watched-p (session)
   "Return t if SESSION is being watched."
@@ -1203,7 +1208,7 @@ Optionally CONCAT the command return command into a string."
    `(,(format "Command: %s" (detached--session-command session))
      ,(format "Working directory: %s" (detached--working-dir-str session))
      ,(format "Host: %s" (detached-session-host-name session))
-     ,(format "Id: %s" (symbol-name (detached--session-id session)))
+     ,(format "Id: %s" (symbol-name (detached-session-id session)))
      ,(format "Status: %s" (detached-session-status session))
      ,(format "Annotation: %s" (if-let ((annotation (detached--session-annotation session))) annotation ""))
      ,(format "Exit-code: %s" (detached-session-exit-code session))
@@ -1246,15 +1251,15 @@ It can take some time for a dtach socket to be created.  Therefore all
 sessions are created with state unknown.  This function creates a
 function to verify that a session was created correctly.  If the
 session is missing its deleted from the database."
-  (setf (alist-get (detached--session-id session) detached--unvalidated-sessions)
+  (setf (alist-get (detached-session-id session) detached--unvalidated-sessions)
         session)
   (run-with-timer detached-dtach-socket-creation-delay
                   nil
                   (lambda ()
-                    (when (alist-get (detached--session-id session)
+                    (when (alist-get (detached-session-id session)
                                      detached--unvalidated-sessions)
                       (setq detached--unvalidated-sessions
-                            (assq-delete-all (detached--session-id session)
+                            (assq-delete-all (detached-session-id session)
                                              detached--unvalidated-sessions))
                       (unless (detached--session-missing-p session)
                         (setf (detached--session-state session) 'active)
@@ -1267,7 +1272,7 @@ Optionally make the path LOCAL to host."
   (let* ((file-name
           (concat
            (symbol-name
-            (detached--session-id session))
+            (detached-session-id session))
            (pcase file
              ('socket ".socket")
              ('log ".log"))))
@@ -1369,7 +1374,7 @@ Optionally make the path LOCAL to host."
 
 (defun detached--db-insert-entry (session)
   "Insert SESSION into `detached--sessions' and update database."
-  (push `(,(detached--session-id session) . ,session) detached--sessions)
+  (push `(,(detached-session-id session) . ,session) detached--sessions)
   (when detached--update-database
     (detached--db-update-sessions)))
 
@@ -1379,13 +1384,13 @@ Optionally make the path LOCAL to host."
     (when (file-exists-p log)
       (delete-file log)))
   (setq detached--sessions
-        (assq-delete-all (detached--session-id session) detached--sessions))
+        (assq-delete-all (detached-session-id session) detached--sessions))
   (when detached--update-database
     (detached--db-update-sessions)))
 
 (defun detached--db-update-entry (session)
   "Update SESSION in `detached--sessions' and the database."
-  (setf (alist-get (detached--session-id session) detached--sessions) session)
+  (setf (alist-get (detached-session-id session) detached--sessions) session)
   (when detached--update-database
     (detached--db-update-sessions)))
 
@@ -1468,7 +1473,7 @@ Optionally make the path LOCAL to host."
       (progn
         (detached--initialize-session session)
         (detached--db-update-sessions)
-        (detached--db-get-session (detached--session-id session)))
+        (detached--db-get-session (detached-session-id session)))
     session))
 
 (defun detached--verify-db-compatibility ()
@@ -1680,7 +1685,7 @@ session and trigger a state transition."
 
 (defun detached--initialize-session (session)
   "Initialize SESSION."
-  (puthash (detached--session-id session) 'initialized detached--hashed-sessions)
+  (puthash (detached-session-id session) 'initialized detached--hashed-sessions)
 
   (let* ((emacsen
           (thread-last `(,(emacs-pid) ,@(detached--session-initialized-emacsen session))
@@ -1718,9 +1723,9 @@ If event is cased by an update to the `detached' database, re-initialize
       (detached--db-initialize)
       ;; Initialize unknown sessions
       (seq-do (lambda (session)
-                (unless (gethash (detached--session-id session) detached--hashed-sessions)
+                (unless (gethash (detached-session-id session) detached--hashed-sessions)
                   (if (not (detached--session-accessible-p session))
-                      (puthash (detached--session-id session) 'uninitialized detached--hashed-sessions)
+                      (puthash (detached-session-id session) 'uninitialized detached--hashed-sessions)
                     (detached--initialize-session session))))
               (detached--db-get-sessions)))))
 

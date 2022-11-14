@@ -624,8 +624,8 @@ If prefix-argument is provided unmark instead of mark."
            (lambda (session)
              (seq-find
               (lambda (marked-session)
-                (eq (detached--session-id marked-session)
-                    (detached--session-id session)))
+                (eq (detached-session-id marked-session)
+                    (detached-session-id session)))
               detached-list--marked-sessions))
            sessions)))
     (setq detached-list--marked-sessions unmarked-sessions)
@@ -735,18 +735,18 @@ If prefix-argument is provided unmark instead of mark."
 (defun detached-list--marked-session-p (session)
   "Return t if SESSION is marked."
   (seq-find (lambda (it)
-              (eq (detached--session-id it)
-                  (detached--session-id session)))
+              (eq (detached-session-id it)
+                  (detached-session-id session)))
             detached-list--marked-sessions))
 
 (defun detached-list--attached-p (session)
   "Return t if Emacs is attached to SESSION."
-  (let ((id (detached--session-id session)))
+  (let ((id (detached-session-id session)))
     (seq-find
      (lambda (buffer)
        (with-current-buffer buffer
          (when-let ((buffer-session detached--buffer-session)
-                    (buffer-session-id (detached--session-id buffer-session)))
+                    (buffer-session-id (detached-session-id buffer-session)))
            (eq buffer-session-id id))))
      (buffer-list))))
 
@@ -756,8 +756,8 @@ If prefix-argument is provided unmark instead of mark."
     (tabulated-list-put-tag " ")
     (setq detached-list--marked-sessions
           (seq-remove (lambda (it)
-                        (eq (detached--session-id it)
-                            (detached--session-id session)))
+                        (eq (detached-session-id it)
+                            (detached-session-id session)))
                       detached-list--marked-sessions))))
 
 (defun detached-list--mark-session (session)
@@ -881,7 +881,7 @@ If prefix-argument is provided unmark instead of mark."
                        (seq-remove #'null)
                        (seq-map #'file-name-sans-extension))))
     (seq-filter (lambda (it)
-                  (member (symbol-name (detached--session-id it)) session-ids))
+                  (member (symbol-name (detached-session-id it)) session-ids))
                 sessions)))
 
 ;;;; Major mode
