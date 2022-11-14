@@ -539,7 +539,7 @@ The session is compiled by opening its output and enabling
   (when (detached-valid-session session)
     (with-temp-buffer
       (insert (detached-session-output session))
-      (when (eq 'terminal-data (detached--session-env session))
+      (when (detached-session-terminal-data-p session)
         ;; Enable `detached-log-mode' to parse ansi-escape sequences
         (detached-log-mode))
       (kill-new (buffer-string)))))
@@ -624,7 +624,7 @@ Optionally DELETE the session if prefix-argument is provided."
           (erase-buffer)
           (insert (detached--session-header session1))
           (insert (detached-session-output session1))
-          (when (eq 'terminal-data (detached--session-env session1))
+          (when (detached-session-terminal-data-p session1)
             ;; Enable `detached-log-mode' to parse ansi-escape sequences
             (detached-log-mode))))
       (with-current-buffer (get-buffer-create buffer2)
@@ -632,7 +632,7 @@ Optionally DELETE the session if prefix-argument is provided."
           (erase-buffer)
           (insert (detached--session-header session2))
           (insert (detached-session-output session2))
-          (when (eq 'terminal-data (detached--session-env session2))
+          (when (detached-session-terminal-data-p session2)
             ;; Enable `detached-log-mode' to parse ansi-escape sequences
             (detached-log-mode))))
       (ediff-buffers buffer1 buffer2))))
@@ -1016,6 +1016,10 @@ This function uses the `notifications' library."
   (eq 'initialized
       (gethash (detached-session-id session) detached--hashed-sessions)))
 
+(defun detached-session-terminal-data-p (session)
+  "Return t if SESSION is run with environment set to terminal data."
+  (eq 'terminal-data
+      (detached--session-env session)))
 
 (defun detached-session-watched-p (session)
   "Return t if SESSION is being watched."
@@ -1571,7 +1575,7 @@ If SESSION is degraded fallback to a command that doesn't rely on tee."
          (command
           (shell-quote-argument
            (format "if %s; then true; else echo \"[detached-exit-code: $?]\"; fi"
-                   (if (and (eq 'terminal-data (detached--session-env session))
+                   (if (and (detached-session-terminal-data-p session)
                             detached-terminal-data-command)
                        (format "TERM=eterm-color %s"
                                (format
