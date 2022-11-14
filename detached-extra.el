@@ -27,8 +27,6 @@
 
 (declare-function detached-compile "detached")
 (declare-function detached-start-session "detached")
-(declare-function detached--session-status "detached")
-(declare-function detached--session-host "detached")
 (declare-function detached--session-command "detached")
 
 (declare-function alert "alert")
