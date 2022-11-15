@@ -1037,6 +1037,10 @@ This function uses the `notifications' library."
    (plist-get (detached--session-action session) :status)
    #'detached-session-exit-code-status))
 
+(defun detached-session-command (session)
+  "Return command run in SESSION."
+  (detached--session-command session))
+
 (defun detached-session-validated-p (session)
   "Return t if SESSION has been validated."
   (not
