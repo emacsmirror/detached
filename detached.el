@@ -337,7 +337,7 @@ This version is encoded as [package-version].[revision].")
 (defvar-local detached--buffer-session nil
   "The `detached-session' session in current buffer.")
 
-(defvar detached--current-session nil
+(defvar detached-current-session nil
   "The current session.")
 
 (defvar detached--session-candidates nil
@@ -418,7 +418,7 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
                                       detached-shell-command-session-action))
          (detached-session-mode (or detached-session-mode
                                     (if suppress-output 'create 'create-and-attach)))
-         (detached--current-session (detached-create-session command)))
+         (detached-current-session (detached-create-session command)))
     (detached-start-session command suppress-output)))
 
 ;;;###autoload
@@ -712,26 +712,26 @@ Optionally SUPPRESS-OUTPUT."
               (or suppress-output
                   (eq detached-session-mode 'create)))
              (detached-session-mode 'create))
-        (let ((detached--current-session
-               (or detached--current-session
+        (let ((detached-current-session
+               (or detached-current-session
                    (detached-create-session command))))
           (setq detached-enabled nil)
           (detached-start-detached-session
-           detached--current-session))
+           detached-current-session))
       (cl-letf* ((detached-session-mode 'create-and-attach)
-                 (detached--current-session
-                  (or detached--current-session
+                 (detached-current-session
+                  (or detached-current-session
                       (detached-create-session command)))
                  ((symbol-function #'set-process-sentinel) #'ignore)
                  (buffer (detached--generate-buffer detached--shell-command-buffer
                                                     (lambda (buffer)
                                                       (not (get-buffer-process buffer)))))
-                 (command (detached-session-start-command detached--current-session
+                 (command (detached-session-start-command detached-current-session
                                                           :type 'string)))
         (setq detached-enabled nil)
         (funcall #'async-shell-command command buffer)
         (with-current-buffer buffer
-          (setq detached--buffer-session detached--current-session))))))
+          (setq detached--buffer-session detached-current-session))))))
 
 (defun detached-start-detached-session (session)
   "Start SESSION in detached mode."
@@ -894,7 +894,7 @@ This function uses the `notifications' library."
 
 (defun detached-shell-command-attach-session (session)
   "Attach to SESSION with `async-shell-command'."
-  (let* ((detached--current-session session)
+  (let* ((detached-current-session session)
          (detached-session-mode 'attach)
          (inhibit-message t))
     (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
@@ -907,7 +907,7 @@ This function uses the `notifications' library."
       (funcall #'async-shell-command command buffer)
       (with-current-buffer buffer
         (setq-local default-directory (detached--session-working-directory session))
-        (setq detached--buffer-session detached--current-session)))))
+        (setq detached--buffer-session detached-current-session)))))
 
 ;;;;; Public session functions
 
@@ -1206,7 +1206,7 @@ Optionally CONCAT the command return command into a string."
             (detached--dtach-command session))
            ((eq 'create-and-attach detached-session-mode)
             (let ((detached-session-mode 'create)
-                  (detached--current-session session))
+                  (detached-current-session session))
               (detached-start-session (detached--session-command session))
               (if concat
                   (string-join tail-command " ")

@@ -76,7 +76,7 @@ cluttering the `comint-history' with dtach commands."
    (list (detached-shell--select-session)))
   (when (detached-valid-session session)
     (if (detached-session-active-p session)
-        (cl-letf ((detached--current-session session)
+        (cl-letf ((detached-current-session session)
                   (comint-input-sender #'detached-shell--attach-input-sender)
                   ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
           (setq detached--buffer-session session)
@@ -102,7 +102,7 @@ cluttering the `comint-history' with dtach commands."
   "Attach to `detached--session' and send the attach command to PROC."
   (let* ((detached-session-mode 'attach)
          (input
-          (detached-session-attach-command detached--current-session
+          (detached-session-attach-command detached-current-session
                                            :type 'string)))
     (comint-simple-send proc input)))
 
