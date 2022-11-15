@@ -938,7 +938,6 @@ This function uses the `notifications' library."
                  "-n"
                  ,(number-to-string detached-session-context-lines)
                  ,log)))))
-     (detached--set-session-state session 'started)
      (pcase type
        ('string (string-join command " "))
        ('list command)
@@ -1113,7 +1112,7 @@ This function uses the `notifications' library."
 
 (defun detached-session-started-p (session)
   "Return t if SESSION has been started."
-  (not (eq 'unknown (detached-session-state session))))
+  (eq 'active (detached-session-state session)))
 
 (defun detached-session-validated-p (session)
   "Return t if SESSION has been validated."
@@ -1314,7 +1313,7 @@ It can take some time for a dtach socket to be created.  Therefore all
 sessions are created with state unknown.  This function creates a
 function to verify that a session was created correctly.  If the
 session is missing its deleted from the database."
-  (setf (alist-get (detached-session-id session) detached--unvalidated-sessions)
+  (setf (alist-get (detached--session-id session) detached--unvalidated-sessions)
         session)
   (run-with-timer detached-dtach-socket-creation-delay
                   nil
@@ -1444,10 +1443,10 @@ Optionally make the path LOCAL to host."
                        (seq-length durations)))))
     `(:durations ,durations :mean ,mean :std ,std)))
 
-(defun detached--set-session-state (session state)
-  "Update SESSION with STATE."
-  (setf (detached--session-state session) state)
-  (detached--db-update-entry session))
+;; (defun detached--set-session-state (session state)
+;;   "Update SESSION with STATE."
+;;   (setf (detached--session-state session) state)
+;;   (detached--db-update-entry session))
 
 ;;;;; Database
 
@@ -1489,7 +1488,7 @@ Optionally make the path LOCAL to host."
 
 (defun detached--db-update-entry (session)
   "Update SESSION in `detached--sessions' and the database."
-  (setf (alist-get (detached-session-id session) detached--sessions) session)
+  (setf (alist-get (detached--session-id session) detached--sessions) session)
   (when detached--update-database
     (detached--db-update-sessions)))
 
