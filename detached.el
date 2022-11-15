@@ -735,13 +735,16 @@ Optionally SUPPRESS-OUTPUT."
 
 (defun detached-start-detached-session (session)
   "Start SESSION in detached mode."
-  (detached--set-session-state session 'started)
-  (let ((dtach-command (detached-session-start-command
-                                session
-                                :type 'string)))
-    (if (detached-session-local-p session)
-        (apply #'start-process-shell-command `("detached" nil ,dtach-command))
-      (apply #'start-file-process-shell-command `("detached" nil ,dtach-command)))))
+  (detached--start-session-process session
+                                   (detached-session-start-command
+                                    session
+                                    :type 'string)))
+
+(defun detached--start-session-process (session start-command)
+  "Start SESSION with START-COMMAND."
+  (if (detached-session-local-p session)
+        (apply #'start-process-shell-command `("detached" nil ,start-command))
+      (apply #'start-file-process-shell-command `("detached" nil ,start-command))))
 
 (defun detached-session-candidates (sessions)
   "Return an alist of SESSIONS candidates."
@@ -914,24 +917,28 @@ This function uses the `notifications' library."
     (error "Type not specified for session start command"))
   (detached-connection-local-variables
    (let* ((socket (detached--session-file session 'socket t))
+          (detached-session-mode (detached--session-initial-mode session))
           (log (detached--session-file session 'log t))
+          (dtach-command-fun (lambda (session)
+                               (let ((detached-session-mode (detached--session-initial-mode session)))
+                                 `(,detached-dtach-program
+                                   ,(detached--dtach-arg) ,socket "-z"
+                                   ,detached-shell-program "-c"
+                                   ,(if (eq type 'string)
+                                        (shell-quote-argument (detached--detached-command session))
+                                      (detached--detached-command session))))))
           (command
-           (if (detached-session-degraded-p session)
-               (progn
-                 (when (eq 'create-and-attach
-                           (detached--session-initial-mode session))
-                   (detached-start-detached-session session))
-                 `(,detached-tail-program
-                   "-F"
-                   "-n"
-                   ,(number-to-string detached-session-context-lines)
-                   ,log))
-             `(,detached-dtach-program
-               ,(detached--dtach-arg) ,socket "-z"
-               ,detached-shell-program "-c"
-               ,(if (eq type 'string)
-                    (shell-quote-argument (detached--detached-command session))
-                  (detached--detached-command session))))))
+           (if (eq 'create (detached--session-initial-mode session))
+               (funcall dtach-command-fun session)
+             (if (not (detached-session-degraded-p session))
+                 (funcall dtach-command-fun session)
+               (detached--start-session-process session
+                                                (funcall dtach-command-fun session))
+               `(,detached-tail-program
+                 "-F"
+                 "-n"
+                 ,(number-to-string detached-session-context-lines)
+                 ,log)))))
      (detached--set-session-state session 'started)
      (pcase type
        ('string (string-join command " "))
@@ -947,11 +954,10 @@ This function uses the `notifications' library."
           (dtach-arg (detached--dtach-arg))
           (command
            (if (detached-session-degraded-p session)
-               `(,detached-tail-program
-                 "-F"
-                 "-n"
-                 ,(number-to-string detached-session-context-lines)
-                 ,log)
+               `(,detached-tail-program "-F"
+                                        "-n"
+                                        ,(number-to-string detached-session-context-lines)
+                                        ,log)
              (append
               (when detached-show-session-context
                 `(,detached-tail-program "-n"

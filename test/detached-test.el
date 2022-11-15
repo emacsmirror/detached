@@ -97,23 +97,40 @@
 
 ;;;;; Other
 
- (ert-deftest detached-test-tail-command ()
-   (detached-test--with-temp-database
-    (cl-letf* ((detached-tail-program "tail")
-               (session (detached-create-session "ls -la"))
-               (detached-show-session-context t)
-               (detached-session-context-lines 20)
-               ((symbol-function #'detached-create-session)
-                (lambda (_)
-                  session)))
-      (let* ((log (detached--session-file session 'log t))
-             (expected `(,detached-tail-program
-                         "-F" "-n" ,(number-to-string detached-session-context-lines)
-                         ,log))
-             (expected-concat (string-join expected " ")))
-        (let ((detached-session-mode 'create-and-attach))
-          (should (equal expected (detached--tail-command session)))
-          (should (equal expected-concat (detached--tail-command session t))))))))
+;; (ert-deftest detached-test-session-start-command ()
+;;   (detached-test--with-temp-database
+;;    (cl-letf* ((detached-tail-program "tail")
+;;               (detached-dtach-program "dtach")
+;;               (detached-shell-program "bash")
+;;               (detached-show-session-context t)
+;;               (detached-session-context-lines 20))
+
+;;      ;; ;; Create and attach
+;;      ;; (let* ((session (detached-create-session "ls -la"))
+;;      ;;        (log (detached--session-file session 'log t))
+;;      ;;        (expected-list `(,detached-tail-program
+;;      ;;                         "-F"
+;;      ;;                         "-n" ,(number-to-string detached-session-context-lines)
+;;      ;;                         ,log)))
+;;      ;;   (setf (detached--session-initial-mode session) 'create-and-attach)
+;;      ;;   (should (equal expected-list (detached-session-start-command session
+;;      ;;                                                                :type 'list))))
+     
+;;      ;; Create and attach to degraded session
+;;      (let* ((detached-degraded-commands '("ls"))
+;;             (session (detached-create-session "ls -la"))
+;;             (log (detached--session-file session 'log t))
+;;             (expected-list `(,detached-tail-program
+;;                              "-F"
+;;                              "-n" ,(number-to-string detached-session-context-lines)
+;;                              ,log)))
+;;        (setf (detached--session-initial-mode session) 'create-and-attach)
+;;        (should (equal expected-list (detached-session-start-command session
+;;                                                                     :type 'list))))
+
+;;      ;; Create
+     
+;;      )))
 
 (ert-deftest detached-test-dtach-command ()
   (detached-test--with-temp-database
