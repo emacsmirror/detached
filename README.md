@@ -287,12 +287,12 @@ With `detached` there exist the possibility to use callback. This functionality 
         `(,@detached-shell-command-session-action
           :callback (lambda (session1)
                       (when (eq 'success (detached-session-status session1))
-                        (let ((default-directory (detached--session-working-directory session1))
+                        (let ((default-directory (detached-session-working-directory session1))
                               (detached-session-action
                                `(,@detached-shell-command-session-action
                                  :callback (lambda (session2)
                                              (when (eq 'success (detached-session-status session2))
-                                               (let ((default-directory (detached--session-working-directory session2)))
+                                               (let ((default-directory (detached-session-working-directory session2)))
                                                  (detached-start-session "ls -la" t)))))))
                           (detached-start-session "ls" t)))))))
   (detached-start-session "sleep 1" t))

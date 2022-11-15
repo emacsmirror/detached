@@ -97,7 +97,7 @@ Optionally EDIT-COMMAND."
 (defun detached-compile--start (_)
   "Run in `compilation-start-hook' if `detached-enabled'."
   (when detached-enabled
-    (setq-local default-directory (detached--session-working-directory detached-current-session))
+    (setq-local default-directory (detached-session-working-directory detached-current-session))
     (setq detached-buffer-session detached-current-session)
     (setq compile-command (detached-session-command detached-current-session))
     (setq compilation-arguments nil)

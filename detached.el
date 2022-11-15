@@ -454,7 +454,7 @@ The session is compiled by opening its output and enabling
             (erase-buffer)
             (insert (detached-session-output session))
             (setq-local default-directory
-                        (detached--session-working-directory session))
+                        (detached-session-working-directory session))
             (run-hooks 'detached-compile-session-hooks)
             (detached-log-mode)
             (compilation-minor-mode)
@@ -475,7 +475,7 @@ The session is compiled by opening its output and enabling
   (when (detached-valid-session session)
     (let* ((detached-local-session (detached--session-local session))
            (default-directory
-             (detached--session-working-directory session))
+             (detached-session-working-directory session))
            (detached-session-mode (or detached-session-mode
                                       (detached--session-initial-mode session)))
            (detached-session-action (detached--session-action session))
@@ -494,7 +494,7 @@ The session is compiled by opening its output and enabling
   (when (detached-valid-session session)
     (let* ((detached-local-session (detached--session-local session))
            (default-directory
-             (detached--session-working-directory session))
+             (detached-session-working-directory session))
            (detached-session-mode (or detached-session-mode
                                       (detached--session-initial-mode session)))
            (detached-session-action (detached--session-action session))
@@ -598,7 +598,7 @@ Optionally DELETE the session if prefix-argument is provided."
               (let ((inhibit-read-only t))
                 (erase-buffer)
                 (insert (detached-session-output session))
-                (setq-local default-directory (detached--session-working-directory session))
+                (setq-local default-directory (detached-session-working-directory session))
                 (detached-log-mode))
               (setq detached-buffer-session session)
               (goto-char (point-max)))
@@ -906,7 +906,7 @@ This function uses the `notifications' library."
         (setq buffer (generate-new-buffer (buffer-name buffer))))
       (funcall #'async-shell-command command buffer)
       (with-current-buffer buffer
-        (setq-local default-directory (detached--session-working-directory session))
+        (setq-local default-directory (detached-session-working-directory session))
         (setq detached-buffer-session detached-current-session)))))
 
 ;;;;; Public session functions
@@ -1106,6 +1106,10 @@ This function uses the `notifications' library."
 (defun detached-session-directory (session)
   "Return directory where SESSION files are located."
   (detached--session-directory session))
+
+(defun detached-session-working-directory (session)
+  "Return SESSION's working directory."
+  (detached--session-working-directory session))
 
 (defun detached-session-started-p (session)
   "Return t if SESSION has been started."
@@ -1921,7 +1925,7 @@ start searching at NUMBER offset."
 (defun detached--working-dir-str (session)
   "Return working directory of SESSION."
   (let ((working-directory
-         (detached--session-working-directory session)))
+         (detached-session-working-directory session)))
     (if-let ((remote (file-remote-p working-directory)))
         (string-remove-prefix remote working-directory)
       working-directory)))

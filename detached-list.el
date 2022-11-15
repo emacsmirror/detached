@@ -403,7 +403,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
    (list
     (if current-prefix-arg
         (regexp-quote
-         (detached--session-working-directory
+         (detached-session-working-directory
           (detached--get-session major-mode)))
       (read-regexp
        "Filter session working directories containing (regexp): "))))
@@ -414,7 +414,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
         ,(lambda (sessions)
            (seq-filter (lambda (it)
                          (string-match regexp
-                                       (detached--session-working-directory it)))
+                                       (detached-session-working-directory it)))
                        sessions)))))))
 
 (defun detached-list-narrow-session-directory (session-directory)
