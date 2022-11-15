@@ -89,7 +89,7 @@ Optionally EDIT-COMMAND."
            (detached-current-session session)
            (detached-local-session (detached-session-local-p session))
            (default-directory (detached-session-directory session)))
-      (compilation-start (detached--session-command session)))))
+      (compilation-start (detached-session-command session)))))
 
 ;;;;; Support functions
 
@@ -99,7 +99,7 @@ Optionally EDIT-COMMAND."
   (when detached-enabled
     (setq-local default-directory (detached--session-working-directory detached-current-session))
     (setq detached-buffer-session detached-current-session)
-    (setq compile-command (detached--session-command detached-current-session))
+    (setq compile-command (detached-session-command detached-current-session))
     (setq compilation-arguments nil)
     (detached-compile--replace-modesetter)
     (when detached-filter-ansi-sequences
@@ -131,7 +131,7 @@ Optionally EDIT-COMMAND."
 	  (goto-char (point-min))
 	  (when (re-search-forward regexp nil t)
 		(delete-region (match-beginning 0) (match-end 0))
-		(insert (detached--session-command detached-current-session))))))
+		(insert (detached-session-command detached-current-session))))))
 
 (defun detached-compile--compilation-detached-filter ()
   "Filter to modify the output in a compilation buffer."

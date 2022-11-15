@@ -27,7 +27,7 @@
 
 (declare-function detached-compile "detached")
 (declare-function detached-start-session "detached")
-(declare-function detached--session-command "detached")
+(declare-function detached-session-command "detached")
 
 (declare-function alert "alert")
 
@@ -58,7 +58,7 @@ Optionally USE-COMINT-MODE"
   "Send an `alert' notification when SESSION becomes inactive."
   (let ((status (detached-session-status session))
 		(host (detached-session-host-name session)))
-	(alert (detached--session-command session)
+	(alert (detached-session-command session)
 		   :title (pcase status
 					('success (format "Detached finished [%s]" host))
 					('failure (format "Detached failed [%s]" host)))

@@ -480,7 +480,7 @@ The session is compiled by opening its output and enabling
                                       (detached--session-initial-mode session)))
            (detached-session-action (detached--session-action session))
            (command
-            (read-string "Edit command: " (detached--session-command session))))
+            (read-string "Edit command: " (detached-session-command session))))
       (if suppress-output
           (detached-start-session command suppress-output)
         (funcall (detached-session-run-function session) command)))))
@@ -498,7 +498,7 @@ The session is compiled by opening its output and enabling
            (detached-session-mode (or detached-session-mode
                                       (detached--session-initial-mode session)))
            (detached-session-action (detached--session-action session))
-           (command (detached--session-command session)))
+           (command (detached-session-command session)))
       (if suppress-output
           (detached-start-session command suppress-output)
         (funcall (detached-session-run-function session) command)))))
@@ -547,7 +547,7 @@ The session is compiled by opening its output and enabling
   "Copy SESSION's command."
   (interactive
    (list (detached-completing-read (detached-get-sessions))))
-  (kill-new (detached--session-command session)))
+  (kill-new (detached-session-command session)))
 
 ;;;###autoload
 (defun detached-insert-session-command (session)
@@ -555,7 +555,7 @@ The session is compiled by opening its output and enabling
   (interactive
    (list (detached-completing-read (detached-get-sessions))))
   (when (detached-valid-session session)
-    (insert (detached--session-command session))))
+    (insert (detached-session-command session))))
 
 ;;;###autoload
 (defun detached-delete-session (session)
@@ -753,7 +753,7 @@ Optionally SUPPRESS-OUTPUT."
           (detached--annotation-widths sessions detached-annotation-format))
     (let ((command-length
            (thread-last sessions
-                        (seq-map #'detached--session-command)
+                        (seq-map #'detached-session-command)
                         (seq-map #'length)
                         (seq-max)
                         (min (plist-get detached-command-format :width)))))
@@ -854,7 +854,7 @@ This function uses the echo area."
   (let ((status (pcase (detached-session-status session)
                   ('success "Detached finished")
                   ('failure "Detached failed"))))
-    (message "%s [%s]: %s" status (detached-session-host-name session) (detached--session-command session))))
+    (message "%s [%s]: %s" status (detached-session-host-name session) (detached-session-command session))))
 
 (defun detached-state-transition-notifications-message (session)
   "Issue a notification when SESSION transitions from active to inactive.
@@ -865,7 +865,7 @@ This function uses the `notifications' library."
      :title (pcase status
               ('success (format "Detached finished [%s]" host))
               ('failure (format "Detached failed [%s]" host)))
-     :body (detached--session-command session)
+     :body (detached-session-command session)
      :urgency (pcase status
                 ('success 'normal)
                 ('failure 'critical)))))
@@ -1064,7 +1064,7 @@ This function uses the `notifications' library."
 (defun detached-session-identifier (session)
   "Return SESSION's identifier string."
   (string-join
-   `(,(detached--session-command session)
+   `(,(detached-session-command session)
      ,(detached--host-str session)
      ,(detached-session-directory session))
    ", "))
@@ -1219,13 +1219,13 @@ This function uses the `notifications' library."
 
 (defun detached-command-str (session max-length)
   "Return SESSION's command as a string restrict it to MAX-LENGTH."
-  (let ((command (detached--session-command session)))
+  (let ((command (detached-session-command session)))
     (if (<= (length command) max-length)
         (truncate-string-to-width
          command
          max-length
          0 ?\s)
-      (concat (substring (detached--session-command session) 0 (- max-length 3)) "..."))))
+      (concat (substring (detached-session-command session) 0 (- max-length 3)) "..."))))
 
 ;;;; Support functions
 
@@ -1264,7 +1264,7 @@ This function uses the `notifications' library."
 (defun detached--session-header (session)
   "Return header for SESSION."
   (string-join
-   `(,(format "Command: %s" (detached--session-command session))
+   `(,(format "Command: %s" (detached-session-command session))
      ,(format "Working directory: %s" (detached--working-dir-str session))
      ,(format "Host: %s" (detached-session-host-name session))
      ,(format "Id: %s" (symbol-name (detached-session-id session)))
@@ -1670,8 +1670,8 @@ If SESSION is degraded fallback to a command that doesn't rely on tee."
                        (format "TERM=eterm-color %s"
                                (format
                                 (detached--get-terminal-data-command)
-                                (detached--session-command session)))
-                     (detached--session-command session))))))
+                                (detached-session-command session)))
+                     (detached-session-command session))))))
     (format "%s %s %s; %s %s" begin-shell-group shell command end-shell-group redirect)))
 
 (defun detached--get-terminal-data-command ()
@@ -2012,7 +2012,7 @@ Optionally CONCAT the command return command into a string."
            ((eq 'create-and-attach detached-session-mode)
             (let ((detached-session-mode 'create)
                   (detached-current-session session))
-              (detached-start-session (detached--session-command session))
+              (detached-start-session (detached-session-command session))
               (if concat
                   (string-join tail-command " ")
                 tail-command)))

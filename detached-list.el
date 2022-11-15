@@ -100,7 +100,7 @@ detached list implements."
     (goto-char (point-min))
     (while (not (eobp))
       (let ((session (tabulated-list-get-id)))
-        (push `(,(detached--session-command session) . ,(point))
+        (push `(,(detached-session-command session) . ,(point))
               index))
       (forward-line 1))
     (seq-reverse index)))
@@ -111,7 +111,7 @@ detached list implements."
     (when (detached-session-p session)
       (let ((strs `(,(when-let  ((annotation (detached--session-annotation session)))
                        (propertize annotation 'face 'detached-annotation-face))
-                    ,(detached--session-command session))))
+                    ,(detached-session-command session))))
         (string-join (seq-remove #'null strs) "\n")))))
 
 ;;;; Commands
@@ -383,7 +383,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
    (list
     (if current-prefix-arg
         (regexp-quote
-         (detached--session-command
+         (detached-session-command
           (detached--get-session major-mode)))
       (read-regexp
        "Filter session commands containing (regexp): "))))
@@ -394,7 +394,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
         ,(lambda (sessions)
            (seq-filter (lambda (it)
                          (string-match regexp
-                                       (detached--session-command it)))
+                                       (detached-session-command it)))
                        sessions)))))))
 
 (defun detached-list-narrow-working-directory (regexp)
@@ -570,7 +570,7 @@ If prefix-argument is provided unmark instead of mark."
     (goto-char (point-min))
     (while (not (eobp))
       (let ((session (tabulated-list-get-id)))
-        (when (string-match regexp (detached--session-command session))
+        (when (string-match regexp (detached-session-command session))
           (if current-prefix-arg
               (detached-list--unmark-session session)
             (detached-list--mark-session session))))
@@ -820,7 +820,7 @@ If prefix-argument is provided unmark instead of mark."
 
 (defun detached-list--command-str (session)
   "Return command string for SESSION."
-  (let ((command-str (detached--session-command session)))
+  (let ((command-str (detached-session-command session)))
     (if (detached-session-uninitialized-p session)
         (propertize command-str 'face 'detached-uninitialized-face)
       command-str)))
