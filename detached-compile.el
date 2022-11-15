@@ -87,8 +87,8 @@ Optionally EDIT-COMMAND."
     (let* ((detached-enabled t)
            (detached-session-mode 'attach)
            (detached-current-session session)
-           (detached-local-session (detached--session-local session))
-           (default-directory (detached--session-directory session)))
+           (detached-local-session (detached-session-local-p session))
+           (default-directory (detached-session-directory session)))
       (compilation-start (detached--session-command session)))))
 
 ;;;;; Support functions

@@ -576,7 +576,7 @@ Optionally DELETE the session if prefix-argument is provided."
    (list (detached-completing-read (detached-get-sessions))
          current-prefix-arg))
   (when (detached-valid-session session)
-    (when-let* ((default-directory (detached--session-directory session))
+    (when-let* ((default-directory (detached-session-directory session))
                 (pid (detached-session-pid session)))
       (detached--kill-processes pid))
     (when delete
@@ -698,7 +698,7 @@ active session.  For sessions created with `detached-compile' or
                                     :state 'unknown
                                     :initialized-emacsen `(,(emacs-pid)))))
      (detached--create-session-validator session)
-     (detached--watch-session-directory (detached--session-directory session))
+     (detached--watch-session-directory (detached-session-directory session))
      session)))
 
 ;;;###autoload
@@ -900,7 +900,7 @@ This function uses the `notifications' library."
     (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
                (buffer (get-buffer-create detached--shell-command-buffer))
                (detached-local-session (detached--session-local session))
-               (default-directory (detached--session-directory session))
+               (default-directory (detached-session-directory session))
                (command (detached-session-attach-command session :type 'string)))
       (when (get-buffer-process buffer)
         (setq buffer (generate-new-buffer (buffer-name buffer))))
@@ -1066,7 +1066,7 @@ This function uses the `notifications' library."
   (string-join
    `(,(detached--session-command session)
      ,(detached--host-str session)
-     ,(detached--session-directory session))
+     ,(detached-session-directory session))
    ", "))
 
 (defun detached-session-view-function (session)
@@ -1102,6 +1102,10 @@ This function uses the `notifications' library."
 (defun detached-session-command (session)
   "Return command run in SESSION."
   (detached--session-command session))
+
+(defun detached-session-directory (session)
+  "Return directory where SESSION files are located."
+  (detached--session-directory session))
 
 (defun detached-session-started-p (session)
   "Return t if SESSION has been started."
@@ -1159,7 +1163,7 @@ This function uses the `notifications' library."
 (defun detached-session-watched-p (session)
   "Return t if SESSION is being watched."
   (detached--watched-session-directory-p
-   (detached--session-directory session)))
+   (detached-session-directory session)))
 
 ;;;;; Other
 
@@ -1243,7 +1247,7 @@ This function uses the `notifications' library."
 (defun detached--session-accessible-p (session)
   "Return t if SESSION is accessible."
   (or (detached-session-localhost-p session)
-      (file-remote-p (detached--session-directory session) nil t)))
+      (file-remote-p (detached-session-directory session) nil t)))
 
 (defun detached--watched-session-directory-p (directory)
   "Return t if DIRECTORY is being watched."
@@ -1331,8 +1335,8 @@ Optionally make the path LOCAL to host."
            (pcase file
              ('socket ".socket")
              ('log ".log"))))
-         (remote-local-path (file-remote-p (expand-file-name file-name (detached--session-directory session)) 'localname))
-         (full-path (expand-file-name file-name (detached--session-directory session))))
+         (remote-local-path (file-remote-p (expand-file-name file-name (detached-session-directory session)) 'localname))
+         (full-path (expand-file-name file-name (detached-session-directory session))))
     (if (and local remote-local-path)
         remote-local-path
       full-path)))
@@ -1349,7 +1353,7 @@ Optionally make the path LOCAL to host."
   (and (detached-session-active-p session)
        (not (detached-session-watched-p session))
        (detached--watch-session-directory
-        (detached--session-directory session))))
+        (detached-session-directory session))))
 
 (defun detached--create-session-directory ()
   "Create session directory if it doesn't exist."
@@ -1733,10 +1737,10 @@ log to deduce the end time."
      `(,session-directory . ,(file-notify-add-watch
                               session-directory
                               '(change)
-                              #'detached--session-directory-event))
+                              #'detached-session-directory-event))
      detached--watched-session-directories)))
 
-(defun detached--session-directory-event (event)
+(defun detached-session-directory-event (event)
   "Act on an EVENT in a directory in `detached--watched-session-directories'.
 
 If event is caused by the deletion of a socket, locate the related
@@ -1749,7 +1753,7 @@ session and trigger a state transition."
                   (session
                    (or (alist-get id detached--unvalidated-sessions)
                        (detached--db-get-session id)))
-                  (session-directory (detached--session-directory session))
+                  (session-directory (detached-session-directory session))
                   (is-primary
                    (detached--primary-detached-emacs-p session)))
 
@@ -1765,7 +1769,7 @@ session and trigger a state transition."
         (unless
             (thread-last (detached--db-get-sessions)
                          (seq-filter #'detached-session-active-p)
-                         (seq-map #'detached--session-directory)
+                         (seq-map #'detached-session-directory)
                          (seq-uniq)
                          (seq-filter (lambda (it) (string= it session-directory))))
           (file-notify-rm-watch
@@ -1788,7 +1792,7 @@ session and trigger a state transition."
       (if (detached--state-transition-p session)
           (detached--session-state-transition-update session 'approximate)
         (detached--db-update-entry session)
-        (detached--watch-session-directory (detached--session-directory session)))
+        (detached--watch-session-directory (detached-session-directory session)))
     (if (detached--session-missing-p session)
         (detached--db-remove-entry session)
       (detached--db-update-entry session))))

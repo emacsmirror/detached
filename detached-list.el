@@ -136,7 +136,7 @@ Optionally initialize ALL session-directories."
   (if-let* ((uninitialized-directories
              (thread-last (detached-get-sessions)
                           (seq-filter #'detached-session-uninitialized-p)
-                          (seq-map #'detached--session-directory)
+                          (seq-map #'detached-session-directory)
                           (seq-uniq))))
       (if all
           (seq-do #'detached-list--initialize-directory uninitialized-directories)
@@ -423,7 +423,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
    (list
     (when-let* ((directories
                  (thread-last (detached-list--get-narrowed-sessions)
-                              (seq-map #'detached--session-directory)
+                              (seq-map #'detached-session-directory)
                               (seq-uniq))))
       (completing-read
        "Select session directory: "
@@ -435,7 +435,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
         ,(lambda (sessions)
            (seq-filter (lambda (it)
                          (string-match session-directory
-                                       (detached--session-directory it)))
+                                       (detached-session-directory it)))
                        sessions)))))))
 
 (defun detached-list-narrow-annotation (regexp)
@@ -684,7 +684,7 @@ If prefix-argument is provided unmark instead of mark."
 (defun detached-list--initialize-directory (directory)
   "Initialize sessions in DIRECTORY."
   (thread-last (detached-get-sessions)
-               (seq-filter (lambda (it) (string= directory (detached--session-directory it))))
+               (seq-filter (lambda (it) (string= directory (detached-session-directory it))))
                (seq-do #'detached--initialize-session)))
 
 (defun detached--list-parse-time (time)
@@ -847,7 +847,7 @@ If prefix-argument is provided unmark instead of mark."
   "Return a narrowed list with SESSIONS containing REGEXP."
   (let* ((sessions-and-directories
           (thread-last sessions
-                       (seq-group-by #'detached--session-directory)
+                       (seq-group-by #'detached-session-directory)
                        (seq-filter (lambda (it)
                                      ;; Filter out only accessible directories
                                      (or (not (file-remote-p (car it)))
