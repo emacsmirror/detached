@@ -1166,102 +1166,6 @@ This function uses the `notifications' library."
   "Return session."
   detached-buffer-session)
 
-(cl-defgeneric detached--shell-command (entity &optional concat)
-  "Return shell command for ENTITY optionally CONCAT.")
-
-(cl-defmethod detached--shell-command ((command string) &optional concat)
-  "Return shell command for COMMAND.
-
-Optionally CONCAT the command return command into a string."
-  (detached--shell-command (detached-create-session command) concat))
-
-(cl-defmethod detached--shell-command ((session detached-session) &optional concat)
-  "Return shell command for SESSION.
-
-Optionally CONCAT the command return command into a string."
-  (if (detached--session-degraded session)
-      (detached--tail-command session concat)
-    (detached--dtach-command session concat)))
-
-(cl-defgeneric detached--tail-command (entity &optional concat)
-  "Return tail command for ENTITY optionally CONCAT.")
-
-(cl-defmethod detached--tail-command ((command string) &optional concat)
-  "Return tail command for COMMAND.
-
-Optionally CONCAT the command return command into a string."
-  (detached--tail-command (detached-create-session command) concat))
-
-(cl-defmethod detached--tail-command ((session detached-session) &optional concat)
-  "Return tail command for SESSION.
-
-Optionally CONCAT the command return command into a string."
-  (detached-connection-local-variables
-   (let* ((log (detached--session-file session 'log t))
-          (tail-command `(,detached-tail-program "-F"
-                                                 "-n"
-                                                 ,(number-to-string detached-session-context-lines)
-                                                 ,log)))
-     (cond ((eq 'create detached-session-mode)
-            (detached--dtach-command session))
-           ((eq 'create-and-attach detached-session-mode)
-            (let ((detached-session-mode 'create)
-                  (detached-current-session session))
-              (detached-start-session (detached--session-command session))
-              (if concat
-                  (string-join tail-command " ")
-                tail-command)))
-           ((eq 'attach detached-session-mode)
-            (if concat
-                (string-join tail-command " ")
-              tail-command))))))
-
-(cl-defgeneric detached--dtach-command (entity &optional concat)
-  "Return dtach command for ENTITY optionally CONCAT.")
-
-(cl-defmethod detached--dtach-command ((command string) &optional concat)
-  "Return dtach command for COMMAND.
-
-Optionally CONCAT the command return command into a string."
-  (detached--dtach-command (detached-create-session command) concat))
-
-(cl-defmethod detached--dtach-command ((session detached-session) &optional concat)
-  "Return dtach command for SESSION.
-
-Optionally CONCAT the command return command into a string."
-  (detached-connection-local-variables
-   (let* ((socket (detached--session-file session 'socket t))
-          (log (detached--session-file session 'log t))
-          (dtach-arg (detached--dtach-arg)))
-     (if (eq detached-session-mode 'attach)
-         (if concat
-             (string-join
-              `(,(when detached-show-session-context
-                   (format  "%s -n %s %s;" detached-tail-program detached-session-context-lines log))
-                ,detached-dtach-program
-                ,dtach-arg
-                ,socket
-                "-r none")
-              " ")
-           (append
-            (when detached-show-session-context
-              `(,detached-tail-program "-n"
-                                       ,(number-to-string detached-session-context-lines)
-                                       ,(concat log ";")))
-            `(,detached-dtach-program ,dtach-arg ,socket "-r" "none")))
-       (if concat
-           (string-join
-            `(,detached-dtach-program
-              ,dtach-arg
-              ,socket "-z"
-              ,detached-shell-program "-c"
-              ,(shell-quote-argument (detached--detached-command session)))
-            " ")
-         `(,detached-dtach-program
-           ,dtach-arg ,socket "-z"
-           ,detached-shell-program "-c"
-           ,(detached--detached-command session)))))))
-
 (defun detached-degraded-command-p (command)
   "Return t if COMMAND is degraded."
   (>
@@ -2057,6 +1961,104 @@ start searching at NUMBER offset."
     (set-buffer-modified-p nil)
     (ansi-color-apply-on-region (point-min) (point-max)))
   (read-only-mode t))
+
+;; TODO Deprecate the following functions:
+
+(cl-defgeneric detached--shell-command (entity &optional concat)
+  "Return shell command for ENTITY optionally CONCAT.")
+
+(cl-defmethod detached--shell-command ((command string) &optional concat)
+  "Return shell command for COMMAND.
+
+Optionally CONCAT the command return command into a string."
+  (detached--shell-command (detached-create-session command) concat))
+
+(cl-defmethod detached--shell-command ((session detached-session) &optional concat)
+  "Return shell command for SESSION.
+
+Optionally CONCAT the command return command into a string."
+  (if (detached--session-degraded session)
+      (detached--tail-command session concat)
+    (detached--dtach-command session concat)))
+
+(cl-defgeneric detached--tail-command (entity &optional concat)
+  "Return tail command for ENTITY optionally CONCAT.")
+
+(cl-defmethod detached--tail-command ((command string) &optional concat)
+  "Return tail command for COMMAND.
+
+Optionally CONCAT the command return command into a string."
+  (detached--tail-command (detached-create-session command) concat))
+
+(cl-defmethod detached--tail-command ((session detached-session) &optional concat)
+  "Return tail command for SESSION.
+
+Optionally CONCAT the command return command into a string."
+  (detached-connection-local-variables
+   (let* ((log (detached--session-file session 'log t))
+          (tail-command `(,detached-tail-program "-F"
+                                                 "-n"
+                                                 ,(number-to-string detached-session-context-lines)
+                                                 ,log)))
+     (cond ((eq 'create detached-session-mode)
+            (detached--dtach-command session))
+           ((eq 'create-and-attach detached-session-mode)
+            (let ((detached-session-mode 'create)
+                  (detached-current-session session))
+              (detached-start-session (detached--session-command session))
+              (if concat
+                  (string-join tail-command " ")
+                tail-command)))
+           ((eq 'attach detached-session-mode)
+            (if concat
+                (string-join tail-command " ")
+              tail-command))))))
+
+(cl-defgeneric detached--dtach-command (entity &optional concat)
+  "Return dtach command for ENTITY optionally CONCAT.")
+
+(cl-defmethod detached--dtach-command ((command string) &optional concat)
+  "Return dtach command for COMMAND.
+
+Optionally CONCAT the command return command into a string."
+  (detached--dtach-command (detached-create-session command) concat))
+
+(cl-defmethod detached--dtach-command ((session detached-session) &optional concat)
+  "Return dtach command for SESSION.
+
+Optionally CONCAT the command return command into a string."
+  (detached-connection-local-variables
+   (let* ((socket (detached--session-file session 'socket t))
+          (log (detached--session-file session 'log t))
+          (dtach-arg (detached--dtach-arg)))
+     (if (eq detached-session-mode 'attach)
+         (if concat
+             (string-join
+              `(,(when detached-show-session-context
+                   (format  "%s -n %s %s;" detached-tail-program detached-session-context-lines log))
+                ,detached-dtach-program
+                ,dtach-arg
+                ,socket
+                "-r none")
+              " ")
+           (append
+            (when detached-show-session-context
+              `(,detached-tail-program "-n"
+                                       ,(number-to-string detached-session-context-lines)
+                                       ,(concat log ";")))
+            `(,detached-dtach-program ,dtach-arg ,socket "-r" "none")))
+       (if concat
+           (string-join
+            `(,detached-dtach-program
+              ,dtach-arg
+              ,socket "-z"
+              ,detached-shell-program "-c"
+              ,(shell-quote-argument (detached--detached-command session)))
+            " ")
+         `(,detached-dtach-program
+           ,dtach-arg ,socket "-z"
+           ,detached-shell-program "-c"
+           ,(detached--detached-command session)))))))
 
 (provide 'detached)
 
