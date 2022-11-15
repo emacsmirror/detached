@@ -668,7 +668,8 @@ If prefix-argument is provided unmark instead of mark."
     (setq tabulated-list-entries
           (seq-map #'detached-list--get-entry
                    (detached-list--get-narrowed-sessions)))
-    (tabulated-list-print t)))
+    (tabulated-list-print t)
+    (detached-list-revert)))
 
 ;;;; Support functions
 
