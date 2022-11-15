@@ -931,7 +931,8 @@ This function uses the `notifications' library."
              (if (not (detached-session-degraded-p session))
                  (funcall dtach-command-fun session)
                (detached--start-session-process session
-                                                (funcall dtach-command-fun session))
+                                                (string-join
+                                                 (funcall dtach-command-fun session) " "))
                `(,detached-tail-program
                  "-F"
                  "-n"
