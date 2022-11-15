@@ -1073,6 +1073,10 @@ This function uses the `notifications' library."
   "Return command run in SESSION."
   (detached--session-command session))
 
+(defun detached-session-started-p (session)
+  "Return t if SESSION has been started."
+  (not (eq 'unknown (detached-session-state session))))
+
 (defun detached-session-validated-p (session)
   "Return t if SESSION has been validated."
   (not
