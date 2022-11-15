@@ -49,7 +49,9 @@
   (let* ((detached-session-action detached-eshell-session-action)
 		 (command (string-trim-right (string-join (flatten-list args) " ")))
 		 (session (detached-create-session command))
-		 (command (detached--shell-command session)))
+		 (command
+          (detached-session-start-command session
+                                          :type 'list)))
 	(advice-remove #'eshell-external-command #'detached-eshell-external-command)
 	(setq detached--buffer-session session)
 	(setq detached-enabled nil)

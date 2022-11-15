@@ -54,10 +54,13 @@ property of :detached t in the org babel src block."
 				   (detached-session-action detached-org-session-action)
 				   (detached-session-mode 'create)
 				   (new-command (replace-regexp-in-string "\n" " && " full-body))
+                   (detached-session (detached-create-session new-command))
 				   (dtach-command
 					(if (string= "none" (alist-get :session params))
-						(detached--dtach-command new-command t)
-					  (format "%s\necho \"[detached]\"" (detached--dtach-command new-command t))))
+						(detached-session-start-command detached-session
+                                                        :type 'string)
+					  (format "%s\necho \"[detached]\"" (detached-session-start-command detached-session
+                                                                                        :type 'string))))
 				   ((symbol-function #'org-babel-eval)
 					(lambda (_ command)
 					  (start-file-process-shell-command "detached-org" nil command)

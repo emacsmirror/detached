@@ -115,7 +115,8 @@ Optionally EDIT-COMMAND."
 			(detached-start-detached-session detached--current-session)
 		  (apply compilation-start `(,(if (eq detached-session-mode 'attach)
                                           (detached--shell-command detached--current-session t)
-                                        (detached-session-start-command detached--current-session 'concat))
+                                        (detached-session-start-command detached--current-session
+                                                                        :type 'string))
 									 ,(or mode 'detached-compilation-mode)
 									 ,name-function
 									 ,highlight-regexp))))

@@ -111,7 +111,7 @@ cluttering the `comint-history' with dtach commands."
    (let* ((session
            (detached-create-session (substring-no-properties string)))
           (command
-           (detached-session-start-command session 'concat)))
+           (detached-session-start-command session :type 'string)))
      (setq detached--buffer-session session)
      (comint-simple-send proc command))))
 

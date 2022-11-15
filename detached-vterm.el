@@ -59,7 +59,8 @@ Optionally DETACH from it."
 		 (detached-session-mode
 		  (if detach 'create 'create-and-attach))
 		 (detached--current-session (detached-create-session input))
-		 (command (detached--shell-command detached--current-session t)))
+		 (command (detached-session-start-command detached--current-session
+                                                  :type 'string)))
 	(vterm-send-C-a)
 	(vterm-send-C-k)
 	(process-send-string vterm--process command)

@@ -905,10 +905,8 @@ This function uses the `notifications' library."
 
 ;;;;; Public session functions
 
-(defun detached-session-start-command (session &optional concat)
-  "Return command to start SESSION.
-
-Optionally return concatenated string when CONCAT."
+(cl-defun detached-session-start-command (session &key type)
+  "Return command to start SESSION with specified TYPE."
   (detached-connection-local-variables
    (let* ((socket (detached--session-file session 'socket t))
           (log (detached--session-file session 'log t)))
@@ -922,15 +920,22 @@ Optionally return concatenated string when CONCAT."
            (when (eq 'create-and-attach
                      (detached--session-initial-mode session))
              (detached-start-detached-session session))
-           (if concat (string-join tail-command " ") tail-command))
+           (pcase type
+             ('string (string-join tail-command " "))
+             ('list tail-command)
+             (_ (error "Type not specified for session start command")))
+           (if  ))
        (let ((dtach-command
               `(,detached-dtach-program
                 ,(detached--dtach-arg) ,socket "-z"
                 ,detached-shell-program "-c"
-                ,(if concat
+                ,(if (eq type 'string)
                      (shell-quote-argument (detached--detached-command session))
                    (detached--detached-command session)))))
-         (if concat (string-join dtach-command " ") dtach-command))))))
+         (pcase type
+           ('string (string-join dtach-command " "))
+           ('list dtach-command)
+           (_ (error "Type not specified for session start command"))))))))
 
 (defun detached-session-output (session)
   "Return content of SESSION's output."
