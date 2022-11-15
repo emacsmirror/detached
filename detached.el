@@ -334,7 +334,7 @@ This version is encoded as [package-version].[revision].")
 (defvar detached--db-watch nil
   "A descriptor to the `detached-db-directory'.")
 
-(defvar-local detached--buffer-session nil
+(defvar-local detached-buffer-session nil
   "The `detached-session' session in current buffer.")
 
 (defvar detached-current-session nil
@@ -458,7 +458,7 @@ The session is compiled by opening its output and enabling
             (run-hooks 'detached-compile-session-hooks)
             (detached-log-mode)
             (compilation-minor-mode)
-            (setq detached--buffer-session session)
+            (setq detached-buffer-session session)
             (setq-local font-lock-defaults '(compilation-mode-font-lock-keywords t)))
           (font-lock-mode)
           (read-only-mode)
@@ -600,7 +600,7 @@ Optionally DELETE the session if prefix-argument is provided."
                 (insert (detached-session-output session))
                 (setq-local default-directory (detached--session-working-directory session))
                 (detached-log-mode))
-              (setq detached--buffer-session session)
+              (setq detached-buffer-session session)
               (goto-char (point-max)))
             (select-window
              (display-buffer buffer-name detached-open-session-display-buffer-action)))
@@ -650,11 +650,11 @@ Optionally DELETE the session if prefix-argument is provided."
 (defun detached-detach-session ()
   "Detach from session in current buffer.
 
-This command is only activated if `detached--buffer-session' is an
+This command is only activated if `detached-buffer-session' is an
 active session.  For sessions created with `detached-compile' or
 `detached-shell-command', the command will also kill the window."
   (interactive)
-  (if-let ((has-session (detached-session-p detached--buffer-session)))
+  (if-let ((has-session (detached-session-p detached-buffer-session)))
       (detached--detach-session major-mode)
     (message "No detached-session found in buffer.")))
 
@@ -731,7 +731,7 @@ Optionally SUPPRESS-OUTPUT."
         (setq detached-enabled nil)
         (funcall #'async-shell-command command buffer)
         (with-current-buffer buffer
-          (setq detached--buffer-session detached-current-session))))))
+          (setq detached-buffer-session detached-current-session))))))
 
 (defun detached-start-detached-session (session)
   "Start SESSION in detached mode."
@@ -907,7 +907,7 @@ This function uses the `notifications' library."
       (funcall #'async-shell-command command buffer)
       (with-current-buffer buffer
         (setq-local default-directory (detached--session-working-directory session))
-        (setq detached--buffer-session detached-current-session)))))
+        (setq detached-buffer-session detached-current-session)))))
 
 ;;;;; Public session functions
 
@@ -1164,7 +1164,7 @@ This function uses the `notifications' library."
 
 (cl-defgeneric detached--get-session (_mode)
   "Return session."
-  detached--buffer-session)
+  detached-buffer-session)
 
 (cl-defgeneric detached--shell-command (entity &optional concat)
   "Return shell command for ENTITY optionally CONCAT.")
@@ -1477,9 +1477,9 @@ Optionally make the path LOCAL to host."
 
 (defun detached--detach-from-comint-process ()
   "Detach from the underlying `comint' process."
-  (when-let ((active-session (detached-session-active-p detached--buffer-session))
+  (when-let ((active-session (detached-session-active-p detached-buffer-session))
              (dtach-process (get-buffer-process (current-buffer))))
-    (setq detached--buffer-session nil)
+    (setq detached-buffer-session nil)
     (comint-simple-send dtach-process detached--dtach-detach-character)))
 
 (defun detached--quit-session-buffer ()

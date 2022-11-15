@@ -53,7 +53,7 @@
           (detached-session-start-command session
                                           :type 'list)))
 	(advice-remove #'eshell-external-command #'detached-eshell-external-command)
-	(setq detached--buffer-session session)
+	(setq detached-buffer-session session)
 	(setq detached-enabled nil)
 	(apply orig-fun `(,(seq-first command) ,(seq-rest command)))))
 
@@ -92,7 +92,7 @@ If prefix-argument directly DETACH from the session."
             (overlay-put (make-overlay begin end) 'invisible t)
             (overlay-put (make-overlay end end) 'before-string "[attached]")
             (insert " "))
-          (setq detached--buffer-session session)
+          (setq detached-buffer-session session)
           (call-interactively #'eshell-send-input))
       (detached-open-session session))))
 
@@ -116,9 +116,9 @@ If prefix-argument directly DETACH from the session."
 
 (cl-defmethod detached--detach-session ((_mode (derived-mode eshell-mode)))
   "Detach from session when MODE is `eshell-mode'."
-  (when-let ((active-session (detached-session-active-p detached--buffer-session))
+  (when-let ((active-session (detached-session-active-p detached-buffer-session))
              (dtach-process (detached-eshell--get-dtach-process)))
-    (setq detached--buffer-session nil)
+    (setq detached-buffer-session nil)
     (process-send-string dtach-process
                          detached--dtach-detach-character)))
 

@@ -64,7 +64,7 @@ Optionally DETACH from it."
 	(vterm-send-C-a)
 	(vterm-send-C-k)
 	(process-send-string vterm--process command)
-	(setq detached--buffer-session detached-current-session)
+	(setq detached-buffer-session detached-current-session)
 	(vterm-send-C-e)
 	(vterm-send-return)))
 
@@ -83,7 +83,7 @@ Optionally DETACH from it."
         (command
          (detached-session-attach-command session
                                           :type 'string)))
-	(setq detached--buffer-session session)
+	(setq detached-buffer-session session)
 	(process-send-string vterm--process command)
 	(vterm-send-return)))
 

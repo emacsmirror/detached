@@ -749,7 +749,7 @@ If prefix-argument is provided unmark instead of mark."
     (seq-find
      (lambda (buffer)
        (with-current-buffer buffer
-         (when-let ((buffer-session detached--buffer-session)
+         (when-let ((buffer-session detached-buffer-session)
                     (buffer-session-id (detached-session-id buffer-session)))
            (eq buffer-session-id id))))
      (buffer-list))))

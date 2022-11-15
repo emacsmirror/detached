@@ -79,7 +79,7 @@ cluttering the `comint-history' with dtach commands."
         (cl-letf ((detached-current-session session)
                   (comint-input-sender #'detached-shell--attach-input-sender)
                   ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
-          (setq detached--buffer-session session)
+          (setq detached-buffer-session session)
           (let ((kill-ring nil))
             (comint-kill-input))
           (insert "[attached]")
@@ -113,7 +113,7 @@ cluttering the `comint-history' with dtach commands."
            (detached-create-session (substring-no-properties string)))
           (command
            (detached-session-start-command session :type 'string)))
-     (setq detached--buffer-session session)
+     (setq detached-buffer-session session)
      (comint-simple-send proc command))))
 
 (defun detached-shell--comint-read-input-ring-advice (orig-fun &rest args)
