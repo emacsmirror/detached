@@ -102,7 +102,8 @@ cluttering the `comint-history' with dtach commands."
   "Attach to `detached--session' and send the attach command to PROC."
   (let* ((detached-session-mode 'attach)
          (input
-          (detached--shell-command detached--current-session t)))
+          (detached-session-attach-command detached--current-session
+                                           :type 'string)))
     (comint-simple-send proc input)))
 
 (defun detached-shell--create-input-sender (proc string)

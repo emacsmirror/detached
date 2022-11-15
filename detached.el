@@ -726,7 +726,8 @@ Optionally SUPPRESS-OUTPUT."
                  (buffer (detached--generate-buffer detached--shell-command-buffer
                                                     (lambda (buffer)
                                                       (not (get-buffer-process buffer)))))
-                 (command (detached--shell-command detached--current-session t)))
+                 (command (detached-session-start-command detached--current-session
+                                                          :type 'string)))
         (setq detached-enabled nil)
         (funcall #'async-shell-command command buffer)
         (with-current-buffer buffer
@@ -897,7 +898,7 @@ This function uses the `notifications' library."
                (buffer (get-buffer-create detached--shell-command-buffer))
                (detached-local-session (detached--session-local session))
                (default-directory (detached--session-directory session))
-               (command (detached--shell-command session t)))
+               (command (detached-session-attach-command session :type 'string)))
       (when (get-buffer-process buffer)
         (setq buffer (generate-new-buffer (buffer-name buffer))))
       (funcall #'async-shell-command command buffer)
@@ -909,36 +910,57 @@ This function uses the `notifications' library."
 
 (cl-defun detached-session-start-command (session &key type)
   "Return command to start SESSION with specified TYPE."
+  (unless (member type '(list string))
+    (error "Type not specified for session start command"))
   (detached-connection-local-variables
    (let* ((socket (detached--session-file session 'socket t))
-          (log (detached--session-file session 'log t)))
+          (log (detached--session-file session 'log t))
+          (command
+           (if (detached-session-degraded-p session)
+               (progn
+                 (when (eq 'create-and-attach
+                           (detached--session-initial-mode session))
+                   (detached-start-detached-session session))
+                 `(,detached-tail-program
+                   "--follow=name"
+                   "--retry"
+                   ,(concat "--lines=" detached-session-context-lines)
+                   ,log))
+             `(,detached-dtach-program
+               ,(detached--dtach-arg) ,socket "-z"
+               ,detached-shell-program "-c"
+               ,(if (eq type 'string)
+                    (shell-quote-argument (detached--detached-command session))
+                  (detached--detached-command session))))))
      (detached--set-session-state session 'started)
-     (if (detached-session-degraded-p session)
-         (let ((tail-command
-                `(,detached-tail-program
-                  "--follow=name"
-                  "--retry"
-                  ,(concat "--lines=" detached-session-context-lines)
-                  ,log)))
-           (when (eq 'create-and-attach
-                     (detached--session-initial-mode session))
-             (detached-start-detached-session session))
-           (pcase type
-             ('string (string-join tail-command " "))
-             ('list tail-command)
-             (_ (error "Type not specified for session start command")))
-           (if  ))
-       (let ((dtach-command
-              `(,detached-dtach-program
-                ,(detached--dtach-arg) ,socket "-z"
-                ,detached-shell-program "-c"
-                ,(if (eq type 'string)
-                     (shell-quote-argument (detached--detached-command session))
-                   (detached--detached-command session)))))
-         (pcase type
-           ('string (string-join dtach-command " "))
-           ('list dtach-command)
-           (_ (error "Type not specified for session start command"))))))))
+     (pcase type
+       ('string (string-join command " "))
+       ('list command)))))
+
+(cl-defun detached-session-attach-command (session &key type)
+  "Return command to attach SESSION with specified TYPE."
+  (unless (member type '(list string))
+    (error "Type not specified for session start command"))
+  (detached-connection-local-variables
+   (let* ((socket (detached--session-file session 'socket t))
+          (log (detached--session-file session 'log t))
+          (dtach-arg (detached--dtach-arg))
+          (command
+           (if (detached-session-degraded-p session)
+               `(,detached-tail-program
+                 "--follow=name"
+                 "--retry"
+                 ,(concat "--lines=" detached-session-context-lines)
+                 ,log)
+             `(,(when detached-show-session-context
+                  (format  "%s -n %s %s;" detached-tail-program detached-session-context-lines log))
+               ,detached-dtach-program
+               ,dtach-arg
+               ,socket
+               "-r none"))))
+     (pcase type
+       ('string (string-join command " "))
+       ('list command)))))
 
 (defun detached-session-output (session)
   "Return content of SESSION's output."

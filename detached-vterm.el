@@ -79,9 +79,12 @@ Optionally DETACH from it."
                                        (string= (detached-session-host-name it) host-name)))
                          (seq-filter #'detached-session-active-p))))
       (detached-completing-read sessions))))
-  (let ((detached-session-mode 'attach))
+  (let ((detached-session-mode 'attach)
+        (command
+         (detached-session-attach-command session
+                                          :type 'string)))
 	(setq detached--buffer-session session)
-	(process-send-string vterm--process (detached--shell-command session t))
+	(process-send-string vterm--process command)
 	(vterm-send-return)))
 
 (cl-defmethod detached--detach-session ((_mode (derived-mode vterm-mode)))

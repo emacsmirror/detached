@@ -114,7 +114,8 @@ Optionally EDIT-COMMAND."
 		(if (eq detached-session-mode 'create)
 			(detached-start-detached-session detached--current-session)
 		  (apply compilation-start `(,(if (detached-session-started-p detached--current-session)
-                                          (detached--shell-command detached--current-session t)
+                                          (detached-session-attach-command detached--current-session
+                                                                           :type 'string)
                                         (detached-session-start-command detached--current-session
                                                                         :type 'string))
 									 ,(or mode 'detached-compilation-mode)
