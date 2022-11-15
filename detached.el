@@ -734,6 +734,7 @@ Optionally SUPPRESS-OUTPUT."
 
 (defun detached-start-detached-session (session)
   "Start SESSION in detached mode."
+  (detached--set-session-state session 'started)
   (if (detached-session-local-p session)
       (apply #'start-process-shell-command
              `("detached" nil ,(detached--dtach-command session t)))
@@ -910,6 +911,7 @@ This function uses the `notifications' library."
   (detached-connection-local-variables
    (let* ((socket (detached--session-file session 'socket t))
           (log (detached--session-file session 'log t)))
+     (detached--set-session-state session 'started)
      (if (detached-session-degraded-p session)
          (let ((tail-command
                 `(,detached-tail-program
@@ -970,9 +972,7 @@ This function uses the `notifications' library."
 
 (defun detached-session-state (session)
   "Return SESSION's state."
-  (if (detached-session-validated-p session)
-      (detached--session-state session)
-    'unknown))
+  (detached--session-state session))
 
 (defun detached-session-status (session)
   "Return status for SESSION."
@@ -1489,6 +1489,11 @@ Optionally make the path LOCAL to host."
                                    0.0)
                        (seq-length durations)))))
     `(:durations ,durations :mean ,mean :std ,std)))
+
+(defun detached--set-session-state (session state)
+  "Update SESSION with STATE."
+  (setf (detached--session-state session) state)
+  (detached--db-update-entry session))
 
 ;;;;; Database
 

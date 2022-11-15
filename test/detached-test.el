@@ -68,6 +68,16 @@
 
 ;;;;; Session interface
 
+(ert-deftest detached-test-set-session-state ()
+  (detached-test--with-temp-database
+   (cl-letf* ((session (detached-create-session "foo")))
+     (should (eq 'unknown (detached-session-state session)))
+     (detached--set-session-state session 'started)
+     (should (eq 'started
+                 (detached-session-state
+                  (detached--db-get-session
+                   (detached-session-id session))))))))
+
 (ert-deftest detached-test-session-status ()
   (let ((failed-session (detached--session-create :status `(failure . 128))))
     (should (detached-session-failed-p failed-session))
