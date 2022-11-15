@@ -922,9 +922,9 @@ This function uses the `notifications' library."
                            (detached--session-initial-mode session))
                    (detached-start-detached-session session))
                  `(,detached-tail-program
-                   "--follow=name"
-                   "--retry"
-                   ,(concat "--lines=" detached-session-context-lines)
+                   "-F"
+                   "-n"
+                   ,(number-to-string detached-session-context-lines)
                    ,log))
              `(,detached-dtach-program
                ,(detached--dtach-arg) ,socket "-z"
@@ -948,16 +948,18 @@ This function uses the `notifications' library."
           (command
            (if (detached-session-degraded-p session)
                `(,detached-tail-program
-                 "--follow=name"
-                 "--retry"
-                 ,(concat "--lines=" detached-session-context-lines)
+                 "-F"
+                 "-n"
+                 ,(number-to-string detached-session-context-lines)
                  ,log)
-             `(,(when detached-show-session-context
-                  (format  "%s -n %s %s;" detached-tail-program detached-session-context-lines log))
-               ,detached-dtach-program
-               ,dtach-arg
-               ,socket
-               "-r none"))))
+             (append
+              (when detached-show-session-context
+                `(,detached-tail-program "-n"
+                                         ,(number-to-string detached-session-context-lines)
+                                         ,(concat log ";")))
+              `(,detached-dtach-program ,dtach-arg
+                                        ,socket
+                                        "-r" "none")))))
      (pcase type
        ('string (string-join command " "))
        ('list command)))))
