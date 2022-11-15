@@ -1381,7 +1381,9 @@ Optionally make the path LOCAL to host."
 
 (cl-defmethod detached--detach-session ((_mode (derived-mode shell-mode)))
   "Detach from session when MODE is `shell-mode'."
-  (detached--detach-from-comint-process)
+  (if (detached-session-degraded-p detached-buffer-session)
+      (comint-interrupt-subjob)
+    (detached--detach-from-comint-process))
   (when (string-match detached--shell-command-buffer (buffer-name))
     (detached--quit-session-buffer)))
 
