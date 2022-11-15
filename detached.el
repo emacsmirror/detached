@@ -913,8 +913,6 @@ This function uses the `notifications' library."
 
 (cl-defun detached-session-start-command (session &key type)
   "Return command to start SESSION with specified TYPE."
-  (unless (member type '(list string))
-    (error "Type not specified for session start command"))
   (detached-connection-local-variables
    (let* ((socket (detached--session-file session 'socket t))
           (detached-session-mode (detached--session-initial-mode session))
@@ -942,12 +940,11 @@ This function uses the `notifications' library."
      (detached--set-session-state session 'started)
      (pcase type
        ('string (string-join command " "))
-       ('list command)))))
+       ('list command)
+       (_ nil)))))
 
 (cl-defun detached-session-attach-command (session &key type)
   "Return command to attach SESSION with specified TYPE."
-  (unless (member type '(list string))
-    (error "Type not specified for session start command"))
   (detached-connection-local-variables
    (let* ((socket (detached--session-file session 'socket t))
           (log (detached--session-file session 'log t))
@@ -968,7 +965,8 @@ This function uses the `notifications' library."
                                         "-r" "none")))))
      (pcase type
        ('string (string-join command " "))
-       ('list command)))))
+       ('list command)
+       (_ nil)))))
 
 (defun detached-session-output (session)
   "Return content of SESSION's output."
