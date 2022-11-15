@@ -1278,6 +1278,16 @@ Optionally CONCAT the command return command into a string."
       (push `(,(car annotator) . ,(funcall (cdr annotator))) metadata))
     metadata))
 
+(defun detached-select-host-session ()
+  "Return selected session."
+  (let* ((host-name (car (detached--host)))
+         (sessions
+          (thread-last (detached-get-sessions)
+                       (seq-filter (lambda (it)
+                                     (string= (detached-session-host-name it) host-name)))
+                       (seq-filter #'detached-session-active-p))))
+    (detached-completing-read sessions)))
+
 (defun detached-completing-read (sessions)
   "Select a session from SESSIONS through `completing-read'."
   (let* ((candidates (detached-session-candidates sessions))

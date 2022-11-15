@@ -73,7 +73,7 @@ This function also makes sure that the HISTFILE is disabled for local shells."
 `comint-add-to-input-history' is temporarily disabled to avoid
 cluttering the `comint-history' with dtach commands."
   (interactive
-   (list (detached-shell--select-session)))
+   (list (detached-select-host-session)))
   (when (detached-valid-session session)
     (if (detached-session-active-p session)
         (cl-letf ((detached-current-session session)
@@ -87,16 +87,6 @@ cluttering the `comint-history' with dtach commands."
       (detached-open-session session))))
 
 ;;;; Support functions
-
-(defun detached-shell--select-session ()
-  "Return selected session."
-  (let* ((host-name (car (detached--host)))
-         (sessions
-          (thread-last (detached-get-sessions)
-                       (seq-filter (lambda (it)
-                                     (string= (detached-session-host-name it) host-name)))
-                       (seq-filter #'detached-session-active-p))))
-    (detached-completing-read sessions)))
 
 (defun detached-shell--attach-input-sender (proc _string)
   "Attach to `detached--session' and send the attach command to PROC."

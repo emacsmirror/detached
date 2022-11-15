@@ -74,7 +74,7 @@ If prefix-argument directly DETACH from the session."
 (defun detached-eshell-attach-session (session)
   "Attach to SESSION."
   (interactive
-   (list (detached-eshell--select-session)))
+   (list (detached-select-host-session)))
   (when (detached-valid-session session)
     (if (detached-session-active-p session)
         (cl-letf* ((detached-session-mode 'attach)
@@ -103,16 +103,6 @@ If prefix-argument directly DETACH from the session."
   (when-let* ((process (and eshell-process-list (caar eshell-process-list))))
     (and (string= (process-name process) "dtach")
          process)))
-
-(defun detached-eshell--select-session ()
-  "Return selected session."
-  (let* ((host-name (car (detached--host)))
-         (sessions
-          (thread-last (detached-get-sessions)
-                       (seq-filter (lambda (it)
-                                     (string= (detached-session-host-name it) host-name)))
-                       (seq-filter #'detached-session-active-p))))
-    (detached-completing-read sessions)))
 
 (cl-defmethod detached--detach-session ((_mode (derived-mode eshell-mode)))
   "Detach from session when MODE is `eshell-mode'."
