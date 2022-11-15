@@ -735,11 +735,12 @@ Optionally SUPPRESS-OUTPUT."
 (defun detached-start-detached-session (session)
   "Start SESSION in detached mode."
   (detached--set-session-state session 'started)
-  (if (detached-session-local-p session)
-      (apply #'start-process-shell-command
-             `("detached" nil ,(detached--dtach-command session t)))
-    (apply #'start-file-process-shell-command
-           `("detached" nil ,(detached--dtach-command session t)))))
+  (let ((dtach-command (detached-session-start-command
+                                session
+                                :type 'string)))
+    (if (detached-session-local-p session)
+        (apply #'start-process-shell-command `("detached" nil ,dtach-command))
+      (apply #'start-file-process-shell-command `("detached" nil ,dtach-command)))))
 
 (defun detached-session-candidates (sessions)
   "Return an alist of SESSIONS candidates."
