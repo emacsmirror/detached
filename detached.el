@@ -417,7 +417,7 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
          (detached-session-action (or detached-session-action
                                       detached-shell-command-session-action))
          (detached-session-mode (or detached-session-mode
-                                    (if suppress-output 'create 'create-and-attach)))
+                                    (if suppress-output 'detached 'attached)))
          (detached-current-session (detached-create-session command)))
     (detached-start-session command suppress-output)))
 
@@ -710,15 +710,15 @@ Optionally SUPPRESS-OUTPUT."
         (detached-enabled t))
     (if-let ((run-in-background
               (or suppress-output
-                  (eq detached-session-mode 'create)))
-             (detached-session-mode 'create))
+                  (eq detached-session-mode 'detached)))
+             (detached-session-mode 'detached))
         (let ((detached-current-session
                (or detached-current-session
                    (detached-create-session command))))
           (setq detached-enabled nil)
           (detached-start-detached-session
            detached-current-session))
-      (cl-letf* ((detached-session-mode 'create-and-attach)
+      (cl-letf* ((detached-session-mode 'attached)
                  (detached-current-session
                   (or detached-current-session
                       (detached-create-session command)))
@@ -916,7 +916,7 @@ This function uses the `notifications' library."
    (let* ((socket (detached--session-file session 'socket t))
           (detached-session-mode (detached--session-initial-mode session))
           (log (detached--session-file session 'log t))
-          (dtach-arg (if (eq 'create (detached--session-initial-mode session))
+          (dtach-arg (if (eq 'detached (detached--session-initial-mode session))
                          "-n"
                        "-c"))
           (dtach-command-fun (lambda (session)
@@ -931,7 +931,7 @@ This function uses the `notifications' library."
                                         (shell-quote-argument (detached--detached-command session))
                                       (detached--detached-command session))))))
           (command
-           (if (eq 'create (detached--session-initial-mode session))
+           (if (eq 'detached (detached--session-initial-mode session))
                (funcall dtach-command-fun session)
              (if (not (detached-session-degraded-p session))
                  (funcall dtach-command-fun session)
@@ -1613,8 +1613,8 @@ Optionally make the path LOCAL to host."
 (defun detached--dtach-arg ()
   "Return dtach argument based on `detached-session-mode'."
   (pcase detached-session-mode
-    ('create "-n")
-    ('create-and-attach "-c")
+    ('detached "-n")
+    ('attached "-c")
     ('attach "-a")
     (_ (error "`detached-session-mode' has an unknown value"))))
 
@@ -2014,10 +2014,10 @@ Optionally CONCAT the command return command into a string."
                                                  "-n"
                                                  ,(number-to-string detached-session-context-lines)
                                                  ,log)))
-     (cond ((eq 'create detached-session-mode)
+     (cond ((eq 'detached detached-session-mode)
             (detached--dtach-command session))
-           ((eq 'create-and-attach detached-session-mode)
-            (let ((detached-session-mode 'create)
+           ((eq 'attached detached-session-mode)
+            (let ((detached-session-mode 'detached)
                   (detached-current-session session))
               (detached-start-session (detached-session-command session))
               (if concat

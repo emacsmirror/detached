@@ -52,7 +52,7 @@ property of :detached t in the org babel src block."
 	(if (alist-get :detached params)
 		(cl-letf* ((detached-session-origin 'org)
 				   (detached-session-action detached-org-session-action)
-				   (detached-session-mode 'create)
+				   (detached-session-mode 'detached)
 				   (new-command (replace-regexp-in-string "\n" " && " full-body))
                    (detached-session (detached-create-session new-command))
 				   (dtach-command

@@ -109,7 +109,7 @@
 ;;      ;;                         "-F"
 ;;      ;;                         "-n" ,(number-to-string detached-session-context-lines)
 ;;      ;;                         ,log)))
-;;      ;;   (setf (detached--session-initial-mode session) 'create-and-attach)
+;;      ;;   (setf (detached--session-initial-mode session) 'attached)
 ;;      ;;   (should (equal expected-list (detached-session-start-command session
 ;;      ;;                                                                :type 'list))))
      
@@ -121,7 +121,7 @@
 ;;                              "-F"
 ;;                              "-n" ,(number-to-string detached-session-context-lines)
 ;;                              ,log)))
-;;        (setf (detached--session-initial-mode session) 'create-and-attach)
+;;        (setf (detached--session-initial-mode session) 'attached)
 ;;        (should (equal expected-list (detached-session-start-command session
 ;;                                                                     :type 'list))))
 
@@ -143,7 +143,7 @@
 			  ((symbol-function #'detached--detached-command)
 			   (lambda (_)
 				 (format "{ detached-command }"))))
-	 (let* ((detached-session-mode 'create-and-attach)
+	 (let* ((detached-session-mode 'attached)
 			(expected `(,detached-dtach-program
 						"-c" ,(detached--session-file session 'socket t)
 						"-z" ,detached-shell-program
@@ -238,9 +238,9 @@
 			  `(,session1 ,session3))))))
 
 (ert-deftest detached-test-dtach-arg ()
-  (let ((detached-session-mode 'create))
+  (let ((detached-session-mode 'detached))
 	(should (string= "-n" (detached--dtach-arg))))
-  (let ((detached-session-mode 'create-and-attach))
+  (let ((detached-session-mode 'attached))
 	(should (string= "-c" (detached--dtach-arg))))
   (let ((detached-session-mode 'attach))
 	(should (string= "-a" (detached--dtach-arg))))

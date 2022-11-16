@@ -236,11 +236,11 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
          current-prefix-arg))
   (let ((detached-session-mode
          (if toggle-suppress-output
-             (if (eq 'create (detached--session-initial-mode session))
-                 'create-and-attach
-               'create)
+             (if (eq 'detached (detached--session-initial-mode session))
+                 'attached
+               'detached)
            (detached--session-initial-mode session))))
-    (unless (eq detached-session-mode 'create)
+    (unless (eq detached-session-mode 'detached)
       (when-let ((single-window (> (length (window-list)) 1))
                  (buffer (current-buffer)))
         (delete-window (get-buffer-window))
@@ -256,11 +256,11 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
          current-prefix-arg))
   (let ((detached-session-mode
          (if toggle-suppress-output
-             (if (eq 'create (detached--session-initial-mode session))
-                 'create-and-attach
-               'create)
+             (if (eq 'detached (detached--session-initial-mode session))
+                 'attached
+               'detached)
            (detached--session-initial-mode session))))
-    (unless (eq detached-session-mode 'create)
+    (unless (eq detached-session-mode 'detached)
       (when-let ((single-window (> (length (window-list)) 1))
                  (buffer (current-buffer)))
         (delete-window (get-buffer-window))
@@ -805,14 +805,14 @@ If prefix-argument is provided unmark instead of mark."
                 ((eq status 'success) 'detached-state-face)
                 (t 'detached-identifier-face)))
          (attach-str
-          (cond ((eq 'create-and-attach (detached--session-initial-mode session))
+          (cond ((eq 'attached (detached--session-initial-mode session))
                  (alist-get 'initially-attached detached-list-state-symbols "?"))
-                ((eq 'create (detached--session-initial-mode session))
+                ((eq 'detached (detached--session-initial-mode session))
                  (alist-get 'initially-detached detached-list-state-symbols "?"))
                 (t "?")))
          (initial-mode-face
-          (cond ((eq 'create-and-attach (detached--session-initial-mode session)) 'detached-identifier-face)
-                ((eq 'create (detached--session-initial-mode session)) 'detached-identifier-face)
+          (cond ((eq 'attached (detached--session-initial-mode session)) 'detached-identifier-face)
+                ((eq 'detached (detached--session-initial-mode session)) 'detached-identifier-face)
                 (t "?"))))
     (string-join
      `(,(propertize status-str 'face status-face)

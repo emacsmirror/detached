@@ -57,7 +57,7 @@ Optionally enable COMINT if prefix-argument is provided."
 		 (detached-session-origin (or detached-session-origin 'compile))
 		 (detached-session-action (or detached-session-action
 									  detached-compile-session-action))
-		 (detached-session-mode (or detached-session-mode 'create-and-attach))
+		 (detached-session-mode (or detached-session-mode 'attached))
 		 (detached-current-session (detached-create-session command)))
 	(compile command comint)))
 
@@ -69,7 +69,7 @@ Optionally EDIT-COMMAND."
   (let* ((detached-enabled t)
 		 (detached-session-action detached-compile-session-action)
 		 (detached-session-origin 'compile)
-		 (detached-session-mode 'create-and-attach)
+		 (detached-session-mode 'attached)
 		 (detached-current-session edit-command))
 	(recompile edit-command)))
 
@@ -110,7 +110,7 @@ Optionally EDIT-COMMAND."
   "Create a `detached' session before running COMPILATION-START with ARGS."
   (if detached-enabled
 	  (pcase-let ((`(,_command ,mode ,name-function ,highlight-regexp) args))
-		(if (eq detached-session-mode 'create)
+		(if (eq detached-session-mode 'detached)
 			(detached-start-detached-session detached-current-session)
 		  (apply compilation-start `(,(if (detached-session-started-p detached-current-session)
                                           (detached-session-attach-command detached-current-session

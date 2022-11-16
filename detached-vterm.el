@@ -57,7 +57,7 @@ Optionally DETACH from it."
 		 (detached-session-origin 'vterm)
 		 (detached-session-action detached-vterm-session-action)
 		 (detached-session-mode
-		  (if detach 'create 'create-and-attach))
+		  (if detach 'detached 'attached))
 		 (detached-current-session (detached-create-session input))
 		 (command (detached-session-start-command detached-current-session
                                                   :type 'string)))

@@ -63,7 +63,7 @@ This function also makes sure that the HISTFILE is disabled for local shells."
   (interactive "P")
   (let* ((detached-session-origin 'shell)
          (detached-session-action detached-shell-session-action)
-         (detached-session-mode (if detach 'create 'create-and-attach))
+         (detached-session-mode (if detach 'detached 'attached))
          (comint-input-sender #'detached-shell--create-input-sender))
     (comint-send-input)))
 

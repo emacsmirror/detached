@@ -65,7 +65,7 @@
 If prefix-argument directly DETACH from the session."
   (interactive "P")
   (let* ((detached-session-origin 'eshell)
-		 (detached-session-mode (if detach 'create 'create-and-attach))
+		 (detached-session-mode (if detach 'detached 'attached))
 		 (detached-enabled t)
 		 (detached-current-session nil))
 	(advice-add #'eshell-external-command :around #'detached-eshell-external-command)
