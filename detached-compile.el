@@ -85,7 +85,6 @@ Optionally EDIT-COMMAND."
   "Attach to SESSION with `compile'."
   (when (detached-valid-session session)
     (let* ((detached-enabled t)
-           (detached-session-mode 'attach)
            (detached-current-session session)
            (detached-local-session (detached-session-local-p session))
            (default-directory (detached-session-directory session)))

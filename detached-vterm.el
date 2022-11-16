@@ -79,8 +79,7 @@ Optionally DETACH from it."
                                        (string= (detached-session-host-name it) host-name)))
                          (seq-filter #'detached-session-active-p))))
       (detached-completing-read sessions))))
-  (let ((detached-session-mode 'attach)
-        (command
+  (let ((command
          (detached-session-attach-command session
                                           :type 'string)))
 	(setq detached-buffer-session session)

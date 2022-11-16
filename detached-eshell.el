@@ -77,8 +77,7 @@ If prefix-argument directly DETACH from the session."
    (list (detached-select-host-session)))
   (when (detached-valid-session session)
     (if (detached-session-active-p session)
-        (cl-letf* ((detached-session-mode 'attach)
-                   (input
+        (cl-letf* ((input
                     (detached-session-attach-command session
                                                      :type 'string))
                    ((symbol-function #'eshell-add-to-history) #'ignore))

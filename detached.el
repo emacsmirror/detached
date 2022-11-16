@@ -895,7 +895,6 @@ This function uses the `notifications' library."
 (defun detached-shell-command-attach-session (session)
   "Attach to SESSION with `async-shell-command'."
   (let* ((detached-current-session session)
-         (detached-session-mode 'attach)
          (inhibit-message t))
     (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
                (buffer (get-buffer-create detached--shell-command-buffer))
