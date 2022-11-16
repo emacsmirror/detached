@@ -58,12 +58,12 @@ This function also makes sure that the HISTFILE is disabled for local shells."
 
 ;;;; Commands
 
-(defun detached-shell-send-input (&optional detach)
-  "Create a session and attach to it unless DETACH."
+(defun detached-shell-send-input (&optional detached)
+  "Start a `detached-session' and attach to it, unless DETACHED."
   (interactive "P")
   (let* ((detached-session-origin 'shell)
          (detached-session-action detached-shell-session-action)
-         (detached-session-mode (if detach 'detached 'attached))
+         (detached-session-mode (if detached 'detached 'attached))
          (comint-input-sender #'detached-shell--create-input-sender))
     (comint-send-input)))
 

@@ -59,13 +59,11 @@
 
 ;;;; Commands
 
-(defun detached-eshell-send-input (&optional detach)
-  "Create a session and attach to it.
-
-If prefix-argument directly DETACH from the session."
+(defun detached-eshell-send-input (&optional detached)
+  "Start a `detached-session' and attach to it, unless DETACHED."
   (interactive "P")
   (let* ((detached-session-origin 'eshell)
-		 (detached-session-mode (if detach 'detached 'attached))
+		 (detached-session-mode (if detached 'detached 'attached))
 		 (detached-enabled t)
 		 (detached-current-session nil))
 	(advice-add #'eshell-external-command :around #'detached-eshell-external-command)

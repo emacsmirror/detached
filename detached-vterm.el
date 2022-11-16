@@ -48,16 +48,14 @@
 
 ;;;; Commands
 
-(defun detached-vterm-send-input (&optional detach)
-  "Create a `detached' session.
-
-Optionally DETACH from it."
+(defun detached-vterm-send-input (&optional detached)
+  "Start a `detached-session' and attach to it, unless DETACHED."
   (interactive)
   (let* ((input (buffer-substring-no-properties (vterm-beginning-of-line) (vterm-end-of-line)))
 		 (detached-session-origin 'vterm)
 		 (detached-session-action detached-vterm-session-action)
 		 (detached-session-mode
-		  (if detach 'detached 'attached))
+		  (if detached 'detached 'attached))
 		 (detached-current-session (detached-create-session input))
 		 (command (detached-session-start-command detached-current-session
                                                   :type 'string)))
