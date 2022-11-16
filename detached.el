@@ -917,11 +917,17 @@ This function uses the `notifications' library."
    (let* ((socket (detached--session-file session 'socket t))
           (detached-session-mode (detached--session-initial-mode session))
           (log (detached--session-file session 'log t))
+          (dtach-arg (if (eq 'create (detached--session-initial-mode session))
+                         "-n"
+                       "-c"))
           (dtach-command-fun (lambda (session)
                                (let ((detached-session-mode (detached--session-initial-mode session)))
                                  `(,detached-dtach-program
-                                   ,(detached--dtach-arg) ,socket "-z"
-                                   ,detached-shell-program "-c"
+                                   ,dtach-arg
+                                   ,socket
+                                   "-z"
+                                   ,detached-shell-program
+                                   "-c"
                                    ,(if (eq type 'string)
                                         (shell-quote-argument (detached--detached-command session))
                                       (detached--detached-command session))))))
@@ -948,7 +954,6 @@ This function uses the `notifications' library."
   (detached-connection-local-variables
    (let* ((socket (detached--session-file session 'socket t))
           (log (detached--session-file session 'log t))
-          (dtach-arg (detached--dtach-arg))
           (command
            (if (detached-session-degraded-p session)
                `(,detached-tail-program "-F"
@@ -960,7 +965,7 @@ This function uses the `notifications' library."
                 `(,detached-tail-program "-n"
                                          ,(number-to-string detached-session-context-lines)
                                          ,(concat log ";")))
-              `(,detached-dtach-program ,dtach-arg
+              `(,detached-dtach-program "-a"
                                         ,socket
                                         "-r" "none")))))
      (pcase type
