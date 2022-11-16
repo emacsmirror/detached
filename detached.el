@@ -743,8 +743,8 @@ Optionally SUPPRESS-OUTPUT."
 (defun detached--start-session-process (session start-command)
   "Start SESSION with START-COMMAND."
   (if (detached-session-local-p session)
-        (apply #'start-process-shell-command `("detached" nil ,start-command))
-      (apply #'start-file-process-shell-command `("detached" nil ,start-command))))
+      (apply #'start-process-shell-command `("detached" nil ,start-command))
+    (apply #'start-file-process-shell-command `("detached" nil ,start-command))))
 
 (defun detached-session-candidates (sessions)
   "Return an alist of SESSIONS candidates."

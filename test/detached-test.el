@@ -112,7 +112,7 @@
 ;;      ;;   (setf (detached--session-initial-mode session) 'attached)
 ;;      ;;   (should (equal expected-list (detached-session-start-command session
 ;;      ;;                                                                :type 'list))))
-     
+
 ;;      ;; Create and attach to degraded session
 ;;      (let* ((detached-degraded-commands '("ls"))
 ;;             (session (detached-create-session "ls -la"))
@@ -126,7 +126,7 @@
 ;;                                                                     :type 'list))))
 
 ;;      ;; Create
-     
+
 ;;      )))
 
 (ert-deftest detached-test-dtach-command ()
