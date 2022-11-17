@@ -421,7 +421,7 @@ This version is encoded as [package-version].[revision].")
   (declare (indent 1))
   `(let ((default-directory (detached-session-working-directory ,session))
          (detached-session-origin (detached--session-origin ,session))
-         (detached-local-session (detached-session-local-p ,session))
+         (detached-local-session (detached--session-local-p ,session))
          (detached-session-mode (detached--session-initial-mode ,session))
          (detached-session-action (detached--session-action ,session))
          (detached-session-command (detached-session-command ,session))
@@ -744,7 +744,7 @@ active session.  For sessions created with `detached-compile' or
 
 (defun detached--start-session-process (session start-command)
   "Start SESSION with START-COMMAND."
-  (if (detached-session-local-p session)
+  (if (detached--session-local-p session)
       (apply #'start-process-shell-command `("detached" nil ,start-command))
     (apply #'start-file-process-shell-command `("detached" nil ,start-command))))
 
@@ -1181,10 +1181,6 @@ This function uses the `notifications' library."
   "Return t if SESSION is degraded."
   (detached--session-degraded session))
 
-(defun detached-session-local-p (session)
-  "Return t if SESSION is forced to run locally."
-  (detached--session-local session))
-
 (defun detached-session-uninitialized-p (session)
   "Return t if SESSION is uninitialized."
   (eq 'uninitialized
@@ -1290,6 +1286,10 @@ This function uses the `notifications' library."
   (alist-get directory
              detached--watched-session-directories
              nil nil #'string=))
+
+(defun detached--session-local-p (session)
+  "Return t if SESSION is forced to run locally."
+  (detached--session-local session))
 
 (defun detached--session-missing-p (session)
   "Return t if SESSION is missing."
