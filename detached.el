@@ -227,6 +227,14 @@ If set to a non nil value the latest entry to
 
 ;;;;; Public
 
+(defvar detached-session-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "e" #'detached-edit-and-run-session)
+    (define-key map "r" #'detached-rerun-session)
+    (define-key map "w" #'detached-copy-session-command)
+    (define-key map "W" #'detached-copy-session)
+    map))
+
 (defvar detached-enabled nil)
 
 (defvar detached-session-mode 'attached
