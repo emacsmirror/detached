@@ -706,39 +706,12 @@ active session.  For sessions created with `detached-compile' or
   "Start a `detached' session running COMMAND.
 
 Optionally SUPPRESS-OUTPUT."
-  (let ((inhibit-message t)
-        (detached-enabled t))
-    (if-let ((run-in-background
-              (or suppress-output
-                  (eq detached-session-mode 'detached)))
-             (detached-session-mode 'detached))
-        (let ((detached-current-session
-               (or detached-current-session
-                   (detached-create-session command))))
-          (setq detached-enabled nil)
-          (detached-start-detached-session
-           detached-current-session))
-      (cl-letf* ((detached-session-mode 'attached)
-                 (detached-current-session
-                  (or detached-current-session
-                      (detached-create-session command)))
-                 ((symbol-function #'set-process-sentinel) #'ignore)
-                 (buffer (detached--generate-buffer detached--shell-command-buffer
-                                                    (lambda (buffer)
-                                                      (not (get-buffer-process buffer)))))
-                 (command (detached-session-start-command detached-current-session
-                                                          :type 'string)))
-        (setq detached-enabled nil)
-        (funcall #'async-shell-command command buffer)
-        (with-current-buffer buffer
-          (setq detached-buffer-session detached-current-session))))))
-
-(defun detached-start-detached-session (session)
-  "Start SESSION in detached mode."
-  (detached--start-session-process session
-                                   (detached-session-start-command
-                                    session
-                                    :type 'string)))
+  (let* ((detached-session-mode
+         (if suppress-output
+             'detached
+           detached-session-mode))
+         (session (detached-create-session command)))
+    (detached-start-session2 session)))
 
 (defun detached--start-session-process (session start-command)
   "Start SESSION with START-COMMAND."
@@ -909,6 +882,26 @@ This function uses the `notifications' library."
         (setq detached-buffer-session detached-current-session)))))
 
 ;;;;; Public session functions
+
+(defun detached-start-session2 (session)
+  "Start SESSION."
+  (if (eq 'detached (detached--session-initial-mode session))
+      (detached--start-session-process session
+                                       (detached-session-start-command
+                                        session
+                                        :type 'string))
+    ;; TODO: Change this part it should use the run function of the session
+    ;; So that this function can be used regardless of origin being shell command or compile
+    (cl-letf* ((inhibit-message t)
+               ((symbol-function #'set-process-sentinel) #'ignore)
+               (buffer (detached--generate-buffer detached--shell-command-buffer
+                                                  (lambda (buffer)
+                                                    (not (get-buffer-process buffer)))))
+               (command (detached-session-start-command detached-current-session
+                                                        :type 'string)))
+      (funcall #'async-shell-command command buffer)
+      (with-current-buffer buffer
+        (setq detached-buffer-session detached-current-session)))))
 
 (cl-defun detached-session-start-command (session &key type)
   "Return command to start SESSION with specified TYPE."

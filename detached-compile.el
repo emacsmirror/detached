@@ -111,7 +111,7 @@ Optionally EDIT-COMMAND."
   (if detached-enabled
 	  (pcase-let ((`(,_command ,mode ,name-function ,highlight-regexp) args))
 		(if (eq detached-session-mode 'detached)
-			(detached-start-detached-session detached-current-session)
+            (detached-start-session2 detached-current-session)
 		  (apply compilation-start `(,(if (detached-session-started-p detached-current-session)
                                           (detached-session-attach-command detached-current-session
                                                                            :type 'string)
