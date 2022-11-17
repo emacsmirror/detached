@@ -416,6 +416,19 @@ This version is encoded as [package-version].[revision].")
       (progn
         ,@body))))
 
+(defmacro detached-with-session (session &rest body)
+  "A macro that set up SESSION's environment before evaluating BODY."
+  (declare (indent 1))
+  `(let ((default-directory (detached-session-working-directory ,session))
+         (detached-session-origin (detached--session-origin ,session))
+         (detached-local-session (detached-session-local-p ,session))
+         (detached-session-mode (detached--session-initial-mode ,session))
+         (detached-session-action (detached--session-action ,session))
+         (detached-session-command (detached-session-command ,session))
+         (detached-session-environment (detached--session-env ,session))
+         (detached-current-session ,session))
+     ,@body))
+
 ;;;; Commands
 
 ;;;###autoload
@@ -495,22 +508,20 @@ Optionally TOGGLE-SESSION-MODE."
   (interactive
    (list (detached-session-in-context)
          current-prefix-arg))
-  (when-let* ((detached-session-command
-               (read-string "Edit command: "
-                            (detached-session-command session))))
-    (let* ((detached-session-mode
-            (if toggle-session-mode
-                (if (eq 'detached (detached--session-initial-mode session))
-                    'attached
-                  'detached)
-              (detached--session-initial-mode session)))
-           (default-directory (detached-session-working-directory session))
-           (detached-local-session (detached-session-local-p session))
-           (detached-session-action (detached--session-action session))
-           (detached-session-environment (detached--session-env session))
-           (detached-current-session
-            (detached-create-session detached-session-command)))
-      (detached-start-session detached-current-session))))
+  (when session
+    (detached-with-session session
+      (when-let* ((detached-session-command
+                   (read-string "Edit command: "
+                                (detached-session-command session)))
+                  (detached-session-mode
+                   (if toggle-session-mode
+                       (if (eq 'detached (detached--session-initial-mode session))
+                           'attached
+                         'detached)
+                     (detached--session-initial-mode session)))
+                  (detached-current-session
+                   (detached-create-session detached-session-command)))
+        (detached-start-session detached-current-session)))))
 
 ;;;###autoload
 (defun detached-rerun-session (session &optional toggle-session-mode)
@@ -520,20 +531,16 @@ Optionally TOGGLE-SESSION-MODE."
   (interactive
    (list (detached-session-in-context)
          current-prefix-arg))
-  (let* ((detached-session-mode
-          (if toggle-session-mode
-              (if (eq 'detached (detached--session-initial-mode session))
-                  'attached
-                'detached)
-            (detached--session-initial-mode session)))
-         ;; TODO: Implement macro detached-with-session
-         (default-directory (detached-session-working-directory session))
-         (detached-local-session (detached-session-local-p session))
-         (detached-session-action (detached--session-action session))
-         (detached-session-environment (detached--session-env session))
-         (detached-current-session
-          (detached-create-session (detached-session-command session))))
-    (detached-start-session detached-current-session)))
+  (when session
+    (detached-with-session session
+      (let* ((detached-session-mode
+              (if toggle-session-mode
+                  (if (eq 'detached (detached--session-initial-mode session))
+                      'attached
+                    'detached)
+                (detached--session-initial-mode session)))
+             (detached-current-session (detached-create-session detached-session-command)))
+        (detached-start-session detached-current-session)))))
 
 ;;;###autoload
 (defun detached-describe-session ()
@@ -925,11 +932,7 @@ This function uses the `notifications' library."
                                        (detached-session-start-command
                                         session
                                         :type 'string))
-    (let* ((default-directory (detached-session-working-directory session))
-           (detached-local-session (detached-session-local-p session))
-           (detached-session-mode (detached--session-initial-mode session))
-           (detached-session-action (detached--session-action session))
-           (detached-session-environment (detached--session-env session)))
+    (detached-with-session session
       (funcall (detached-session-run-function session) session))))
 
 (cl-defun detached-session-start-command (session &key type)

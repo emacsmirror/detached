@@ -65,19 +65,16 @@ Optionally enable COMINT if prefix-argument is provided."
   "Re-compile by running `compile' but in a 'detached' session.
 Optionally EDIT-COMMAND."
   (interactive "P")
-  (let* ((detached-enabled t)
-		 (detached-session-action detached-compile-session-action)
-		 (detached-session-origin 'compile)
-		 (detached-session-mode 'attached)
-         (command
-          (if edit-command
-              (compilation-read-command
-               (detached-session-command detached-buffer-session))
-            (detached-session-command detached-buffer-session)))
-         (detached-session-environment
-          (detached--session-env detached-buffer-session))
-         (detached-current-session (detached-create-session command)))
-    (apply #'compilation-start `(,command))))
+  (detached-with-session detached-buffer-session
+    (let* ((detached-enabled t)
+		   (detached-session-mode 'attached)
+           (detached-session-command
+            (if edit-command
+                (compilation-read-command
+                 (detached-session-command detached-buffer-session))
+              (detached-session-command detached-buffer-session)))
+           (detached-current-session (detached-create-session detached-session-command)))
+      (apply #'compilation-start `(,detached-session-command)))))
 
 (defun detached-compile-kill ()
   "Kill a 'detached' session."
@@ -90,18 +87,16 @@ Optionally EDIT-COMMAND."
 (defun detached-compile-attach (session)
   "Attach to SESSION with `compile'."
   (when (detached-valid-session session)
-    (let* ((detached-enabled t)
-           (detached-current-session session)
-           (detached-local-session (detached-session-local-p session))
-           (default-directory (detached-session-directory session)))
-      (compilation-start (detached-session-command session)))))
+    (detached-with-session session
+      (let* ((detached-enabled t))
+        (compilation-start detached-session-command)))))
 
 ;;;###autoload
 (defun detached-compile-start-session (session)
   "Start SESSION with `detached-compile'."
-  (let* ((detached-enabled t)
-         (detached-current-session session))
-    (detached-compile (detached-session-command session))))
+  (detached-with-session session
+    (let* ((detached-enabled t))
+      (detached-compile detached-session-command))))
 
 ;;;;; Support functions
 
