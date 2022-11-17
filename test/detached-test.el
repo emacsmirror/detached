@@ -283,14 +283,14 @@
 								   :working-directory "/home/user/"
 								   :command "ls -la"
 								   :degraded nil
-								   :env 'terminal-data
+								   :text-mode 'terminal-data
 								   :id 'foo123))
 		(degraded-plain-text-session
 		 (detached--session-create :directory "/tmp/detached/"
 								   :working-directory "/home/user/"
 								   :command "ls -la"
 								   :degraded t
-								   :env 'plain-text
+								   :text-mode 'plain-text
 								   :id 'foo123)))
 	(should (string= "{ bash -c if\\ TERM\\=eterm-color\\ script\\ --quiet\\ --flush\\ --return\\ --command\\ \\\"ls\\ -la\\\"\\ /dev/null\\;\\ then\\ true\\;\\ else\\ echo\\ \\\"\\[detached-exit-code\\:\\ \\$\\?\\]\\\"\\;\\ fi; } 2>&1 | tee /tmp/detached/foo123.log"
 					 (detached--detached-command terminal-data-session)))

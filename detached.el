@@ -245,11 +245,11 @@ Valid values are: create, new and attach")
 (defvar detached-session-annotation nil
   "An annotation string.")
 
-(defconst detached-session-version "0.9.2.1"
+(defconst detached-session-version "0.9.2.2"
   "The version of `detached-session'.
 This version is encoded as [package-version].[revision].")
 
-(defconst detached-minimum-session-version "0.9.2.1"
+(defconst detached-minimum-session-version "0.9.2.2"
   "The version of `detached-session' that the package is compatible with.")
 
 ;;;;; Faces
@@ -374,6 +374,7 @@ This version is encoded as [package-version].[revision].")
   (metadata nil :read-only t)
   (host nil :read-only t)
   (degraded nil :read-only t)
+  (text-mode nil :read-only t)
   (env nil :read-only t)
   (action nil :read-only t)
   (local nil :read-only t)
@@ -692,7 +693,7 @@ active session.  For sessions created with `detached-compile' or
                                     :local detached-local-session
                                     :size 0
                                     :directory (detached--get-session-directory)
-                                    :env (detached--env command)
+                                    :text-mode (detached--text-mode command)
                                     :host (detached--host)
                                     :metadata (detached-metadata)
                                     :state 'unknown
@@ -1156,9 +1157,9 @@ This function uses the `notifications' library."
       (gethash (detached-session-id session) detached--hashed-sessions)))
 
 (defun detached-session-terminal-data-p (session)
-  "Return t if SESSION is run with environment set to terminal data."
+  "Return t if SESSION is run with text mode set to terminal data."
   (eq 'terminal-data
-      (detached--session-env session)))
+      (detached--session-text-mode session)))
 
 (defun detached-session-watched-p (session)
   "Return t if SESSION is being watched."
@@ -1682,8 +1683,8 @@ If SESSION is degraded fallback to a command that doesn't rely on tee."
     ((and (pred stringp) command) command)
     (_ (error "Unable to determine script command, set `detached-terminal-data-command' properly"))))
 
-(defun detached--env (command)
-  "Return the environment to run in COMMAND in."
+(defun detached--text-mode (command)
+  "Return the text mode to run in COMMAND in."
   (if (seq-find (lambda (regexp)
                   (string-match-p regexp command))
                 detached-plain-text-commands)
