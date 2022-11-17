@@ -133,7 +133,7 @@ Optionally EDIT-COMMAND."
                                                                            :type 'string)
                                         (detached-session-start-command detached-current-session
                                                                         :type 'string))
-                                     ,@(plist-get (detached--session-env detached-current-session) :compilation-args)))))
+                                     ,@(detached-session-environment-property detached-current-session :compilation-args)))))
 	(apply compilation-start args)))
 
 (defun detached-compile--replace-modesetter ()

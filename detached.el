@@ -1123,6 +1123,10 @@ This function uses the `notifications' library."
    (plist-get (detached--session-action session) :callback)
    #'ignore))
 
+(defun detached-session-environment-property (session property)
+  "Return PROPERTY from SESSION environment."
+  (plist-get (detached--session-env session) property))
+
 (defun detached-session-status-function (session)
   "Return SESSION's status function."
   (or
