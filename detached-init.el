@@ -36,7 +36,7 @@
 (declare-function detached-rerun-session "detached")
 (declare-function detached-view-session "detached")
 (declare-function detached-copy-session-command "detached")
-(declare-function detached-copy-session "detached")
+(declare-function detached-copy-session-output "detached")
 (declare-function detached-diff-session "detached")
 (declare-function detached-initialize-sessions "detached")
 (declare-function detached-shell-mode "detached")
@@ -89,7 +89,7 @@
 	(define-key map "r" #'detached-rerun-session)
 	(define-key map "v" #'detached-view-session)
 	(define-key map "w" #'detached-copy-session-command)
-	(define-key map "W" #'detached-copy-session)
+	(define-key map "W" #'detached-copy-session-output)
 	(define-key map "=" #'detached-diff-session)
 	map))
 

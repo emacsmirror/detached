@@ -229,10 +229,11 @@ If set to a non nil value the latest entry to
 
 (defvar detached-session-map
   (let ((map (make-sparse-keymap)))
+    (define-key map "a" #'detached-edit-session-annotation)
     (define-key map "e" #'detached-edit-and-run-session)
     (define-key map "r" #'detached-rerun-session)
     (define-key map "w" #'detached-copy-session-command)
-    (define-key map "W" #'detached-copy-session)
+    (define-key map "W" #'detached-copy-session-output)
     map))
 
 (defvar detached-enabled nil)
@@ -501,6 +502,18 @@ The session is compiled by opening its output and enabling
          (display-buffer buffer-name detached-open-session-display-buffer-action))))))
 
 ;;;###autoload
+(defun detached-edit-session-annotation (session)
+  "Edit SESSION's annotation."
+  (interactive
+   (list (detached-session-in-context)))
+  (when-let* ((initial-value (or
+                              (detached--session-annotation session)
+                              ""))
+              (annotation (read-string "Annotation: " initial-value)))
+    (setf (detached--session-annotation session) annotation)
+    (detached--db-update-entry session)))
+
+;;;###autoload
 (defun detached-edit-and-run-session (session &optional toggle-session-mode)
   "Edit and re-run SESSION at point.
 
@@ -570,7 +583,7 @@ Optionally TOGGLE-SESSION-MODE."
                  initialized-session)))))
 
 ;;;###autoload
-(defun detached-copy-session (session)
+(defun detached-copy-session-output (session)
   "Copy SESSION's output."
   (interactive
    (list (detached-session-in-context)))

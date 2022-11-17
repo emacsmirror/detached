@@ -109,7 +109,7 @@ The package also provides additional commands to interact with a session.
 | detached-rerun-session (r)          | Rerun a session                             |
 | detached-insert-session-command (i) | Insert the session's command at point       |
 | detached-copy-session-command (w)   | Copy the session's shell command            |
-| detached-copy-session (W)           | Copy the session's output                   |
+| detached-copy-session-output (W)    | Copy the session's output                   |
 | detached-kill-session (k)           | Kill an active session                      |
 | detached-delete-session (d)         | Delete an inactive session                  |
 

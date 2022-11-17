@@ -144,17 +144,6 @@ Optionally initialize ALL session-directories."
           (detached-list--initialize-directory directory)))
     (message "All session directories have been initialized")))
 
-(defun detached-list-edit-annotation (session)
-  "Edit SESSION's annotation."
-  (interactive
-   (list (tabulated-list-get-id)))
-  (when-let* ((initial-value (or
-                              (detached--session-annotation session)
-                              ""))
-              (annotation (read-string "Annotation: " initial-value)))
-    (setf (detached--session-annotation session) annotation)
-    (detached--db-update-entry session)))
-
 (defun detached-list-quit ()
   "Quit command."
   (interactive)
@@ -191,18 +180,6 @@ Optionally initialize ALL session-directories."
   (interactive
    (list (tabulated-list-get-id)))
   (detached-open-session-directory session))
-
-(defun detached-list-copy-session-command (session)
-  "Copy SESSION at point's command."
-  (interactive
-   (list (tabulated-list-get-id)))
-  (detached-copy-session-command session))
-
-(defun detached-list-copy-session-output (session)
-  "Copy SESSION at point's output."
-  (interactive
-   (list (tabulated-list-get-id)))
-  (detached-copy-session session))
 
 (defun detached-list-kill-session ()
   "Send a TERM signal to sessions at point, or all marked sessions.
@@ -893,7 +870,7 @@ If prefix-argument is provided unmark instead of mark."
 
 (defvar detached-list-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "a") #'detached-list-edit-annotation)
+    (define-key map (kbd "a") #'detached-edit-session-annotation)
     (define-key map (kbd "d") #'detached-list-delete-session)
     (define-key map (kbd "e") #'detached-edit-and-run-session)
     (define-key map (kbd "f") #'detached-list-select-filter)
@@ -930,7 +907,7 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "U") #'detached-list-unmark-sessions)
     (define-key map (kbd "v") #'detached-list-view-session)
     (define-key map (kbd "w") #'detached-copy-session-command)
-    (define-key map (kbd "W") #'detached-copy-session)
+    (define-key map (kbd "W") #'detached-copy-session-output)
     (define-key map (kbd "x") #'detached-list-detach-from-session)
     (define-key map (kbd "%") #'detached-list-mark-regexp)
     (define-key map (kbd "=") #'detached-list-diff-marked-sessions)
