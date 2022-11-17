@@ -574,8 +574,8 @@ Optionally TOGGLE-SESSION-MODE."
 (defun detached-attach-session (session)
   "Attach to SESSION."
   (interactive
-   (list (detached-completing-read (detached-get-sessions))))
-  (when (detached-valid-session session)
+   (list (detached-session-in-context)))
+  (when session
     (let ((initialized-session (detached--get-initialized-session session)))
       (if (detached-session-inactive-p initialized-session)
           (detached-open-session initialized-session)
@@ -909,19 +909,18 @@ This function uses the `notifications' library."
 
 (defun detached-shell-command-attach-session (session)
   "Attach to SESSION with `async-shell-command'."
-  (let* ((detached-current-session session)
-         (inhibit-message t))
-    (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
-               (buffer (get-buffer-create detached--shell-command-buffer))
-               (detached-local-session (detached--session-local session))
-               (default-directory (detached-session-directory session))
-               (command (detached-session-attach-command session :type 'string)))
-      (when (get-buffer-process buffer)
-        (setq buffer (generate-new-buffer (buffer-name buffer))))
-      (funcall #'async-shell-command command buffer)
-      (with-current-buffer buffer
-        (setq-local default-directory (detached-session-working-directory session))
-        (setq detached-buffer-session detached-current-session)))))
+  (let* ((inhibit-message t))
+    (detached-with-session session
+      (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
+                 (buffer (get-buffer-create detached--shell-command-buffer))
+                 (default-directory (detached-session-directory session))
+                 (command (detached-session-attach-command session :type 'string)))
+        (when (get-buffer-process buffer)
+          (setq buffer (generate-new-buffer (buffer-name buffer))))
+        (funcall #'async-shell-command command buffer)
+        (with-current-buffer buffer
+          (setq-local default-directory (detached-session-working-directory session))
+          (setq detached-buffer-session detached-current-session))))))
 
 (defun detached-start-shell-command-session (session)
   "Start SESSION as a `shell-command'."
