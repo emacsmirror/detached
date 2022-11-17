@@ -230,6 +230,7 @@ If set to a non nil value the latest entry to
 (defvar detached-session-map
   (let ((map (make-sparse-keymap)))
     (define-key map "a" #'detached-edit-session-annotation)
+    (define-key map "d" #'detached-detach-session)
     (define-key map "e" #'detached-edit-and-run-session)
     (define-key map "r" #'detached-rerun-session)
     (define-key map "w" #'detached-copy-session-command)
