@@ -49,9 +49,11 @@ Optionally USE-COMINT-MODE"
 ;;;###autoload
 (defun detached-extra-dired-rsync (command _details)
   "Run COMMAND with `detached'."
-  (let ((detached-local-session t)
-		(detached-session-origin 'rsync))
-	(detached-start-session command t)))
+  (let* ((detached-local-session t)
+		 (detached-session-origin 'rsync)
+         (detached-session-mode 'detached)
+         (session (detached-create-session command)))
+	(detached-start-session session)))
 
 ;;;###autoload
 (defun detached-extra-alert-notification (session)

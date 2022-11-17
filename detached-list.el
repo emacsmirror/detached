@@ -119,7 +119,7 @@ detached list implements."
 (defun detached-list-describe-duration (session)
   "Describe the SESSION's duration statistics."
   (interactive
-   (list (detached--get-session major-mode)))
+   (list (detached-session-in-context)))
   (let ((mean (detached-session-mean-duration session))
         (std (detached-session-std-duration session)))
     (message "%s: %s %s: %s"
@@ -222,7 +222,7 @@ Optionally DELETE the session if prefix-argument is provided."
 (defun detached-list-view-session (session)
   "View SESSION."
   (interactive
-   (list (detached--get-session major-mode)))
+   (list (detached-session-in-context)))
   (let ((detached-open-session-display-buffer-action
          detached-list-open-session-display-buffer-action))
     (detached-view-dwim session)))
@@ -247,16 +247,16 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
         (bury-buffer buffer)))
     (detached-edit-and-run-session session)))
 
-(defun detached-list-rerun-session (session &optional toggle-suppress-output)
+(defun detached-list-rerun-session (session &optional toggle-session-mode)
   "Rerun SESSION at point.
 
-Optionally TOGGLE-SUPPRESS-OUTPUT."
+Optionally TOGGLE-SESSION-MODE."
   (interactive
    (list (tabulated-list-get-id)
          current-prefix-arg))
   (let ((detached-session-mode
-         (if toggle-suppress-output
-             (if (eq 'detached (detached--session-initial-mode session))
+         (if toggle-session-mode
+             (if (eq 'attached (detached--session-initial-mode session))
                  'attached
                'detached)
            (detached--session-initial-mode session))))
@@ -384,7 +384,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
     (if current-prefix-arg
         (regexp-quote
          (detached-session-command
-          (detached--get-session major-mode)))
+          (detached-session-in-context)))
       (read-regexp
        "Filter session commands containing (regexp): "))))
   (when regexp
@@ -404,7 +404,7 @@ Optionally TOGGLE-SUPPRESS-OUTPUT."
     (if current-prefix-arg
         (regexp-quote
          (detached-session-working-directory
-          (detached--get-session major-mode)))
+          (detached-session-in-context)))
       (read-regexp
        "Filter session working directories containing (regexp): "))))
   (when regexp
@@ -840,7 +840,7 @@ If prefix-argument is provided unmark instead of mark."
             detached-list--narrow-criteria)
     sessions))
 
-(cl-defmethod detached--get-session ((_mode (derived-mode detached-list-mode)))
+(cl-defmethod detached--session-in-context ((_mode (derived-mode detached-list-mode)))
   "Return session when in `detached-list-mode'."
   (tabulated-list-get-id))
 
@@ -895,7 +895,7 @@ If prefix-argument is provided unmark instead of mark."
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "a") #'detached-list-edit-annotation)
     (define-key map (kbd "d") #'detached-list-delete-session)
-    (define-key map (kbd "e") #'detached-list-edit-and-run-session)
+    (define-key map (kbd "e") #'detached-edit-and-run-session)
     (define-key map (kbd "f") #'detached-list-select-filter)
     (define-key map (kbd "g") #'detached-list-revert)
     (define-key map (kbd "i") #'detached-list-initialize-session-directory)
@@ -923,14 +923,14 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "n +") #'detached-list-narrow-after-time)
     (define-key map (kbd "n -") #'detached-list-narrow-before-time)
     (define-key map (kbd "q") #'detached-list-quit)
-    (define-key map (kbd "r") #'detached-list-rerun-session)
+    (define-key map (kbd "r") #'detached-rerun-session)
     (define-key map (kbd "t") #'detached-list-toggle-mark-session)
     (define-key map (kbd "T") #'detached-list-toggle-sessions)
     (define-key map (kbd "u") #'detached-list-unmark-session)
     (define-key map (kbd "U") #'detached-list-unmark-sessions)
     (define-key map (kbd "v") #'detached-list-view-session)
-    (define-key map (kbd "w") #'detached-list-copy-session-command)
-    (define-key map (kbd "W") #'detached-list-copy-session-output)
+    (define-key map (kbd "w") #'detached-copy-session-command)
+    (define-key map (kbd "W") #'detached-copy-session)
     (define-key map (kbd "x") #'detached-list-detach-from-session)
     (define-key map (kbd "%") #'detached-list-mark-regexp)
     (define-key map (kbd "=") #'detached-list-diff-marked-sessions)

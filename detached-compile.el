@@ -35,7 +35,7 @@
 (defcustom detached-compile-session-action
   '(:attach detached-compile-attach
 			:view detached-compile-session
-			:run detached-compile)
+			:run detached-compile-start-session)
   "Actions for a session created with `detached-compile'."
   :group 'detached
   :type 'plist)
@@ -57,8 +57,7 @@ Optionally enable COMINT if prefix-argument is provided."
 		 (detached-session-origin (or detached-session-origin 'compile))
 		 (detached-session-action (or detached-session-action
 									  detached-compile-session-action))
-		 (detached-session-mode (or detached-session-mode 'attached))
-		 (detached-current-session (detached-create-session command)))
+		 (detached-session-mode (or detached-session-mode 'attached)))
 	(compile command comint)))
 
 ;;;###autoload
@@ -70,8 +69,15 @@ Optionally EDIT-COMMAND."
 		 (detached-session-action detached-compile-session-action)
 		 (detached-session-origin 'compile)
 		 (detached-session-mode 'attached)
-		 (detached-current-session edit-command))
-	(recompile edit-command)))
+         (command
+          (if edit-command
+              (compilation-read-command
+               (detached-session-command detached-buffer-session))
+            (detached-session-command detached-buffer-session)))
+         (detached-session-environment
+          (detached--session-env detached-buffer-session))
+         (detached-current-session (detached-create-session command)))
+    (apply #'compilation-start `(,command))))
 
 (defun detached-compile-kill ()
   "Kill a 'detached' session."
@@ -89,6 +95,13 @@ Optionally EDIT-COMMAND."
            (detached-local-session (detached-session-local-p session))
            (default-directory (detached-session-directory session)))
       (compilation-start (detached-session-command session)))))
+
+;;;###autoload
+(defun detached-compile-start-session (session)
+  "Start SESSION with `detached-compile'."
+  (let* ((detached-enabled t)
+         (detached-current-session session))
+    (detached-compile (detached-session-command session))))
 
 ;;;;; Support functions
 
@@ -109,17 +122,23 @@ Optionally EDIT-COMMAND."
 (defun detached-compile--compilation-start (compilation-start &rest args)
   "Create a `detached' session before running COMPILATION-START with ARGS."
   (if detached-enabled
-	  (pcase-let ((`(,_command ,mode ,name-function ,highlight-regexp) args))
+	  (pcase-let* ((`(,command ,mode ,name-function ,highlight-regexp) args)
+                   (detached-session-environment
+                    (or detached-session-environment
+                        `(:compilation-args ,(list (or mode 'detached-compilation-mode)
+                                                   name-function
+                                                   highlight-regexp))))
+                   (detached-current-session
+                    (or detached-current-session
+                        (detached-create-session command))))
 		(if (eq detached-session-mode 'detached)
-            (detached-start-session2 detached-current-session)
+            (detached-start-session detached-current-session)
 		  (apply compilation-start `(,(if (detached-session-started-p detached-current-session)
                                           (detached-session-attach-command detached-current-session
                                                                            :type 'string)
                                         (detached-session-start-command detached-current-session
                                                                         :type 'string))
-									 ,(or mode 'detached-compilation-mode)
-									 ,name-function
-									 ,highlight-regexp))))
+                                     ,@(plist-get (detached--session-env detached-current-session) :compilation-args)))))
 	(apply compilation-start args)))
 
 (defun detached-compile--replace-modesetter ()

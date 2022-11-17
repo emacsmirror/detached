@@ -149,10 +149,22 @@ Acceptable values are
 (defcustom detached-shell-command-session-action
   '(:attach detached-shell-command-attach-session
             :view detached-view-dwim
-            :run detached-shell-command)
+            :run detached-start-shell-command-session)
   "Actions for a session created with `detached-shell-command'."
   :type 'plist
   :group 'detached)
+
+(defcustom detached-session-command
+  nil
+  "Command to run in session."
+  :group 'detached
+  :type 'string)
+
+(defcustom detached-session-environment
+  nil
+  "A property list with variables for session."
+  :group 'detached
+  :type 'plist)
 
 (defcustom detached-shell-command-initial-input t
   "Variable to control initial command input for `detached-shell-command'.
@@ -217,7 +229,7 @@ If set to a non nil value the latest entry to
 
 (defvar detached-enabled nil)
 
-(defvar detached-session-mode nil
+(defvar detached-session-mode 'attached
   "Mode of operation for session.
 Valid values are: create, new and attach")
 
@@ -419,8 +431,8 @@ Optionally SUPPRESS-OUTPUT if prefix-argument is provided."
                                       detached-shell-command-session-action))
          (detached-session-mode (or detached-session-mode
                                     (if suppress-output 'detached 'attached)))
-         (detached-current-session (detached-create-session command)))
-    (detached-start-session command suppress-output)))
+         (session (detached-create-session command)))
+    (detached-start-session session)))
 
 ;;;###autoload
 (defun detached-open-session (session)
@@ -468,46 +480,58 @@ The session is compiled by opening its output and enabling
          (display-buffer buffer-name detached-open-session-display-buffer-action))))))
 
 ;;;###autoload
-(defun detached-edit-and-run-session (session &optional suppress-output)
-  "Edit SESSION and run, optionally SUPPRESS-OUTPUT."
+(defun detached-edit-and-run-session (session &optional toggle-session-mode)
+  "Edit and re-run SESSION at point.
+
+Optionally TOGGLE-SESSION-MODE."
   (interactive
-   (list (detached-completing-read (detached-get-sessions))
+   (list (detached-session-in-context)
          current-prefix-arg))
-  (when (detached-valid-session session)
-    (let* ((detached-local-session (detached--session-local session))
-           (default-directory
-             (detached-session-working-directory session))
-           (detached-session-mode (or detached-session-mode
-                                      (detached--session-initial-mode session)))
+  (when-let* ((detached-session-command
+               (read-string "Edit command: "
+                            (detached-session-command session))))
+    (let* ((detached-session-mode
+            (if toggle-session-mode
+                (if (eq 'detached (detached--session-initial-mode session))
+                    'attached
+                  'detached)
+              (detached--session-initial-mode session)))
+           (default-directory (detached-session-working-directory session))
+           (detached-local-session (detached-session-local-p session))
            (detached-session-action (detached--session-action session))
-           (command
-            (read-string "Edit command: " (detached-session-command session))))
-      (if suppress-output
-          (detached-start-session command suppress-output)
-        (funcall (detached-session-run-function session) command)))))
+           (detached-session-environment (detached--session-env session))
+           (detached-current-session
+            (detached-create-session detached-session-command)))
+      (detached-start-session detached-current-session))))
 
 ;;;###autoload
-(defun detached-rerun-session (session &optional suppress-output)
-  "Rerun SESSION, optionally SUPPRESS-OUTPUT."
-  (interactive
-   (list (detached-completing-read (detached-get-sessions))
-         current-prefix-arg))
-  (when (detached-valid-session session)
-    (let* ((detached-local-session (detached--session-local session))
-           (default-directory
-             (detached-session-working-directory session))
-           (detached-session-mode (or detached-session-mode
-                                      (detached--session-initial-mode session)))
-           (detached-session-action (detached--session-action session))
-           (command (detached-session-command session)))
-      (if suppress-output
-          (detached-start-session command suppress-output)
-        (funcall (detached-session-run-function session) command)))))
+(defun detached-rerun-session (session &optional toggle-session-mode)
+  "Re-run SESSION at point.
 
+Optionally TOGGLE-SESSION-MODE."
+  (interactive
+   (list (detached-session-in-context)
+         current-prefix-arg))
+  (let* ((detached-session-mode
+          (if toggle-session-mode
+              (if (eq 'detached (detached--session-initial-mode session))
+                  'attached
+                'detached)
+            (detached--session-initial-mode session)))
+         ;; TODO: Implement macro detached-with-session
+         (default-directory (detached-session-working-directory session))
+         (detached-local-session (detached-session-local-p session))
+         (detached-session-action (detached--session-action session))
+         (detached-session-environment (detached--session-env session))
+         (detached-current-session
+          (detached-create-session (detached-session-command session))))
+    (detached-start-session detached-current-session)))
+
+;;;###autoload
 (defun detached-describe-session ()
   "Describe current session."
   (interactive)
-  (when-let* ((session (detached--get-session major-mode))
+  (when-let* ((session (detached-session-in-context))
               (buffer (get-buffer-create "*detached-session-info*"))
               (window (display-buffer buffer detached-session-info-buffer-action)))
     (select-window window)
@@ -534,8 +558,8 @@ The session is compiled by opening its output and enabling
 (defun detached-copy-session (session)
   "Copy SESSION's output."
   (interactive
-   (list (detached-completing-read (detached-get-sessions))))
-  (when (detached-valid-session session)
+   (list (detached-session-in-context)))
+  (when session
     (with-temp-buffer
       (insert (detached-session-output session))
       (when (detached-session-terminal-data-p session)
@@ -547,7 +571,7 @@ The session is compiled by opening its output and enabling
 (defun detached-copy-session-command (session)
   "Copy SESSION's command."
   (interactive
-   (list (detached-completing-read (detached-get-sessions))))
+   (list (detached-session-in-context)))
   (kill-new (detached-session-command session)))
 
 ;;;###autoload
@@ -694,6 +718,7 @@ active session.  For sessions created with `detached-compile' or
                                     :size 0
                                     :directory (detached--get-session-directory)
                                     :text-mode (detached--text-mode command)
+                                    :env detached-session-environment
                                     :host (detached--host)
                                     :metadata (detached-metadata)
                                     :state 'unknown
@@ -701,18 +726,6 @@ active session.  For sessions created with `detached-compile' or
      (detached--create-session-validator session)
      (detached--watch-session-directory (detached-session-directory session))
      session)))
-
-;;;###autoload
-(defun detached-start-session (command &optional suppress-output)
-  "Start a `detached' session running COMMAND.
-
-Optionally SUPPRESS-OUTPUT."
-  (let* ((detached-session-mode
-         (if suppress-output
-             'detached
-           detached-session-mode))
-         (session (detached-create-session command)))
-    (detached-start-session2 session)))
 
 (defun detached--start-session-process (session start-command)
   "Start SESSION with START-COMMAND."
@@ -884,25 +897,32 @@ This function uses the `notifications' library."
 
 ;;;;; Public session functions
 
-(defun detached-start-session2 (session)
+(defun detached-start-shell-command-session (session)
+  "Start SESSION as a `shell-command'."
+  (cl-letf* ((inhibit-message t)
+             ((symbol-function #'set-process-sentinel) #'ignore)
+             (buffer (detached--generate-buffer detached--shell-command-buffer
+                                                (lambda (buffer)
+                                                  (not (get-buffer-process buffer)))))
+             (command (detached-session-start-command session
+                                                      :type 'string)))
+    (funcall #'async-shell-command command buffer)
+    (with-current-buffer buffer
+      (setq detached-buffer-session session))))
+
+(defun detached-start-session (session)
   "Start SESSION."
   (if (eq 'detached (detached--session-initial-mode session))
       (detached--start-session-process session
                                        (detached-session-start-command
                                         session
                                         :type 'string))
-    ;; TODO: Change this part it should use the run function of the session
-    ;; So that this function can be used regardless of origin being shell command or compile
-    (cl-letf* ((inhibit-message t)
-               ((symbol-function #'set-process-sentinel) #'ignore)
-               (buffer (detached--generate-buffer detached--shell-command-buffer
-                                                  (lambda (buffer)
-                                                    (not (get-buffer-process buffer)))))
-               (command (detached-session-start-command detached-current-session
-                                                        :type 'string)))
-      (funcall #'async-shell-command command buffer)
-      (with-current-buffer buffer
-        (setq detached-buffer-session detached-current-session)))))
+    (let* ((default-directory (detached-session-working-directory session))
+           (detached-local-session (detached-session-local-p session))
+           (detached-session-mode (detached--session-initial-mode session))
+           (detached-session-action (detached--session-action session))
+           (detached-session-environment (detached--session-env session)))
+      (funcall (detached-session-run-function session) session))))
 
 (cl-defun detached-session-start-command (session &key type)
   "Return command to start SESSION with specified TYPE."
@@ -1082,7 +1102,7 @@ This function uses the `notifications' library."
   "Return SESSION's run function."
   (or
    (plist-get (detached--session-action session) :run)
-   #'detached-start-session))
+   #'detached-start-shell-command-session))
 
 (defun detached-session-callback-function (session)
   "Return SESSION's callback function."
@@ -1107,6 +1127,14 @@ This function uses the `notifications' library."
 (defun detached-session-working-directory (session)
   "Return SESSION's working directory."
   (detached--session-working-directory session))
+
+(defun detached-session-in-context ()
+  "Return session from current context."
+  (let ((session
+         (or (detached--session-in-context major-mode)
+             (detached-completing-read (detached-get-sessions)))))
+    (when (detached-valid-session session)
+      session)))
 
 (defun detached-session-started-p (session)
   "Return t if SESSION has been started."
@@ -1167,10 +1195,6 @@ This function uses the `notifications' library."
    (detached-session-directory session)))
 
 ;;;;; Other
-
-(cl-defgeneric detached--get-session (_mode)
-  "Return session."
-  detached-buffer-session)
 
 (defun detached-degraded-command-p (command)
   "Return t if COMMAND is degraded."
@@ -1375,6 +1399,10 @@ Optionally make the path LOCAL to host."
   (if detached-local-session
       detached-session-directory
     (concat (file-remote-p default-directory) detached-session-directory)))
+
+(cl-defgeneric detached--session-in-context (_mode)
+  "Default implementation."
+  detached-buffer-session)
 
 (cl-defgeneric detached--detach-session (_mode)
   "Default implementation."

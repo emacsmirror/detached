@@ -78,7 +78,7 @@
   :group 'detached
   :type 'list)
 
-(defvar detached-action-map
+(defvar detached-embark-action-map
   (let ((map (make-sparse-keymap)))
 	(define-key map "a" #'detached-attach-session)
 	(define-key map "c" #'detached-compile-session)
@@ -166,7 +166,7 @@
 (defun detached-init--embark ()
   "Initialize integration with `embark'."
   (with-eval-after-load 'embark
-	(defvar embark-detached-map (make-composed-keymap detached-action-map embark-general-map))
+	(defvar embark-detached-map (make-composed-keymap detached-embark-action-map embark-general-map))
 	(add-to-list 'embark-keymap-alist '(detached . embark-detached-map))))
 
 (defun detached-init--nano-modeline ()
