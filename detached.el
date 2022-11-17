@@ -910,8 +910,6 @@ This function uses the `notifications' library."
         (setq-local default-directory (detached-session-working-directory session))
         (setq detached-buffer-session detached-current-session)))))
 
-;;;;; Public session functions
-
 (defun detached-start-shell-command-session (session)
   "Start SESSION as a `shell-command'."
   (cl-letf* ((inhibit-message t)
@@ -924,6 +922,8 @@ This function uses the `notifications' library."
     (funcall #'async-shell-command command buffer)
     (with-current-buffer buffer
       (setq detached-buffer-session session))))
+
+;;;;; Public session functions
 
 (defun detached-start-session (session)
   "Start SESSION."
@@ -1024,7 +1024,9 @@ This function uses the `notifications' library."
     (car
      (split-string
       (with-temp-buffer
-        (apply #'process-file `("pgrep" nil t nil "-f" ,(shell-quote-argument (format "dtach -. %s" socket))))
+        (apply #'process-file
+               `("pgrep" nil t nil
+                 "-f" ,(shell-quote-argument (format "dtach -. %s" socket))))
         (buffer-string))
       "\n" t))))
 
