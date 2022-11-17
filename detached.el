@@ -1482,11 +1482,6 @@ Optionally make the path LOCAL to host."
                        (seq-length durations)))))
     `(:durations ,durations :mean ,mean :std ,std)))
 
-;; (defun detached--set-session-state (session state)
-;;   "Update SESSION with STATE."
-;;   (setf (detached--session-state session) state)
-;;   (detached--db-update-entry session))
-
 ;;;;; Database
 
 (defun detached--db-initialize ()
