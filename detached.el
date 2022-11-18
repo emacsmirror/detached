@@ -1112,7 +1112,7 @@ This function uses the `notifications' library."
   (string-join
    `(,(detached-session-command session)
      ,(detached--host-str session)
-     ,(detached-session-directory session))
+     ,(detached-session-working-directory session))
    ", "))
 
 (defun detached-session-view-function (session)
