@@ -89,14 +89,13 @@ Optionally EDIT-COMMAND."
   (when (detached-valid-session session)
     (detached-with-session session
       (let* ((detached-enabled t))
-        (compilation-start detached-session-command)))))
+        (compilation-start `(,detached-session-command))))))
 
 ;;;###autoload
 (defun detached-compile-start-session (session)
   "Start SESSION with `detached-compile'."
   (detached-with-session session
-    (let* ((detached-enabled t))
-      (detached-compile detached-session-command))))
+    (detached-compile detached-session-command)))
 
 ;;;;; Support functions
 
@@ -125,7 +124,10 @@ Optionally EDIT-COMMAND."
                                                    highlight-regexp))))
                    (detached-current-session
                     (or detached-current-session
-                        (detached-create-session command))))
+                        (detached-create-session command)))
+                   (default-directory (if (detached--session-local-p detached-current-session)
+                                          (detached-session-directory detached-current-session)
+                                        (detached-session-working-directory detached-current-session))))
 		(if (eq detached-session-mode 'detached)
             (detached-start-session detached-current-session)
 		  (apply compilation-start `(,(if (detached-session-started-p detached-current-session)

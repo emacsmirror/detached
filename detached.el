@@ -926,6 +926,9 @@ This function uses the `notifications' library."
 (defun detached-start-shell-command-session (session)
   "Start SESSION as a `shell-command'."
   (cl-letf* ((inhibit-message t)
+             (default-directory (if (detached--session-local-p session)
+                                    (detached-session-directory session)
+                                  (detached-session-working-directory session)))
              ((symbol-function #'set-process-sentinel) #'ignore)
              (buffer (detached--generate-buffer detached--shell-command-buffer
                                                 (lambda (buffer)
