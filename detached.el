@@ -752,6 +752,7 @@ active session.  For sessions created with `detached-compile' or
                                     :metadata (detached-metadata)
                                     :state 'unknown
                                     :initialized-emacsen `(,(emacs-pid)))))
+     (detached--db-insert-entry session)
      session)))
 
 (defun detached--start-session-process (session start-command)
@@ -1874,9 +1875,15 @@ session and trigger a state transition."
           (detached--session-state-transition-update session 'approximate)
         (detached--db-update-entry session)
         (detached--watch-session-directory (detached-session-directory session)))
-    (if (detached--session-missing-p session)
-        (detached--db-remove-entry session)
-      (detached--db-update-entry session))))
+
+    ;; TODO(Niklas Eklund, 20221118): I should remove the autoremoval
+    ;; code of the codebase, it prevents us from being able to create
+    ;; a session without starting it.
+
+    ;; (if (detached--session-missing-p session)
+    ;;     (detached--db-remove-entry session)
+    ;;   (detached--db-update-entry session))
+    ))
 
 (defun detached--uninitialized-sessions ()
   "Return a list of uninitialized sessions."
