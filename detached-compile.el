@@ -130,8 +130,12 @@ Optionally EDIT-COMMAND."
                                           (detached-session-directory detached-current-session)
                                         (detached-session-working-directory detached-current-session))))
 		(if (eq detached-session-mode 'detached)
-            (detached-start-session detached-current-session)
-		  (apply compilation-start `(,(if (detached-session-started-p detached-current-session)
+            (detached--start-session-process detached-current-session
+                                             (detached-session-start-command
+                                              detached-current-session
+                                              :type 'string))
+          (detached-register-session detached-current-session)
+          (apply compilation-start `(,(if (detached-session-started-p detached-current-session)
                                           (detached-session-attach-command detached-current-session
                                                                            :type 'string)
                                         (detached-session-start-command detached-current-session

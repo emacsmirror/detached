@@ -752,12 +752,11 @@ active session.  For sessions created with `detached-compile' or
                                     :metadata (detached-metadata)
                                     :state 'unknown
                                     :initialized-emacsen `(,(emacs-pid)))))
-     (detached--create-session-validator session)
-     (detached--watch-session-directory (detached-session-directory session))
      session)))
 
 (defun detached--start-session-process (session start-command)
   "Start SESSION with START-COMMAND."
+  (detached-register-session session)
   (if (detached--session-local-p session)
       (apply #'start-process-shell-command `("detached" nil ,start-command))
     (apply #'start-file-process-shell-command `("detached" nil ,start-command))))
@@ -936,11 +935,10 @@ This function uses the `notifications' library."
                                                   (not (get-buffer-process buffer)))))
              (command (detached-session-start-command session
                                                       :type 'string)))
+    (detached-register-session session)
     (funcall #'async-shell-command command buffer)
     (with-current-buffer buffer
       (setq detached-buffer-session session))))
-
-;;;;; Public session functions
 
 (defun detached-start-session (session)
   "Start SESSION."
@@ -952,8 +950,16 @@ This function uses the `notifications' library."
     (detached-with-session session
       (funcall (detached-session-run-function session) session))))
 
+(defun detached-register-session (session)
+  "Register the existence of SESSION and start monitoring it."
+  (detached--create-session-validator session)
+  (detached--watch-session-directory (detached-session-directory session)))
+
+;;;;; Public session functions
+
 (cl-defun detached-session-start-command (session &key type)
   "Return command to start SESSION with specified TYPE."
+  (detached-register-session session)
   (detached-connection-local-variables
    (let* ((socket (detached--session-file session 'socket t))
           (detached-session-mode (detached--session-initial-mode session))
