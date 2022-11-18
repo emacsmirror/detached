@@ -913,6 +913,7 @@ This function uses the `notifications' library."
   (let* ((inhibit-message t))
     (detached-with-session session
       (cl-letf* (((symbol-function #'set-process-sentinel) #'ignore)
+                 (detached-session-mode 'attached)
                  (buffer (get-buffer-create detached--shell-command-buffer))
                  (default-directory (detached-session-directory session))
                  (command (detached-session-attach-command session :type 'string)))

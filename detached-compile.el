@@ -88,7 +88,8 @@ Optionally EDIT-COMMAND."
   "Attach to SESSION with `compile'."
   (when (detached-valid-session session)
     (detached-with-session session
-      (let* ((detached-enabled t))
+      (let* ((detached-enabled t)
+             (detached-session-mode 'attached))
         (compilation-start `(,detached-session-command))))))
 
 ;;;###autoload
