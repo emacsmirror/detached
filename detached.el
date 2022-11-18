@@ -1803,6 +1803,7 @@ log to deduce the end time."
 If event is caused by the deletion of a socket, locate the related
 session and trigger a state transition."
   (pcase-let* ((`(,_ ,action ,file) event))
+    ;; Session becomes inactive
     (when (and (eq action 'deleted)
                (string= "socket" (file-name-extension file)))
 
@@ -1832,7 +1833,23 @@ session and trigger a state transition."
           (file-notify-rm-watch
            (alist-get session-directory detached--watched-session-directories nil nil #'string=))
           (setq detached--watched-session-directories
-                (assoc-delete-all session-directory detached--watched-session-directories)))))))
+                (assoc-delete-all session-directory detached--watched-session-directories)))))
+
+    ;; Session becomes active
+    (when (and (eq action 'created)
+               (string= "log" (file-name-extension file)))
+      (when-let* ((id (intern (file-name-base file)))
+                  (session
+                   (or (alist-get id detached--unvalidated-sessions)
+                       (detached--db-get-session id)))
+                  (session-directory (detached-session-directory session))
+                  (is-primary
+                   (detached--primary-detached-emacs-p session)))
+        (setq detached--unvalidated-sessions
+              (assq-delete-all (detached-session-id session)
+                               detached--unvalidated-sessions))
+        (setf (detached--session-state session) 'active)
+        (detached--db-insert-entry session)))))
 
 (defun detached--initialize-session (session)
   "Initialize SESSION."
