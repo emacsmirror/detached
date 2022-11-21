@@ -232,6 +232,7 @@ If set to a non nil value the latest entry to
     (define-key map "a" #'detached-edit-session-annotation)
     (define-key map "d" #'detached-detach-session)
     (define-key map "e" #'detached-edit-and-run-session)
+    (define-key map "k" #'detached-kill-session)
     (define-key map "r" #'detached-rerun-session)
     (define-key map "w" #'detached-copy-session-command)
     (define-key map "W" #'detached-copy-session-output)
@@ -628,7 +629,7 @@ Optionally TOGGLE-SESSION-MODE."
 
 Optionally DELETE the session if prefix-argument is provided."
   (interactive
-   (list (detached-completing-read (detached-get-sessions))
+   (list (detached-session-in-context)
          current-prefix-arg))
   (when (detached-valid-session session)
     (when-let* ((default-directory (detached-session-directory session))
