@@ -347,8 +347,8 @@ This version is encoded as [package-version].[revision].")
 (defvar detached--hashed-sessions nil
   "Hashed sessions.")
 
-(defvar detached--unvalidated-sessions nil
-  "List of unvalidated sessions.")
+(defvar detached--unvalidated-session-ids nil
+  "A list of unvalidated session ids.")
 
 (defvar detached--current-emacsen nil
   "List of current detached Emacsen.")
@@ -1184,8 +1184,8 @@ This function uses the `notifications' library."
 (defun detached-session-validated-p (session)
   "Return t if SESSION has been validated."
   (not
-   (alist-get (detached-session-id session)
-              detached--unvalidated-sessions)))
+   (member (detached-session-id session)
+           detached--unvalidated-session-ids)))
 
 (defun detached-session-failed-p (session)
   "Return t if SESSION failed."
@@ -1376,19 +1376,18 @@ It can take some time for a dtach socket to be created.  Therefore all
 sessions are created with state unknown.  This function creates a
 function to verify that a session was created correctly.  If the
 session is missing its deleted from the database."
-  (setf (alist-get (detached--session-id session) detached--unvalidated-sessions)
-        session)
-  (run-with-timer detached-dtach-socket-creation-delay
-                  nil
-                  (lambda ()
-                    (when (alist-get (detached-session-id session)
-                                     detached--unvalidated-sessions)
-                      (setq detached--unvalidated-sessions
-                            (assq-delete-all (detached-session-id session)
-                                             detached--unvalidated-sessions))
-                      (unless (detached--session-missing-p session)
-                        (setf (detached--session-state session) 'active)
-                        (detached--db-insert-entry session))))))
+  (let ((session-id (detached-session-id session)))
+    (push session-id detached--unvalidated-session-ids)
+    (run-with-timer detached-dtach-socket-creation-delay
+                    nil
+                    (lambda ()
+                      (when (member session-id detached--unvalidated-session-ids)
+                        (setq detached--unvalidated-session-ids (delete session-id detached--unvalidated-session-ids))
+                        (let ((session (detached--db-get-session session-id)))
+                          (if (detached--session-missing-p session)
+                              (detached--db-remove-entry session)
+                            (setf (detached--session-state session) 'active)
+                            (detached--db-update-entry session))))))))
 
 (defun detached--session-file (session file &optional local)
   "Return the full path to SESSION's FILE.
@@ -1816,16 +1815,13 @@ session and trigger a state transition."
                (string= "socket" (file-name-extension file)))
 
       (when-let* ((id (intern (file-name-base file)))
-                  (session
-                   (or (alist-get id detached--unvalidated-sessions)
-                       (detached--db-get-session id)))
+                  (session (detached--db-get-session id))
                   (session-directory (detached-session-directory session))
                   (is-primary
                    (detached--primary-detached-emacs-p session)))
 
         ;; Remove from unvalidated sessions
-        (setq detached--unvalidated-sessions
-              (assq-delete-all id detached--unvalidated-sessions))
+        (setq detached--unvalidated-session-ids (delete id detached--unvalidated-session-ids))
 
         ;; Update session
         (detached--session-state-transition-update session)
@@ -1847,17 +1843,12 @@ session and trigger a state transition."
     (when (and (eq action 'created)
                (string= "log" (file-name-extension file)))
       (when-let* ((id (intern (file-name-base file)))
-                  (session
-                   (or (alist-get id detached--unvalidated-sessions)
-                       (detached--db-get-session id)))
+                  (session (detached--db-get-session id))
                   (session-directory (detached-session-directory session))
-                  (is-primary
-                   (detached--primary-detached-emacs-p session)))
-        (setq detached--unvalidated-sessions
-              (assq-delete-all (detached-session-id session)
-                               detached--unvalidated-sessions))
+                  (is-primary (detached--primary-detached-emacs-p session)))
+        (setq detached--unvalidated-session-ids (delete (detached-session-id session) detached--unvalidated-session-ids))
         (setf (detached--session-state session) 'active)
-        (detached--db-insert-entry session)))))
+        (detached--db-update-entry session)))))
 
 (defun detached--initialize-session (session)
   "Initialize SESSION."
@@ -1874,16 +1865,7 @@ session and trigger a state transition."
       (if (detached--state-transition-p session)
           (detached--session-state-transition-update session 'approximate)
         (detached--db-update-entry session)
-        (detached--watch-session-directory (detached-session-directory session)))
-
-    ;; TODO(Niklas Eklund, 20221118): I should remove the autoremoval
-    ;; code of the codebase, it prevents us from being able to create
-    ;; a session without starting it.
-
-    ;; (if (detached--session-missing-p session)
-    ;;     (detached--db-remove-entry session)
-    ;;   (detached--db-update-entry session))
-    ))
+        (detached--watch-session-directory (detached-session-directory session)))))
 
 (defun detached--uninitialized-sessions ()
   "Return a list of uninitialized sessions."

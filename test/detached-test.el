@@ -49,7 +49,6 @@
 			 ((symbol-function #'emacs-pid) (lambda () 1))
 			 (session (detached-create-session command)))
 	(detached-test--change-session-state session 'activate)
-	(detached--db-insert-entry session)
 	session))
 
 (defun detached-test--change-session-state (session state)
