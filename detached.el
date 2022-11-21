@@ -1462,10 +1462,12 @@ Optionally make the path LOCAL to host."
 
 (defun detached--detach-from-comint-process ()
   "Detach from the underlying `comint' process."
-  (when-let ((active-session (detached-session-active-p detached-buffer-session))
+  (when-let ((active-session (detached-session-active-p
+                              (alist-get (detached-session-id detached-buffer-session)
+                                         detached--sessions)))
              (dtach-process (get-buffer-process (current-buffer))))
-    (setq detached-buffer-session nil)
-    (comint-simple-send dtach-process detached--dtach-detach-character)))
+    (comint-simple-send dtach-process detached--dtach-detach-character)
+    (setq detached-buffer-session nil)))
 
 (defun detached--quit-session-buffer ()
   "Quit session buffer."
