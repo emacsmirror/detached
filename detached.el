@@ -740,7 +740,7 @@ active session.  For sessions created with `detached-compile' or
                                     :working-directory (detached--get-working-directory)
                                     :degraded (detached-degraded-command-p command)
                                     :initial-mode detached-session-mode
-                                    :time `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0)
+                                    :time `(:start 0.0 :end 0.0 :duration 0.0 :offset 0.0)
                                     :status '(unknown . 0)
                                     :annotation detached-session-annotation
                                     :local detached-local-session
@@ -953,7 +953,9 @@ This function uses the `notifications' library."
 
 (defun detached-register-session (session)
   "Register the existence of SESSION and start monitoring it."
-  (detached--create-session-validator session)
+  (setf (detached--session-time session) `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0))
+  (setf (detached--session-state session) 'started)
+  (detached--db-update-entry session)
   (detached--watch-session-directory (detached-session-directory session)))
 
 ;;;;; Public session functions
@@ -1368,26 +1370,6 @@ This function uses the `notifications' library."
 (defun detached--decode-session (item)
   "Return the session associated with ITEM."
   (cdr (assoc item detached--session-candidates)))
-
-(defun detached--create-session-validator (session)
-  "Create a function to validate SESSION.
-
-It can take some time for a dtach socket to be created.  Therefore all
-sessions are created with state unknown.  This function creates a
-function to verify that a session was created correctly.  If the
-session is missing its deleted from the database."
-  (let ((session-id (detached-session-id session)))
-    (push session-id detached--unvalidated-session-ids)
-    (run-with-timer detached-dtach-socket-creation-delay
-                    nil
-                    (lambda ()
-                      (when (member session-id detached--unvalidated-session-ids)
-                        (setq detached--unvalidated-session-ids (delete session-id detached--unvalidated-session-ids))
-                        (let ((session (detached--db-get-session session-id)))
-                          (if (detached--session-missing-p session)
-                              (detached--db-remove-entry session)
-                            (setf (detached--session-state session) 'active)
-                            (detached--db-update-entry session))))))))
 
 (defun detached--session-file (session file &optional local)
   "Return the full path to SESSION's FILE.
