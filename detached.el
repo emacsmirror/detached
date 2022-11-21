@@ -576,7 +576,8 @@ Optionally TOGGLE-SESSION-MODE."
   "Attach to SESSION."
   (interactive
    (list (detached-session-in-context)))
-  (when session
+  (when (and session
+             (detached--valid-dtach-executable-p session))
     (let ((initialized-session (detached--get-initialized-session session)))
       (if (detached-session-inactive-p initialized-session)
           (detached-open-session initialized-session)
@@ -943,13 +944,14 @@ This function uses the `notifications' library."
 
 (defun detached-start-session (session)
   "Start SESSION."
-  (if (eq 'detached (detached--session-initial-mode session))
-      (detached--start-session-process session
-                                       (detached-session-start-command
-                                        session
-                                        :type 'string))
-    (detached-with-session session
-      (funcall (detached-session-run-function session) session))))
+  (when (detached--valid-dtach-executable-p session)
+    (if (eq 'detached (detached--session-initial-mode session))
+        (detached--start-session-process session
+                                         (detached-session-start-command
+                                          session
+                                          :type 'string))
+      (detached-with-session session
+        (funcall (detached-session-run-function session) session)))))
 
 (defun detached-register-session (session)
   "Register the existence of SESSION and start monitoring it."
@@ -962,66 +964,68 @@ This function uses the `notifications' library."
 
 (cl-defun detached-session-start-command (session &key type)
   "Return command to start SESSION with specified TYPE."
-  (detached-register-session session)
-  (detached-connection-local-variables
-   (let* ((socket (detached--session-file session 'socket t))
-          (detached-session-mode (detached--session-initial-mode session))
-          (log (detached--session-file session 'log t))
-          (dtach-arg (if (eq 'detached (detached--session-initial-mode session))
-                         "-n"
-                       "-c"))
-          (dtach-command-fun (lambda (session)
-                               (let ((detached-session-mode (detached--session-initial-mode session)))
-                                 `(,detached-dtach-program
-                                   ,dtach-arg
-                                   ,socket
-                                   "-z"
-                                   ,detached-shell-program
-                                   "-c"
-                                   ,(if (eq type 'string)
-                                        (shell-quote-argument (detached--detached-command session))
-                                      (detached--detached-command session))))))
-          (command
-           (if (eq 'detached (detached--session-initial-mode session))
-               (funcall dtach-command-fun session)
-             (if (not (detached-session-degraded-p session))
+  (when (detached--valid-dtach-executable-p session)
+    (detached-register-session session)
+    (detached-connection-local-variables
+     (let* ((socket (detached--session-file session 'socket t))
+            (detached-session-mode (detached--session-initial-mode session))
+            (log (detached--session-file session 'log t))
+            (dtach-arg (if (eq 'detached (detached--session-initial-mode session))
+                           "-n"
+                         "-c"))
+            (dtach-command-fun (lambda (session)
+                                 (let ((detached-session-mode (detached--session-initial-mode session)))
+                                   `(,detached-dtach-program
+                                     ,dtach-arg
+                                     ,socket
+                                     "-z"
+                                     ,detached-shell-program
+                                     "-c"
+                                     ,(if (eq type 'string)
+                                          (shell-quote-argument (detached--detached-command session))
+                                        (detached--detached-command session))))))
+            (command
+             (if (eq 'detached (detached--session-initial-mode session))
                  (funcall dtach-command-fun session)
-               (detached--start-session-process session
-                                                (string-join
-                                                 (funcall dtach-command-fun session) " "))
-               `(,detached-tail-program
-                 "-F"
-                 "-n"
-                 ,(number-to-string detached-session-context-lines)
-                 ,log)))))
-     (pcase type
-       ('string (string-join command " "))
-       ('list command)
-       (_ nil)))))
+               (if (not (detached-session-degraded-p session))
+                   (funcall dtach-command-fun session)
+                 (detached--start-session-process session
+                                                  (string-join
+                                                   (funcall dtach-command-fun session) " "))
+                 `(,detached-tail-program
+                   "-F"
+                   "-n"
+                   ,(number-to-string detached-session-context-lines)
+                   ,log)))))
+       (pcase type
+         ('string (string-join command " "))
+         ('list command)
+         (_ nil))))))
 
 (cl-defun detached-session-attach-command (session &key type)
   "Return command to attach SESSION with specified TYPE."
-  (detached-connection-local-variables
-   (let* ((socket (detached--session-file session 'socket t))
-          (log (detached--session-file session 'log t))
-          (command
-           (if (detached-session-degraded-p session)
-               `(,detached-tail-program "-F"
-                                        "-n"
-                                        ,(number-to-string detached-session-context-lines)
-                                        ,log)
-             (append
-              (when detached-show-session-context
-                `(,detached-tail-program "-n"
-                                         ,(number-to-string detached-session-context-lines)
-                                         ,(concat log ";")))
-              `(,detached-dtach-program "-a"
-                                        ,socket
-                                        "-r" "none")))))
-     (pcase type
-       ('string (string-join command " "))
-       ('list command)
-       (_ nil)))))
+  (when (detached--valid-dtach-executable-p session)
+    (detached-connection-local-variables
+     (let* ((socket (detached--session-file session 'socket t))
+            (log (detached--session-file session 'log t))
+            (command
+             (if (detached-session-degraded-p session)
+                 `(,detached-tail-program "-F"
+                                          "-n"
+                                          ,(number-to-string detached-session-context-lines)
+                                          ,log)
+               (append
+                (when detached-show-session-context
+                  `(,detached-tail-program "-n"
+                                           ,(number-to-string detached-session-context-lines)
+                                           ,(concat log ";")))
+                `(,detached-dtach-program "-a"
+                                          ,socket
+                                          "-r" "none")))))
+       (pcase type
+         ('string (string-join command " "))
+         ('list command)
+         (_ nil))))))
 
 (defun detached-session-output (session)
   "Return content of SESSION's output."
@@ -1301,6 +1305,15 @@ This function uses the `notifications' library."
        (detached--session-file session 'socket))
       'active
     'inactive))
+
+
+(defun detached--valid-dtach-executable-p (session)
+  "Verify that dtach executable is accessible for SESSION."
+  (let ((default-directory (detached-session-directory session)))
+    (detached-connection-local-variables
+     (if (executable-find detached-dtach-program t)
+         t
+       (error "The `detached-dtach-program' doesn't contain a path to a dtach executable")))))
 
 (defun detached--state-transition-p (session)
   "Return t if SESSION has transitioned from active to inactive."
