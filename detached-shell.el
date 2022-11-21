@@ -32,7 +32,7 @@
 (defcustom detached-shell-session-action
   '(:attach detached-shell-command-attach-session
             :view detached-view-dwim
-            :run detached-shell-command)
+            :run detached-start-shell-command-session)
   "Actions for a session created with `detached-shell'."
   :group 'detached
   :type 'plist)
