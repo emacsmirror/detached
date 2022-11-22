@@ -9,6 +9,7 @@
 - Implement mean and std duration for sessions
 - Make tail commands work on macOS
 - Rewrite core code related to creating, starting, and attaching to sessions.
+- New implementation of kill command. Instead of determining process IDs and sending termination signal to all of them detached attach to the session behind the scenes and sends a termination.
 
 * Version 0.9.2 (2022-11-01)
 

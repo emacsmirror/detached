@@ -67,33 +67,7 @@ This function also makes sure that the HISTFILE is disabled for local shells."
          (comint-input-sender #'detached-shell--create-input-sender))
     (comint-send-input)))
 
-(defun detached-shell-attach-session (session)
-  "Attach to SESSION.
-
-`comint-add-to-input-history' is temporarily disabled to avoid
-cluttering the `comint-history' with dtach commands."
-  (interactive
-   (list (detached-select-host-session)))
-  (when (detached-valid-session session)
-    (if (detached-session-active-p session)
-        (cl-letf ((detached-current-session session)
-                  (comint-input-sender #'detached-shell--attach-input-sender)
-                  ((symbol-function 'comint-add-to-input-history) (lambda (_) t)))
-          (setq detached-buffer-session session)
-          (let ((kill-ring nil))
-            (comint-kill-input))
-          (insert "[attached]")
-          (comint-send-input))
-      (detached-open-session session))))
-
 ;;;; Support functions
-
-(defun detached-shell--attach-input-sender (proc _string)
-  "Attach to `detached--session' and send the attach command to PROC."
-  (let* ((input
-          (detached-session-attach-command detached-current-session
-                                           :type 'string)))
-    (comint-simple-send proc input)))
 
 (defun detached-shell--create-input-sender (proc string)
   "Create a detached session based on STRING and send to PROC."
