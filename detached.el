@@ -759,7 +759,7 @@ active session.  For sessions created with `detached-compile' or
 
 (defun detached--start-session-process (session start-command)
   "Start SESSION with START-COMMAND."
-  (detached-register-session session)
+  (detached-watch-session session)
   (if (detached--session-local-p session)
       (apply #'start-process-shell-command `("detached" nil ,start-command))
     (apply #'start-file-process-shell-command `("detached" nil ,start-command))))
@@ -938,7 +938,7 @@ This function uses the `notifications' library."
                                                   (not (get-buffer-process buffer)))))
              (command (detached-session-start-command session
                                                       :type 'string)))
-    (detached-register-session session)
+    (detached-watch-session session)
     (funcall #'async-shell-command command buffer)
     (with-current-buffer buffer
       (setq detached-buffer-session session))))
@@ -954,11 +954,8 @@ This function uses the `notifications' library."
       (detached-with-session session
         (funcall (detached-session-run-function session) session)))))
 
-(defun detached-register-session (session)
-  "Register the existence of SESSION and start monitoring it."
-  (setf (detached--session-time session) `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0))
-  (setf (detached--session-state session) 'started)
-  (detached--db-update-entry session)
+(defun detached-watch-session (session)
+  "Start to watch SESSION."
   (detached--watch-session-directory (detached-session-directory session)))
 
 ;;;;; Public session functions
@@ -966,7 +963,7 @@ This function uses the `notifications' library."
 (cl-defun detached-session-start-command (session &key type)
   "Return command to start SESSION with specified TYPE."
   (when (detached--valid-dtach-executable-p session)
-    (detached-register-session session)
+    (detached-watch-session session)
     (detached-connection-local-variables
      (let* ((socket (detached--session-file session 'socket t))
             (detached-session-mode (detached--session-initial-mode session))
@@ -1846,6 +1843,7 @@ session and trigger a state transition."
                   (is-primary (detached--primary-detached-emacs-p session)))
         (setq detached--unvalidated-session-ids (delete (detached-session-id session) detached--unvalidated-session-ids))
         (setf (detached--session-state session) 'active)
+        (setf (detached--session-time session) `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0))
         (detached--db-update-entry session)))))
 
 (defun detached--initialize-session (session)
