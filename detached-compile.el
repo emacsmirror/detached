@@ -134,7 +134,8 @@ Optionally EDIT-COMMAND."
                                              (detached-session-start-command
                                               detached-current-session
                                               :type 'string))
-          (detached-register-session detached-current-session)
+          (unless (detached-session-started-p detached-current-session)
+            (detached-register-session detached-current-session))
           (apply compilation-start `(,(if (detached-session-active-p detached-current-session)
                                           (detached-session-attach-command detached-current-session
                                                                            :type 'string)
