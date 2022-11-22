@@ -1184,10 +1184,6 @@ This function uses the `notifications' library."
     (when (detached-valid-session session)
       session)))
 
-(defun detached-session-started-p (session)
-  "Return t if SESSION has been started."
-  (eq 'active (detached-session-state session)))
-
 (defun detached-session-validated-p (session)
   "Return t if SESSION has been validated."
   (not
@@ -1205,6 +1201,10 @@ This function uses the `notifications' library."
 (defun detached-session-localhost-p (session)
   "Return t if SESSION is running on the local host."
   (eq 'localhost (detached-session-host-type session)))
+
+(defun detached-session-started-p (session)
+  "Return t if SESSION has been started."
+  (not (eq 'unknown (detached-session-state session))))
 
 (defun detached-session-active-p (session)
   "Return t if SESSION is active."
@@ -1945,7 +1945,9 @@ start searching at NUMBER offset."
 
 (defun detached--duration-str (session)
   "Return SESSION's duration time."
-  (detached--duration-str2 (detached-session-duration session)))
+  (if (detached-session-started-p session)
+      (detached--duration-str2 (detached-session-duration session))
+    ""))
 
 (defun detached--duration-str2 (duration)
   "Return propertized DURATION."
@@ -1959,9 +1961,11 @@ start searching at NUMBER offset."
 
 (defun detached--creation-str (session)
   "Return SESSION's creation time."
-  (format-time-string
-   "%b %d %H:%M"
-   (detached-session-start-time session)))
+  (if (detached-session-started-p session)
+      (format-time-string
+       "%b %d %H:%M"
+       (detached-session-start-time session))
+    ""))
 
 (defun detached--size-str (session)
   "Return the size of SESSION's output."

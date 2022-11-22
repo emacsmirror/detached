@@ -76,7 +76,8 @@ detached list implements."
   :type 'sexp)
 
 (defcustom detached-list-state-symbols
-  '((active . "*")
+  '((unknown . "-")
+    (active . "*")
     (failure . "!")
     (success . " ")
     (initially-attached . "o")
@@ -768,11 +769,15 @@ If prefix-argument is provided unmark instead of mark."
   "Return a string representation of SESSION's status."
   (let* ((status (detached-session-status session))
          (status-str
-          (if (detached-session-active-p session)
-              (alist-get 'active detached-list-state-symbols "?")
-            (if (eq status 'failure)
-                (alist-get 'failure detached-list-state-symbols "?")
-              (alist-get 'success detached-list-state-symbols "?"))))
+          (cond ((detached-session-active-p session)
+                 (alist-get 'active detached-list-state-symbols "?"))
+                ((and (detached-session-inactive-p session) (eq status 'failure))
+                 (alist-get 'failure detached-list-state-symbols "?"))
+                ((and (detached-session-inactive-p session) (eq status 'success))
+                 (alist-get 'success detached-list-state-symbols "?"))
+                ((not (detached-session-started-p session))
+                 (alist-get 'unknown detached-list-state-symbols "?"))
+                (t "?")))
          (status-face
           (cond ((and (detached-session-uninitialized-p session)
                       (detached-session-active-p session))
