@@ -117,18 +117,6 @@ detached list implements."
 
 ;;;; Commands
 
-(defun detached-list-describe-duration (session)
-  "Describe the SESSION's duration statistics."
-  (interactive
-   (list (detached-session-in-context)))
-  (let ((mean (detached-session-mean-duration session))
-        (std (detached-session-std-duration session)))
-    (message "%s: %s %s: %s"
-             (propertize "μ" 'face 'detached-mark-face)
-             (if mean (detached--duration-str2 mean) "-")
-             (propertize "σ" 'face 'detached-mark-face)
-             (if std (detached--duration-str2 std) "-"))))
-
 (defun detached-list-initialize-session-directory (&optional all)
   "Initialize a session-directory.
 
@@ -920,7 +908,7 @@ If prefix-argument is provided unmark instead of mark."
     (define-key map (kbd "!") #'detached-shell-command)
     ;; Describe
     (define-key map (kbd ". s") #'detached-describe-session)
-    (define-key map (kbd ". d") #'detached-list-describe-duration)
+    (define-key map (kbd ". d") #'detached-describe-duration)
     (define-key map (kbd "<backspace>") #'detached-list-remove-narrow-criterion)
     (define-key map (kbd "<return>") #'detached-list-open-session)
     map)
