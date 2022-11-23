@@ -1054,7 +1054,7 @@ cluttering the `comint-history' with dtach commands."
     (cl-letf* (((getenv "HISTFILE") "")
                (default-directory (detached-session-directory session))
                (buffer (get-buffer-create (format "*dtach-%s*" (detached-session-id session))))
-               (termination-delay 0.1)
+               (termination-delay 0.5)
                (comint-exec-hook
                 `(,(lambda ()
                      (when-let ((process (get-buffer-process (current-buffer))))
