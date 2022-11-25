@@ -4,6 +4,10 @@
 
 * Development
 
+* Version 0.10.1 (2022-11-25)
+
+- Add fallback validation of sessions using timer-based solution. This should make sure that sessions are verified even if notify-watch fails to do it due to raise condition.
+
 * Version 0.10.0 (2022-11-23)
 
 - Add =edit-and-run= command, which is convenient when a session command needs to be tweaked before re-running.

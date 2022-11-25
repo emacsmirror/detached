@@ -1,7 +1,7 @@
 This is detached.info, produced by makeinfo version 7.0 from
 detached.texi.
 
-This manual describes the design of the ‘detached’ (version 0.10.0, last
+This manual describes the design of the ‘detached’ (version 0.10.1, last
 updated 1 November 2022) package, as well as its options and
 customizations.
 
@@ -25,7 +25,7 @@ File: detached.info,  Node: Top,  Next: Overview,  Up: (dir)
 Detached processes for GNU Emacs
 ********************************
 
-This manual describes the design of the ‘detached’ (version 0.10.0, last
+This manual describes the design of the ‘detached’ (version 0.10.1, last
 updated 1 November 2022) package, as well as its options and
 customizations.
 
