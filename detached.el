@@ -225,6 +225,12 @@ If set to a non nil value the latest entry to
   :group 'detached
   :type 'sexp)
 
+(defcustom detached-debug-enabled
+  nil
+  "If t enable debug messages in `detached'."
+  :group 'detached
+  :type 'boolean)
+
 ;;;;; Public
 
 (defvar detached-session-map
@@ -1830,9 +1836,12 @@ session and trigger a state transition."
                   (session-directory (detached-session-directory session))
                   (is-primary
                    (detached--primary-detached-emacs-p session)))
+        (when detached-debug-enabled
+          (message "Session %s is set to inactive by notify-watch event" (detached-session-id session)))
 
-        ;; Remove from unvalidated sessions
-        (setq detached--unvalidated-session-ids (delete id detached--unvalidated-session-ids))
+        ;; Remove from un-validated sessions
+        (setq detached--unvalidated-session-ids
+              (delete id detached--unvalidated-session-ids))
 
         ;; Update session
         (detached--session-state-transition-update session)
@@ -1857,7 +1866,10 @@ session and trigger a state transition."
                   (session (detached--db-get-session id))
                   (session-directory (detached-session-directory session))
                   (is-primary (detached--primary-detached-emacs-p session)))
-        (setq detached--unvalidated-session-ids (delete (detached-session-id session) detached--unvalidated-session-ids))
+        (when detached-debug-enabled
+          (message "Session %s is set to active by notify-watch event" (detached-session-id session)))
+        (setq detached--unvalidated-session-ids
+              (delete (detached-session-id session) detached--unvalidated-session-ids))
         (setf (detached--session-state session) 'active)
         (setf (detached--session-time session) `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0))
         (detached--db-update-entry session)))))
