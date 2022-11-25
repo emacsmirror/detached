@@ -1088,10 +1088,14 @@ session validation."
                                          ;; Attach to session
                                          (with-current-buffer buffer
                                            (let ((detached-show-session-context nil))
+                                             (when detached-debug-enabled
+                                               (message "Kill function attaching to session %s" (detached-session-id session)))
                                              (detached-shell-attach-session session))
                                            (run-with-timer termination-delay nil
                                                            (lambda ()
                                                              ;; Send termination signal to session
+                                                             (when detached-debug-enabled
+                                                               (message "Kill function sending termination signal to session %s" (detached-session-id session)))
                                                              (with-current-buffer buffer
                                                                (call-interactively #'comint-interrupt-subjob)
                                                                (let ((kill-buffer-query-functions nil))
