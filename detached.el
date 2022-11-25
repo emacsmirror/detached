@@ -991,7 +991,16 @@ cluttering the `comint-history' with dtach commands."
         (funcall (detached-session-run-function session) session)))))
 
 (defun detached-watch-session (session)
-  "Start to watch SESSION."
+  "Start to watch SESSION.
+
+If there is no file-notify watch on SESSION's directory it should be
+added.  This watch will ensure that when a socket is created the
+session is set to active and when the socket is deleted it is set to
+inactive.  However there could be situations where the watch creation
+is delayed and takes place after the socket appears.  This is most
+likely to happen on remote hosts.  If so we fallback to a timer for
+session validation."
+  (detached--create-session-validator session)
   (detached--watch-session-directory (detached-session-directory session)))
 
 ;;;;; Public session functions
@@ -1424,6 +1433,30 @@ cluttering the `comint-history' with dtach commands."
 (defun detached--decode-session (item)
   "Return the session associated with ITEM."
   (cdr (assoc item detached--session-candidates)))
+
+(defun detached--create-session-validator (session)
+  "Create a function to validate SESSION.
+
+It can take some time for a dtach socket to be created.  Therefore all
+sessions are created with state unknown.  This function creates a
+function to verify that a session was created correctly.  If the
+session is missing its deleted from the database."
+  (let ((session-id (detached-session-id session))
+        (start-time
+         `(:start ,(time-to-seconds (current-time)) :end 0.0 :duration 0.0 :offset 0.0)))
+    (push session-id detached--unvalidated-session-ids)
+    (run-with-timer detached-dtach-socket-creation-delay
+                    nil
+                    (lambda ()
+                      (when (member session-id detached--unvalidated-session-ids)
+                        (when detached-debug-enabled
+                          (message "Session %s is set to active by validator" session-id))
+                        (let ((session (detached--db-get-session session-id)))
+                          (setq detached--unvalidated-session-ids
+                                (delete session-id detached--unvalidated-session-ids))
+                          (setf (detached--session-state session) 'active)
+                          (setf (detached--session-time session) start-time)
+                          (detached--db-update-entry session)))))))
 
 (defun detached--session-file (session file &optional local)
   "Return the full path to SESSION's FILE.
