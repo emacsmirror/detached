@@ -44,7 +44,7 @@
 
 ;;;###autoload
 (defun detached-compile (command &optional comint)
-  "Run COMMAND through `compile' but in a 'detached' session.
+  "Run COMMAND through `compile' but in a `detached' session.
 Optionally enable COMINT if prefix-argument is provided."
   (interactive
    (list
@@ -62,7 +62,7 @@ Optionally enable COMINT if prefix-argument is provided."
 
 ;;;###autoload
 (defun detached-compile-recompile (&optional edit-command)
-  "Re-compile by running `compile' but in a 'detached' session.
+  "Re-compile by running `compile' but in a `detached' session.
 Optionally EDIT-COMMAND."
   (interactive "P")
   (detached-with-session detached-buffer-session
@@ -77,7 +77,7 @@ Optionally EDIT-COMMAND."
       (apply #'compilation-start `(,detached-session-command)))))
 
 (defun detached-compile-kill ()
-  "Kill a 'detached' session."
+  "Kill a `detached' session."
   (interactive)
   (detached-kill-session detached-buffer-session))
 
