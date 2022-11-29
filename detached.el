@@ -1076,31 +1076,33 @@ session validation."
   (interactive
    (list (detached-session-in-context)))
   (when session
-    (cl-letf* (((getenv "HISTFILE") "")
-               (default-directory (detached-session-directory session))
-               (buffer (get-buffer-create (format "*dtach-%s*" (detached-session-id session))))
-               (termination-delay 0.5)
-               (comint-exec-hook
-                `(,(lambda ()
-                     (when-let ((process (get-buffer-process (current-buffer))))
-                       (run-with-timer termination-delay nil
-                                       (lambda ()
-                                         ;; Attach to session
-                                         (with-current-buffer buffer
-                                           (let ((detached-show-session-context nil))
-                                             (when detached-debug-enabled
-                                               (message "Kill function attaching to session %s" (detached-session-id session)))
-                                             (detached-shell-attach-session session))
-                                           (run-with-timer termination-delay nil
-                                                           (lambda ()
-                                                             ;; Send termination signal to session
-                                                             (when detached-debug-enabled
-                                                               (message "Kill function sending termination signal to session %s" (detached-session-id session)))
-                                                             (with-current-buffer buffer
-                                                               (call-interactively #'comint-interrupt-subjob)
-                                                               (let ((kill-buffer-query-functions nil))
-                                                                 (kill-buffer)))))))))))))
-      (apply #'make-comint-in-buffer `("dtach" ,buffer ,detached-shell-program nil)))))
+    (if (detached-session-active-p session)
+        (cl-letf* (((getenv "HISTFILE") "")
+                   (default-directory (detached-session-directory session))
+                   (buffer (get-buffer-create (format "*dtach-%s*" (detached-session-id session))))
+                   (termination-delay 0.5)
+                   (comint-exec-hook
+                    `(,(lambda ()
+                         (when-let ((process (get-buffer-process (current-buffer))))
+                           (run-with-timer termination-delay nil
+                                           (lambda ()
+                                             ;; Attach to session
+                                             (with-current-buffer buffer
+                                               (let ((detached-show-session-context nil))
+                                                 (when detached-debug-enabled
+                                                   (message "Kill function attaching to session %s" (detached-session-id session)))
+                                                 (detached-shell-attach-session session))
+                                               (run-with-timer termination-delay nil
+                                                               (lambda ()
+                                                                 ;; Send termination signal to session
+                                                                 (when detached-debug-enabled
+                                                                   (message "Kill function sending termination signal to session %s" (detached-session-id session)))
+                                                                 (with-current-buffer buffer
+                                                                   (call-interactively #'comint-interrupt-subjob)
+                                                                   (let ((kill-buffer-query-functions nil))
+                                                                     (kill-buffer)))))))))))))
+          (apply #'make-comint-in-buffer `("dtach" ,buffer ,detached-shell-program nil)))
+      (message "Session %s is already inactive." (detached-session-id session)))))
 
 (defun detached-session-output (session)
   "Return content of SESSION's output."
